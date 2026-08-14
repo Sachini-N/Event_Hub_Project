@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventHub - Company Free Events & Registration</title>
+  <meta name="description" content="Discover and register for free company tech workshops, hackathons, and innovation summits with EventHub. Download calendar invites and photo highlights.">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand" onclick="app.switchTab('upcoming')">
+        <div class="logo-icon"><i class="fa-solid fa-calendar-star"></i></div>
+        <span class="logo-text">Event<span class="highlight">Hub</span></span>
+      </div>
+      <nav class="nav-links">
+        <button class="nav-link active" id="tab-upcoming" onclick="app.switchTab('upcoming')">
+          <i class="fa-regular fa-calendar-check"></i> Upcoming Events
+        </button>
+        <button class="nav-link" id="tab-past" onclick="app.switchTab('past')">
+          <i class="fa-solid fa-images"></i> Past Events & Gallery
+        </button>
+        <button class="nav-link" id="tab-my-registrations" onclick="app.openMyRegistrationsModal()">
+          <i class="fa-solid fa-ticket"></i> My Tickets
+        </button>
+
+        <!-- Auth Section (Logged Out) -->
+        <div id="nav-auth-logged-out" class="nav-auth-group" style="display: flex; gap: 0.5rem; align-items: center;">
+          <button class="nav-btn login-btn" onclick="app.openLoginModal()">
+            <i class="fa-solid fa-right-to-bracket"></i> Log In
+          </button>
+          <button class="nav-btn signup-btn" onclick="app.openSignupModal()">
+            <i class="fa-solid fa-user-plus"></i> Sign Up
+          </button>
+        </div>
+
+        <!-- Auth Section (Logged In) -->
+        <div id="nav-auth-logged-in" class="nav-auth-group hidden" style="display: flex; gap: 0.5rem; align-items: center;">
+          <div class="user-profile-badge">
+            <i class="fa-solid fa-circle-user"></i>
+            <span id="user-display-name">User</span>
+          </div>
+          <button class="nav-btn logout-btn" onclick="app.logout()">
+            <i class="fa-solid fa-right-from-bracket"></i> Logout
+          </button>
+        </div>
+
+        <button class="nav-btn admin-btn" onclick="app.openAdminModal()">
+          <i class="fa-solid fa-sliders"></i> Admin Panel
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <div class="hero-badge"><i class="fa-solid fa-sparkles"></i> 100% Free Company Events</div>
+      <h1 class="hero-title">Connect, Learn & Grow With Our Tech Community</h1>
+      <p class="hero-subtitle">Explore upcoming workshops, webinars, and hackathons open to everyone. Register in one click and sync reminders directly to your personal calendar.</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" onclick="app.scrollToEvents()">
+          <i class="fa-solid fa-compass"></i> Explore Events
+        </button>
+        <button class="btn btn-secondary" onclick="app.switchTab('past')">
+          <i class="fa-solid fa-photo-film"></i> Past Highlights
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Container -->
+  <main class="main-container" id="events-section">
+    
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="tab-selectors">
+        <button class="tab-btn active" id="filter-upcoming" onclick="app.switchTab('upcoming')">
+          Upcoming Events <span class="badge" id="upcoming-count">0</span>
+        </button>
+        <button class="tab-btn" id="filter-past" onclick="app.switchTab('past')">
+          Past Events & Highlights <span class="badge" id="past-count">0</span>
+        </button>
+      </div>
+
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" id="search-input" placeholder="Search by title, topic, speaker..." oninput="app.filterEvents()">
+      </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-state" id="loading-spinner">
+      <div class="spinner"></div>
+      <p>Loading event catalog...</p>
+    </div>
+
+    <!-- Events Grid Container -->
+    <div class="events-grid" id="events-grid"></div>
+
+    <!-- Empty State -->
+    <div class="empty-state hidden" id="empty-state">
+      <i class="fa-solid fa-calendar-xmark"></i>
+      <h3>No events found</h3>
+      <p>Try adjusting your search criteria or switch between upcoming and past tabs.</p>
+    </div>
+  </main>
+
+  <!-- Registration Modal -->
+  <div class="modal-overlay hidden" id="registration-modal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="app.closeModal('registration-modal')"><i class="fa-solid fa-xmark"></i></button>
+      
+      <div class="modal-header">
+        <span class="modal-badge"><i class="fa-solid fa-tag"></i> Free Registration</span>
+        <h2 id="reg-event-title">Event Registration</h2>
+        <p class="modal-sub" id="reg-event-meta"><i class="fa-regular fa-clock"></i> Date & Time</p>
+      </div>
+
+      <!-- Registration Form -->
+      <form id="registration-form" onsubmit="app.handleRegistrationSubmit(event)">
+        <input type="hidden" id="reg-event-id">
+
+        <div class="form-group">
+          <label for="reg-name"><i class="fa-regular fa-user"></i> Full Name *</label>
+          <input type="text" id="reg-name" required placeholder="John Doe">
+        </div>
+
+        <div class="form-group">
+          <label for="reg-email"><i class="fa-regular fa-envelope"></i> Email Address *</label>
+          <input type="email" id="reg-email" required placeholder="john.doe@example.com">
+        </div>
+
+        <div class="form-group">
+          <label for="reg-phone"><i class="fa-solid fa-phone"></i> Contact Phone Number *</label>
+          <input type="tel" id="reg-phone" required placeholder="+1 (555) 000-0000">
+        </div>
+
+        <div class="form-group">
+          <label for="reg-notes"><i class="fa-regular fa-comment-dots"></i> Special Requirements / Description (Optional)</label>
+          <textarea id="reg-notes" rows="3" placeholder="Any questions for the speaker or dietary/accessibility requirements..."></textarea>
+        </div>
+
+        <div class="form-notice">
+          <i class="fa-solid fa-bell"></i> After registration, you can download a <strong>1-Day Reminder Calendar Invite</strong> (.ics) to add directly to your Google, Apple, or Outlook calendar!
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="app.closeModal('registration-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="reg-submit-btn">
+            <i class="fa-solid fa-check"></i> Complete Free Registration
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Registration Confirmation & Ticket Badge Modal -->
+  <div class="modal-overlay hidden" id="confirmation-modal">
+    <div class="modal-card ticket-modal">
+      <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
+      <h2>Registration Successful!</h2>
+      <p class="success-sub">You're all set! A confirmation ticket has been generated for your profile.</p>
+
+      <div class="ticket-card">
+        <div class="ticket-header">
+          <span class="ticket-brand">EventHub Official Pass</span>
+          <span class="ticket-id" id="ticket-id-display">EVT-XXXXXX</span>
+        </div>
+        <div class="ticket-body">
+          <h3 id="ticket-event-title">Event Title</h3>
+          <div class="ticket-meta">
+            <p><i class="fa-regular fa-calendar"></i> <span id="ticket-event-date">Date</span></p>
+            <p><i class="fa-solid fa-location-dot"></i> <span id="ticket-event-location">Location</span></p>
+            <p><i class="fa-regular fa-user"></i> Attendee: <strong id="ticket-attendee-name">Name</strong></p>
+          </div>
+        </div>
+        <div class="ticket-footer">
+          <div class="qr-placeholder">
+            <i class="fa-solid fa-qrcode"></i>
+            <span>Valid Pass</span>
+          </div>
+          <div class="reminder-tag">
+            <i class="fa-solid fa-bell"></i> 1-Day Prior Alarm Included
+          </div>
+        </div>
+      </div>
+
+      <div class="ticket-actions">
+        <button class="btn btn-accent" id="btn-download-ics">
+          <i class="fa-regular fa-calendar-plus"></i> Download Calendar Invite (.ics)
+        </button>
+        <button class="btn btn-secondary" id="btn-google-calendar" target="_blank">
+          <i class="fa-brands fa-google"></i> Add to Google Calendar
+        </button>
+        <button class="btn btn-secondary" onclick="app.requestBrowserNotificationPermission()">
+          <i class="fa-solid fa-bell-ring"></i> Enable Browser 1-Day Reminder
+        </button>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="app.closeModal('confirmation-modal')">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Past Event Photo Lightbox Modal -->
+  <div class="modal-overlay hidden" id="lightbox-modal">
+    <div class="modal-card lightbox-card">
+      <button class="modal-close" onclick="app.closeModal('lightbox-modal')"><i class="fa-solid fa-xmark"></i></button>
+      <div class="lightbox-container">
+        <img id="lightbox-img" src="" alt="Event Highlight">
+        <div class="lightbox-caption" id="lightbox-caption">Photo Caption</div>
+      </div>
+      <div class="lightbox-nav">
+        <button class="btn btn-secondary" onclick="app.prevGalleryImage()"><i class="fa-solid fa-chevron-left"></i> Previous</button>
+        <span id="gallery-counter">1 of 4</span>
+        <button class="btn btn-secondary" onclick="app.nextGalleryImage()">Next <i class="fa-solid fa-chevron-right"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- My Registrations Modal -->
+  <div class="modal-overlay hidden" id="my-registrations-modal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="app.closeModal('my-registrations-modal')"><i class="fa-solid fa-xmark"></i></button>
+      <h2><i class="fa-solid fa-ticket"></i> Find My Registrations</h2>
+      <p class="modal-sub">Enter your email address to view all your registered event tickets and calendar invites.</p>
+
+      <div class="search-form">
+        <input type="email" id="lookup-email-input" placeholder="Enter your email address..." required>
+        <button class="btn btn-primary" onclick="app.lookupRegistrations()">
+          <i class="fa-solid fa-magnifying-glass"></i> Search
+        </button>
+      </div>
+
+      <div id="user-registrations-list" class="registrations-list"></div>
+    </div>
+  </div>
+
+  <!-- Admin Panel Modal -->
+  <div class="modal-overlay hidden" id="admin-modal">
+    <div class="modal-card admin-card">
+      <button class="modal-close" onclick="app.closeModal('admin-modal')"><i class="fa-solid fa-xmark"></i></button>
+      <div class="modal-header">
+        <h2><i class="fa-solid fa-sliders"></i> EventHub Admin Portal</h2>
+        <p class="modal-sub">Create new events or add past event photo galleries.</p>
+      </div>
+
+      <form id="admin-event-form" onsubmit="app.handleCreateEventSubmit(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="admin-title">Event Title *</label>
+            <input type="text" id="admin-title" required placeholder="e.g. Cloud Security Summit 2026">
+          </div>
+          <div class="form-group">
+            <label for="admin-category">Category</label>
+            <select id="admin-category">
+              <option value="Technology">Technology</option>
+              <option value="Design">Design</option>
+              <option value="DevOps">DevOps</option>
+              <option value="Artificial Intelligence">Artificial Intelligence</option>
+              <option value="Hackathon">Hackathon</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="admin-status">Event Status *</label>
+            <select id="admin-status">
+              <option value="upcoming">Upcoming (Open Registration)</option>
+              <option value="past">Past (Showcase & Gallery)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="admin-capacity">Capacity / Max Seats</label>
+            <input type="number" id="admin-capacity" value="100" min="1">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="admin-date">Date *</label>
+            <input type="date" id="admin-date" required>
+          </div>
+          <div class="form-group">
+            <label for="admin-time">Time *</label>
+            <input type="text" id="admin-time" required placeholder="e.g. 10:00 AM - 04:00 PM EST">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="admin-location">Location / Stream URL *</label>
+          <input type="text" id="admin-location" required placeholder="e.g. Main Auditorium or Zoom Link">
+        </div>
+
+        <div class="form-group">
+          <label for="admin-description">Description *</label>
+          <textarea id="admin-description" rows="3" required placeholder="Comprehensive details about the event..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="admin-image">Cover Image URL</label>
+          <input type="url" id="admin-image" placeholder="https://images.unsplash.com/...">
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="app.closeModal('admin-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Create & Publish Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Login Modal -->
+  <div class="modal-overlay hidden" id="login-modal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="app.closeModal('login-modal')"><i class="fa-solid fa-xmark"></i></button>
+      <div class="modal-header">
+        <h2><i class="fa-solid fa-right-to-bracket"></i> Welcome Back</h2>
+        <p class="modal-sub">Log in to your EventHub account to access quick registration and tickets.</p>
+      </div>
+
+      <form id="login-form" onsubmit="app.handleLoginSubmit(event)">
+        <div class="form-group">
+          <label for="login-email"><i class="fa-regular fa-envelope"></i> Email Address *</label>
+          <input type="email" id="login-email" required placeholder="john.doe@example.com">
+        </div>
+
+        <div class="form-group">
+          <label for="login-password"><i class="fa-solid fa-lock"></i> Password *</label>
+          <input type="password" id="login-password" required placeholder="Enter your password">
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="app.closeModal('login-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="login-submit-btn">
+            <i class="fa-solid fa-right-to-bracket"></i> Log In
+          </button>
+        </div>
+
+        <p class="auth-switch-text" style="margin-top: 15px; text-align: center; font-size: 0.9rem; color: var(--text-muted);">
+          Don't have an account? <a href="#" onclick="app.switchToSignup(event)" style="color: var(--primary); font-weight: 600; text-decoration: none;">Sign Up</a>
+        </p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Signup Modal -->
+  <div class="modal-overlay hidden" id="signup-modal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="app.closeModal('signup-modal')"><i class="fa-solid fa-xmark"></i></button>
+      <div class="modal-header">
+        <h2><i class="fa-solid fa-user-plus"></i> Create Account</h2>
+        <p class="modal-sub">Sign up for EventHub to seamlessly register for events and manage tickets.</p>
+      </div>
+
+      <form id="signup-form" onsubmit="app.handleSignupSubmit(event)">
+        <div class="form-group">
+          <label for="signup-name"><i class="fa-regular fa-user"></i> Full Name *</label>
+          <input type="text" id="signup-name" required placeholder="John Doe">
+        </div>
+
+        <div class="form-group">
+          <label for="signup-email"><i class="fa-regular fa-envelope"></i> Email Address *</label>
+          <input type="email" id="signup-email" required placeholder="john.doe@example.com">
+        </div>
+
+        <div class="form-group">
+          <label for="signup-phone"><i class="fa-solid fa-phone"></i> Contact Phone Number</label>
+          <input type="tel" id="signup-phone" placeholder="+1 (555) 000-0000">
+        </div>
+
+        <div class="form-group">
+          <label for="signup-password"><i class="fa-solid fa-lock"></i> Password *</label>
+          <input type="password" id="signup-password" required minlength="6" placeholder="Create a password (min 6 chars)">
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="app.closeModal('signup-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="signup-submit-btn">
+            <i class="fa-solid fa-user-check"></i> Sign Up
+          </button>
+        </div>
+
+        <p class="auth-switch-text" style="margin-top: 15px; text-align: center; font-size: 0.9rem; color: var(--text-muted);">
+          Already have an account? <a href="#" onclick="app.switchToLogin(event)" style="color: var(--primary); font-weight: 600; text-decoration: none;">Log In</a>
+        </p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div class="toast hidden" id="toast-notification">
+    <i class="fa-solid fa-circle-info toast-icon"></i>
+    <span class="toast-message" id="toast-message">Notification message</span>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <p>&copy; 2026 EventHub Community. All company events are 100% free and open to everyone.</p>
+    </div>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
