@@ -37,7 +37,7 @@ const eventSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["upcoming", "past"],
+      enum: ["upcoming", "past", "draft"],
       default: "upcoming",
     },
     coverImage: {

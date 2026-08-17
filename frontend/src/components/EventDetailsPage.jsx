@@ -1,0 +1,461 @@
+import React, { useState, useEffect } from 'react';
+
+export default function EventDetailsPage({
+  event,
+  onBack,
+  currentUser,
+  onRegistrationSuccess,
+  onOpenMyEvents,
+  showToast,
+}) {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [message, setMessage] = useState('');
+  const [agreed, setAgreed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [registrationData, setRegistrationData] = useState(null);
+
+  useEffect(() => {
+    if (currentUser) {
+      setName(currentUser.name || '');
+      setEmail(currentUser.email || '');
+      setPhone(currentUser.contactNumber || '');
+    }
+  }, [currentUser]);
+
+  if (!event) return null;
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'November 12, 2024';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!agreed) {
+      showToast('Please agree to the Terms of Service and Privacy Policy.', 'error');
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const response = await fetch('/api/registrations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId: event._id,
+          name,
+          email,
+          contactNumber: phone,
+          notes: message,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setIsRegistered(true);
+        setRegistrationData(result.data);
+        showToast('Registration successful!', 'success');
+        if (onRegistrationSuccess) {
+          onRegistrationSuccess(result.data);
+        }
+      } else {
+        showToast(result.message || 'Registration failed', 'error');
+      }
+    } catch (error) {
+      console.error('Error during registration:', error);
+      showToast('Network error during registration', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const downloadIcs = () => {
+    const eventDate = new Date(event.date || Date.now());
+    const formatDateForIcs = (date) => date.toISOString().replace(/-|:|\.\d\d\d/g, '');
+
+    const startDateStr = formatDateForIcs(eventDate);
+    const endDateStr = formatDateForIcs(new Date(eventDate.getTime() + 2 * 60 * 60 * 1000));
+    const ticketId = registrationData?.registration?.ticketId || 'TICKET-' + Date.now();
+
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//TRACE Event Hub//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:REQUEST',
+      'BEGIN:VEVENT',
+      `UID:${ticketId}@trace.lk`,
+      `DTSTAMP:${formatDateForIcs(new Date())}`,
+      `DTSTART:${startDateStr}`,
+      `DTEND:${endDateStr}`,
+      `SUMMARY:${event.title}`,
+      `DESCRIPTION:${(event.description || '').replace(/\n/g, ' ')} | Ticket: ${ticketId}`,
+      `LOCATION:${event.location}`,
+      'STATUS:CONFIRMED',
+      'BEGIN:VALARM',
+      'ACTION:DISPLAY',
+      `DESCRIPTION:Reminder: 1 Day until ${event.title}`,
+      'TRIGGER:-P1D',
+      'END:VALARM',
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.setAttribute('download', `${(event.title || 'Event').replace(/\s+/g, '_')}_Reminder.ics`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    if (showToast) {
+      showToast('Downloaded Calendar Invite (.ics)', 'success');
+    }
+  };
+
+  const imgMain =
+    event.coverImage ||
+    'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80';
+  const imgTopRight =
+    'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=600&q=80';
+  const imgBottomRight =
+    'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=600&q=80';
+
+  return (
+    <div className="event-details-page">
+      {/* Top Bar Header matching screenshot */}
+      <header className="details-header">
+        <div className="details-header-container">
+          <div className="brand-logo">
+            <span className="logo-icon">✶</span>
+            <span className="brand-title">TRACE Event Hub</span>
+          </div>
+          <button className="btn-back-link" onClick={onBack}>
+            <i className="fa-solid fa-arrow-left"></i> Back to Events
+          </button>
+        </div>
+      </header>
+
+      {/* Main Content Layout */}
+      <main className="details-main-content">
+        <div className="details-container">
+          {/* If Registration Successful, render the exact confirmation view matching screenshot */}
+          {isRegistered ? (
+            <div className="success-page-container">
+              <div className="success-card-box">
+                {/* Top Teal Check Circle */}
+                <div className="success-check-badge">
+                  <i className="fa-solid fa-check"></i>
+                </div>
+
+                <h1 className="success-title">Registration Successful!</h1>
+                <p className="success-subtitle">You are successfully registered for this event.</p>
+
+                {/* Event Summary Card */}
+                <div className="success-event-summary">
+                  <img src={imgMain} alt={event.title} className="summary-thumb" />
+                  <div className="summary-details">
+                    <h3 className="summary-event-title">{event.title}</h3>
+                    <div className="summary-meta-item">
+                      <i className="fa-regular fa-calendar"></i>
+                      <span>{formatDate(event.date)}</span>
+                    </div>
+                    <div className="summary-meta-item">
+                      <i className="fa-regular fa-clock"></i>
+                      <span>{event.time || '10:00 AM - 1:00 PM'}</span>
+                    </div>
+                    <div className="summary-meta-item">
+                      <i className="fa-solid fa-location-dot"></i>
+                      <span>{event.location || 'TRACE Expert City'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Reminder Notification Info Banner */}
+                <div className="reminder-info-banner">
+                  <i className="fa-solid fa-circle-info info-icon"></i>
+                  <span>You will receive a reminder notification one day before the event.</span>
+                </div>
+
+                {/* Action Buttons Row matching screenshot */}
+                <div className="success-actions-row">
+                  <button className="btn-add-calendar-blue" onClick={downloadIcs}>
+                    <i className="fa-regular fa-calendar-plus"></i> Add to Calendar
+                  </button>
+                  <button className="btn-view-my-events-outline" onClick={onOpenMyEvents}>
+                    View My Events
+                  </button>
+                  <button className="btn-back-events-link" onClick={onBack}>
+                    Back to Events
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Registration Form View */
+            <div className="details-grid-layout">
+              {/* Left Column: Media Collage & Event Info */}
+              <div className="details-left-column">
+                <div className="media-collage-grid">
+                  <div className="collage-main-photo">
+                    <img src={imgMain} alt={event.title} />
+                    <span className="free-event-badge">FREE EVENT</span>
+                  </div>
+                  <div className="collage-side-photos">
+                    <div className="side-photo-top">
+                      <img src={imgTopRight} alt="Event audience" />
+                    </div>
+                    <div className="side-photo-bottom">
+                      <img src={imgBottomRight} alt="Event presentation" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="event-info-box">
+                  {/* Category Badge & Seats Remaining Pill */}
+                  <div className="details-tags-row">
+                    <span className="event-category-badge">
+                      {(event.category || 'WORKSHOP').toUpperCase()}
+                    </span>
+                    <span className="seats-left-pill">
+                      <i className="fa-solid fa-chair"></i>{' '}
+                      {Math.max(0, (event.capacity || 100) - (event.registeredCount || 0))} Seats Remaining
+                    </span>
+                  </div>
+
+                  <h1 className="details-event-title">{event.title}</h1>
+
+                  {/* Short Excerpt Summary Box */}
+                  {event.shortDescription && (
+                    <div className="event-excerpt-callout">
+                      <i className="fa-solid fa-quote-left quote-icon"></i>
+                      <p>{event.shortDescription}</p>
+                    </div>
+                  )}
+
+                  <p className="details-event-description">{event.description}</p>
+
+                  <div className="event-meta-row">
+                    <div className="meta-item">
+                      <div className="meta-icon-wrapper">
+                        <i className="fa-regular fa-calendar"></i>
+                      </div>
+                      <div className="meta-text">
+                        <span className="meta-label">DATE</span>
+                        <span className="meta-value">{formatDate(event.date)}</span>
+                      </div>
+                    </div>
+
+                    <div className="meta-item">
+                      <div className="meta-icon-wrapper">
+                        <i className="fa-regular fa-clock"></i>
+                      </div>
+                      <div className="meta-text">
+                        <span className="meta-label">TIME</span>
+                        <span className="meta-value">{event.time || '10:00 AM - 1:00 PM'}</span>
+                      </div>
+                    </div>
+
+                    <div className="meta-item">
+                      <div className="meta-icon-wrapper">
+                        <i className="fa-solid fa-location-dot"></i>
+                      </div>
+                      <div className="meta-text">
+                        <span className="meta-label">LOCATION</span>
+                        <span className="meta-value">{event.location || 'TRACE Expert City'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Featured Speaker Profile Card */}
+                  {event.speaker && (event.speaker.name || event.speaker.role) && (
+                    <div className="details-speaker-card">
+                      <div className="speaker-card-header">
+                        <i className="fa-solid fa-user-tie"></i>
+                        <h3>Featured Speaker</h3>
+                      </div>
+                      <div className="speaker-card-body">
+                        <div className="speaker-avatar">
+                          <img
+                            src={
+                              event.speaker.avatar ||
+                              'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80'
+                            }
+                            alt={event.speaker.name || 'Speaker'}
+                          />
+                        </div>
+                        <div className="speaker-info">
+                          <h4>{event.speaker.name || 'Guest Speaker'}</h4>
+                          <span className="speaker-role">{event.speaker.role || 'Tech Leader'}</span>
+                          {event.speaker.bio && <p className="speaker-bio">{event.speaker.bio}</p>}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Key Highlights / Agenda */}
+                  {event.highlights && event.highlights.length > 0 && (
+                    <div className="details-highlights-box">
+                      <h3><i className="fa-solid fa-list-check"></i> Key Event Highlights</h3>
+                      <div className="highlights-tags-list">
+                        {event.highlights.map((item, idx) => (
+                          <span key={idx} className="highlight-tag-pill">
+                            <i className="fa-solid fa-check"></i> {item}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Photo Gallery Showcase */}
+                  {event.gallery && event.gallery.length > 0 && (
+                    <div className="details-gallery-box">
+                      <h3><i className="fa-regular fa-images"></i> Showcase Photo Gallery</h3>
+                      <div className="details-gallery-showcase-grid">
+                        {event.gallery.map((photo, idx) => (
+                          <div key={idx} className="showcase-photo-card">
+                            <img src={photo.url} alt={photo.caption || 'Event gallery photo'} />
+                            {photo.caption && <span className="showcase-photo-caption">{photo.caption}</span>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column: Registration Card Box */}
+              <div className="details-right-column">
+                <div className="registration-card-box">
+                  <h2 className="registration-card-title">Register for this Event</h2>
+                  <p className="registration-card-subtitle">
+                    Reserve your place by providing your details below.
+                  </p>
+
+                  <form onSubmit={handleSubmit} className="registration-form">
+                    <div className="form-field-group">
+                      <label htmlFor="details-name">Full Name *</label>
+                      <input
+                        type="text"
+                        id="details-name"
+                        required
+                        placeholder="Jane Doe"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-field-group">
+                      <label htmlFor="details-email">Email Address *</label>
+                      <input
+                        type="email"
+                        id="details-email"
+                        required
+                        placeholder="jane@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-field-group">
+                      <label htmlFor="details-phone">Contact Number *</label>
+                      <input
+                        type="tel"
+                        id="details-phone"
+                        required
+                        placeholder="+94 77 123 4567"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-field-group">
+                      <label htmlFor="details-message">Description / Message</label>
+                      <textarea
+                        id="details-message"
+                        rows="3"
+                        placeholder="Any special requirements or questions?"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                      ></textarea>
+                    </div>
+
+                    <div className="form-checkbox-group">
+                      <label className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={agreed}
+                          onChange={(e) => setAgreed(e.target.checked)}
+                          required
+                        />
+                        <span>
+                          I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>. *
+                        </span>
+                      </label>
+                    </div>
+
+                    <div className="form-button-row">
+                      <button
+                        type="submit"
+                        className="btn-submit-registration"
+                        disabled={submitting}
+                      >
+                        {submitting ? (
+                          <>
+                            <i className="fa-solid fa-spinner fa-spin"></i> Submitting...
+                          </>
+                        ) : (
+                          <>
+                            Submit Registration <i className="fa-solid fa-arrow-right"></i>
+                          </>
+                        )}
+                      </button>
+                      <button type="button" className="btn-cancel-registration" onClick={onBack}>
+                        Cancel
+                      </button>
+                    </div>
+
+                    <div className="security-notice-text">
+                      <i className="fa-solid fa-lock"></i>
+                      <span>
+                        Your information will only be used for event registration and event-related communication.
+                      </span>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Footer matching screenshot */}
+      <footer className="details-footer">
+        <div className="details-footer-container">
+          <div className="footer-left-info">
+            <span className="footer-brand-title">TRACE Event Hub</span>
+            <p className="footer-copy-text">&copy; 2024 TRACE Event Hub. All rights reserved.</p>
+          </div>
+          <div className="footer-right-nav">
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">Contact Support</a>
+            <a href="#">Sponsorships</a>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
