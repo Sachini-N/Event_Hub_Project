@@ -424,8 +424,9 @@ export default function AdminDashboardPage({
             <div className="admin-profile-badge">
               <img
                 src={
-                  currentUser?.avatar ||
-                  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'
+                  (currentUser?.avatar && currentUser.avatar.trim() !== '')
+                    ? currentUser.avatar
+                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.name || 'Admin')}&background=0052cc&color=fff&size=100`
                 }
                 alt={currentUser?.name}
               />

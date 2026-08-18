@@ -15,14 +15,24 @@ export default function ProfilePage({
   const [emailNotifications, setEmailNotifications] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const defaultAvatar =
-    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80';
+  const getInitialsAvatar = (cleanName) => {
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName || 'User')}&background=0052cc&color=fff&size=200`;
+  };
+
+  const getAvatarUrl = (userObj, currentName) => {
+    if (userObj?.avatar && userObj.avatar.trim() !== '') {
+      return userObj.avatar;
+    }
+    return getInitialsAvatar(currentName || userObj?.name);
+  };
 
   useEffect(() => {
-    setName(currentUser?.name || 'Jane Doe');
-    setEmail(currentUser?.email || 'jane@example.com');
+    const initialName = currentUser?.name || 'Saduni Madushika';
+    const initialEmail = currentUser?.email || 'saduni@gmail.com';
+    setName(initialName);
+    setEmail(initialEmail);
     setPhone(currentUser?.contactNumber || '+94 77 123 4567');
-    setAvatar(currentUser?.avatar || defaultAvatar);
+    setAvatar(currentUser?.avatar ? currentUser.avatar : getInitialsAvatar(initialName));
   }, [currentUser]);
 
   const handleImageUpload = (e) => {
@@ -38,6 +48,13 @@ export default function ProfilePage({
     reader.onloadend = () => {
       const base64String = reader.result;
       setAvatar(base64String);
+      if (setCurrentUser) {
+        setCurrentUser((prev) =>
+          prev
+            ? { ...prev, avatar: base64String }
+            : { name, email, contactNumber: phone, avatar: base64String }
+        );
+      }
       saveAvatarToBackend(base64String);
     };
     reader.readAsDataURL(file);
@@ -47,9 +64,8 @@ export default function ProfilePage({
     const authToken = token || localStorage.getItem('eventhub_token');
     if (!authToken) {
       if (setCurrentUser) {
-        setCurrentUser((prev) => ({ ...prev, avatar: newAvatar }));
+        setCurrentUser((prev) => (prev ? { ...prev, avatar: newAvatar } : null));
       }
-      if (showToast) showToast('Profile photo updated!', 'success');
       return;
     }
 
@@ -65,14 +81,12 @@ export default function ProfilePage({
 
       const result = await response.json();
       if (result.success) {
-        if (setCurrentUser) setCurrentUser(result.data);
-        if (showToast) showToast('Profile photo updated successfully!', 'success');
-      } else {
-        if (showToast) showToast(result.message || 'Failed to update photo', 'error');
+        if (setCurrentUser) {
+          setCurrentUser(result.data);
+        }
       }
     } catch (err) {
       console.error('Error updating avatar:', err);
-      if (showToast) showToast('Failed to upload photo', 'error');
     }
   };
 
@@ -105,7 +119,7 @@ export default function ProfilePage({
             setCurrentUser(result.data);
           }
           if (showToast) {
-            showToast('Profile updated successfully in database!', 'success');
+            showToast('Profile updated successfully!', 'success');
           }
         } else {
           if (showToast) {
@@ -124,9 +138,24 @@ export default function ProfilePage({
       setTimeout(() => {
         setSaving(false);
         if (showToast) {
-          showToast('Profile and preferences updated successfully!', 'success');
+          showToast('Profile updated successfully!', 'success');
         }
       }, 300);
+    }
+  };
+
+  const handleRemovePhoto = (e) => {
+    if (e) e.preventDefault();
+    const initialsAvatar = getInitialsAvatar(name);
+    setAvatar(initialsAvatar);
+
+    if (setCurrentUser) {
+      setCurrentUser((prev) => (prev ? { ...prev, avatar: '' } : null));
+    }
+
+    saveAvatarToBackend('');
+    if (showToast) {
+      showToast('Profile photo removed successfully!', 'info');
     }
   };
 
@@ -138,7 +167,7 @@ export default function ProfilePage({
           <div className="profile-left-column">
             <div className="avatar-card-box">
               <div className="avatar-wrapper">
-                <img src={avatar || defaultAvatar} alt={name} />
+                <img src={avatar || getAvatarUrl(currentUser, name)} alt={name} />
                 <label
                   htmlFor="avatar-file-input"
                   className="avatar-camera-btn"
@@ -154,6 +183,28 @@ export default function ProfilePage({
                   onChange={handleImageUpload}
                 />
               </div>
+
+              <button
+                type="button"
+                className="btn-remove-photo-text"
+                onClick={handleRemovePhoto}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#ef4444',
+                  fontSize: '0.82rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  marginTop: '0.5rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.2rem 0.5rem',
+                  borderRadius: '4px',
+                }}
+              >
+                <i className="fa-regular fa-trash-can"></i> Remove Photo
+              </button>
 
               <h2 className="avatar-user-name">{name}</h2>
               <p className="avatar-user-email">{email}</p>
