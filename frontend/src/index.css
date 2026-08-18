@@ -3221,15 +3221,21 @@ input:checked + .slider:before {
   display: inline-block;
 }
 
-.status-pill.active {
+.status-pill.active,
+.status-pill.confirmed {
   background-color: #dcfce7;
   color: #15803d;
 }
 
-.status-pill.draft,
 .status-pill.pending {
-  background-color: #f1f5f9;
-  color: #64748b;
+  background-color: #fef3c7;
+  color: #b45309;
+}
+
+.status-pill.draft,
+.status-pill.cancelled {
+  background-color: #fee2e2;
+  color: #b91c1c;
 }
 
 .action-buttons-group {

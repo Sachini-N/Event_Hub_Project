@@ -196,12 +196,22 @@ export default function AdminDashboardPage({
       const result = await response.json();
 
       if (result.success) {
-        if (showToast) showToast('Registration updated in MongoDB!', 'success');
-        setSelectedReg({
+        if (showToast) showToast('Registration status updated successfully!', 'success');
+        const updatedReg = result.data || {
           ...selectedReg,
           status: editingRegStatus,
           notes: editingRegNotes,
-        });
+        };
+
+        setSelectedReg(updatedReg);
+        setIsChangingStatus(false);
+        setIsEditingNotes(false);
+
+        // Update local registrations list state immediately
+        setRegistrations((prevRegs) =>
+          prevRegs.map((r) => (r._id === updatedReg._id ? { ...r, ...updatedReg } : r))
+        );
+
         fetchDashboardData();
       } else {
         if (showToast) showToast(result.message || 'Failed to update registration', 'error');
@@ -530,38 +540,54 @@ export default function AdminDashboardPage({
                         <th>EMAIL</th>
                         <th>CONTACT NUMBER</th>
                         <th>EVENT</th>
+                        <th>STATUS</th>
                       </tr>
                     </thead>
                     <tbody>
                       {displayedRegistrations.length === 0 ? (
                         <tr>
-                          <td colSpan="4" style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
+                          <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
                             No registration records found.
                           </td>
                         </tr>
                       ) : (
-                        displayedRegistrations.map((reg) => (
-                          <tr
-                            key={reg._id}
-                            className={`reg-row-clickable ${
-                              selectedReg?._id === reg._id ? 'selected-row' : ''
-                            }`}
-                            onClick={() => setSelectedReg(reg)}
-                          >
-                            <td>
-                              <strong className="registrant-name">{reg.name}</strong>
-                            </td>
-                            <td>
-                              <span className="registrant-email">{reg.email}</span>
-                            </td>
-                            <td>
-                              <span className="cell-contact-text">{reg.contactNumber || '+94 77 123 4567'}</span>
-                            </td>
-                            <td>
-                              <span className="cell-event-title">{reg.eventTitle || 'Tech Summit 2024'}</span>
-                            </td>
-                          </tr>
-                        ))
+                        displayedRegistrations.map((reg) => {
+                          const currentStatus = reg.status || 'Confirmed';
+                          const statusClass =
+                            currentStatus === 'Confirmed'
+                              ? 'confirmed'
+                              : currentStatus === 'Pending'
+                              ? 'pending'
+                              : 'cancelled';
+
+                          return (
+                            <tr
+                              key={reg._id}
+                              className={`reg-row-clickable ${
+                                selectedReg?._id === reg._id ? 'selected-row' : ''
+                              }`}
+                              onClick={() => setSelectedReg(reg)}
+                            >
+                              <td>
+                                <strong className="registrant-name">{reg.name}</strong>
+                              </td>
+                              <td>
+                                <span className="registrant-email">{reg.email}</span>
+                              </td>
+                              <td>
+                                <span className="cell-contact-text">{reg.contactNumber || '+94 77 123 4567'}</span>
+                              </td>
+                              <td>
+                                <span className="cell-event-title">{reg.eventTitle || 'Tech Summit 2024'}</span>
+                              </td>
+                              <td>
+                                <span className={`status-pill ${statusClass}`}>
+                                  {currentStatus}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })
                       )}
                     </tbody>
                   </table>
