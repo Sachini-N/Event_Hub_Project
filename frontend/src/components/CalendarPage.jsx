@@ -6,6 +6,7 @@ export default function CalendarPage({
   onSelectEvent,
   onOpenUpcoming,
   showToast,
+  openLoginModal,
 }) {
   // Calendar Navigation State - Default to current date
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -27,13 +28,14 @@ export default function CalendarPage({
           if (data.success && data.data) {
             const userEvts = data.data.map((reg) => ({
               _id: reg.eventId?._id || reg.eventId || reg._id,
-              title: reg.eventTitle || reg.eventId?.title || 'Registered Event',
-              date: reg.eventDate || reg.eventId?.date || new Date().toISOString(),
-              time: reg.eventId?.time || '09:00 AM - 05:00 PM',
-              location: reg.eventLocation || reg.eventId?.location || 'TRACE Expert City, Colombo',
+              title: reg.eventId?.title || reg.eventTitle || 'Registered Event',
+              date: reg.eventId?.date || reg.eventDate || new Date().toISOString(),
+              time: reg.eventId?.time || reg.eventTime || '09:00 AM - 05:00 PM',
+              location: reg.eventId?.location || reg.eventLocation || 'TRACE Expert City, Colombo',
               description: reg.eventId?.description || 'Registered TRACE Event',
               coverImage:
                 reg.eventId?.coverImage ||
+                reg.coverImage ||
                 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
               ticketId: reg.ticketId,
             }));
@@ -58,23 +60,13 @@ export default function CalendarPage({
         }
       }
 
-      // If registeredEvents prop provided (e.g. guest or passed from parent), use it; otherwise empty list
-      const list = registeredEvents && registeredEvents.length > 0 ? registeredEvents : [];
-      setEventsList(list);
-      if (list.length > 0) {
-        const firstEvt = list[0];
-        const evtDateObj = new Date(firstEvt.date);
-        setSelectedEvent(firstEvt);
-        setSelectedDate(evtDateObj);
-        setCurrentDate(new Date(evtDateObj.getFullYear(), evtDateObj.getMonth(), 1));
-      } else {
-        setSelectedEvent(null);
-        setSelectedDate(new Date());
-      }
+      setEventsList([]);
+      setSelectedEvent(null);
+      setSelectedDate(new Date());
     };
 
     fetchUserRegisteredEvents();
-  }, [currentUser, registeredEvents]);
+  }, [currentUser]);
 
   // Calendar Date Math Helpers
   const year = currentDate.getFullYear();
@@ -225,8 +217,29 @@ export default function CalendarPage({
           </p>
         </div>
 
-        {/* 2-Column Main Layout */}
-        <div className="calendar-main-grid">
+        {!currentUser ? (
+          <div
+            className="empty-state"
+            style={{
+              padding: '4rem 2rem',
+              background: '#ffffff',
+              borderRadius: '16px',
+              border: '1px solid #e2e8f0',
+              textAlign: 'center',
+              margin: '2rem auto',
+              maxWidth: '500px',
+            }}
+          >
+            <i className="fa-solid fa-lock" style={{ fontSize: '2.5rem', color: '#64748b', marginBottom: '1rem' }}></i>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.5rem' }}>Log In Required</h3>
+            <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>Please log in to view your calendar of registered events.</p>
+            <button className="btn btn-primary" onClick={openLoginModal}>
+              Log In Now
+            </button>
+          </div>
+        ) : (
+          /* 2-Column Main Layout */
+          <div className="calendar-main-grid">
           {/* LEFT COLUMN: Calendar Card & Month Grid */}
           <div className="calendar-card-panel">
             {/* Toolbar Header */}
@@ -507,6 +520,7 @@ export default function CalendarPage({
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

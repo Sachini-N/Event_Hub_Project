@@ -239,6 +239,7 @@ export default function App() {
             currentUser={currentUser}
             onViewEvent={openEventDetails}
             showToast={showToast}
+            openLoginModal={() => setShowLogin(true)}
           />
         )}
 
@@ -262,6 +263,7 @@ export default function App() {
             onSelectEvent={openEventDetails}
             onOpenUpcoming={() => setActiveTab('upcoming')}
             showToast={showToast}
+            openLoginModal={() => setShowLogin(true)}
           />
         )}
 

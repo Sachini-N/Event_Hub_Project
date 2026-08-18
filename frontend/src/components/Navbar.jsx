@@ -39,7 +39,7 @@ export default function Navbar({
           >
             Past Events
           </button>
-          {!(currentUser?.isAdmin || currentUser?.role === 'admin' || currentUser?.email === 'admin@trace.lk') && (
+          {currentUser && !(currentUser?.isAdmin || currentUser?.role === 'admin' || currentUser?.email === 'admin@trace.lk') && (
             <>
               <button
                 className={`nav-link ${activeTab === 'my-events' ? 'active' : ''}`}

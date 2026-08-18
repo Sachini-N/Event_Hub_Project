@@ -4,75 +4,58 @@ export default function MyEventsPage({
   currentUser,
   onViewEvent,
   showToast,
+  openLoginModal,
 }) {
   const [activeSubTab, setActiveSubTab] = useState('upcoming');
   const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [lookupEmail, setLookupEmail] = useState('');
-
-  // Default sample registered events matching reference screenshot
-  const defaultRegisteredEvents = [
-    {
-      _id: 'default-reg-1',
-      title: 'Future of Innovation in Sri Lanka',
-      description: 'A deep dive into emerging tech trends, startup ecosystems, and sustainable innovation in Sri Lanka.',
-      date: '2024-11-12T10:00:00Z',
-      time: '10:00 AM - 1:00 PM',
-      location: 'BMICH, Colombo',
-      coverImage: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
-      status: 'upcoming',
-      ticketId: 'TRC-NOV12-8492',
-    },
-    {
-      _id: 'default-reg-2',
-      title: 'TRACE Community Meetup',
-      description: 'Connect with fellow tech professionals, share ideas, and build your network in a relaxed atmosphere.',
-      date: '2024-11-05T17:30:00Z',
-      time: '5:30 PM',
-      location: 'TRACE Lounge',
-      coverImage: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80',
-      status: 'upcoming',
-      ticketId: 'TRC-NOV05-3921',
-    },
-  ];
 
   const fetchUserRegistrations = async (emailToFetch) => {
-    if (!emailToFetch) return;
+    if (!emailToFetch) {
+      setRegistrations([]);
+      return;
+    }
     setLoading(true);
 
     try {
-      const response = await fetch(`/api/registrations/user/${encodeURIComponent(emailToFetch)}`);
+      const response = await fetch(`/api/registrations/user/${encodeURIComponent(emailToFetch.trim())}`);
       const result = await response.json();
 
       if (result.success && result.data && result.data.length > 0) {
-        // Map backend registrations to display items
-        const mapped = result.data.map((reg) => ({
-          _id: reg._id,
-          title: reg.eventTitle || 'TRACE Event',
-          date: reg.eventDate || new Date(),
-          time: reg.eventTime || '10:00 AM',
-          location: reg.eventLocation || 'TRACE Expert City',
-          coverImage: reg.coverImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
-          status: 'upcoming',
-          ticketId: reg.ticketId,
-        }));
+        // Map backend registrations to display items using populated eventId
+        const mapped = result.data.map((reg) => {
+          const evt = reg.eventId && typeof reg.eventId === 'object' ? reg.eventId : {};
+          return {
+            _id: reg._id,
+            eventId: evt._id || reg.eventId,
+            title: evt.title || reg.eventTitle || 'TRACE Event',
+            description: evt.description || '',
+            date: evt.date || reg.eventDate || new Date(),
+            time: evt.time || reg.eventTime || '10:00 AM',
+            location: evt.location || reg.eventLocation || 'TRACE Expert City',
+            coverImage: evt.coverImage || reg.coverImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
+            status: evt.status === 'past' ? 'past' : 'upcoming',
+            ticketId: reg.ticketId,
+          };
+        });
         setRegistrations(mapped);
       } else {
-        // Fallback to default registered events for visual demonstration matching reference image
-        setRegistrations(defaultRegisteredEvents);
+        setRegistrations([]);
       }
     } catch (error) {
       console.error('Error fetching registrations:', error);
-      setRegistrations(defaultRegisteredEvents);
+      setRegistrations([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const targetEmail = currentUser?.email || 'jane@example.com';
-    setLookupEmail(targetEmail);
-    fetchUserRegistrations(targetEmail);
+    if (currentUser?.email) {
+      fetchUserRegistrations(currentUser.email);
+    } else {
+      setRegistrations([]);
+    }
   }, [currentUser]);
 
   const downloadIcs = (eventItem) => {
@@ -160,8 +143,20 @@ export default function MyEventsPage({
           </button>
         </div>
 
+        {/* Unauthenticated State */}
+        {!currentUser && (
+          <div className="empty-state" style={{ padding: '3rem 1.5rem' }}>
+            <i className="fa-solid fa-lock" style={{ fontSize: '2.5rem', color: '#64748b', marginBottom: '1rem' }}></i>
+            <h3>Log In Required</h3>
+            <p>Please log in to view and manage your registered event passes.</p>
+            <button className="btn btn-primary" style={{ marginTop: '1rem' }} onClick={openLoginModal}>
+              Log In Now
+            </button>
+          </div>
+        )}
+
         {/* Loading Spinner */}
-        {loading && (
+        {currentUser && loading && (
           <div className="loading-state">
             <div className="spinner"></div>
             <p>Loading your registered events...</p>
@@ -169,7 +164,7 @@ export default function MyEventsPage({
         )}
 
         {/* Empty State */}
-        {!loading && filteredRegistrations.length === 0 && (
+        {currentUser && !loading && filteredRegistrations.length === 0 && (
           <div className="empty-state">
             <i className="fa-solid fa-ticket-simple"></i>
             <h3>No registered events found</h3>
@@ -178,7 +173,7 @@ export default function MyEventsPage({
         )}
 
         {/* Registered Event Cards Grid (2 Columns) matching reference screenshot */}
-        {!loading && filteredRegistrations.length > 0 && (
+        {currentUser && !loading && filteredRegistrations.length > 0 && (
           <div className="my-events-grid-2col">
             {filteredRegistrations.map((item) => (
               <div className="my-event-card" key={item._id}>

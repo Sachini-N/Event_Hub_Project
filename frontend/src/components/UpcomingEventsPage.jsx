@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
 export default function UpcomingEventsPage({
   events,
@@ -11,11 +11,37 @@ export default function UpcomingEventsPage({
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('Any Location');
 
-  // Registered events tracking (mocked or from registered state)
-  const registeredEventIds = useMemo(() => {
-    // For visual match with screenshot, "TRACE Community Meetup" is marked registered
-    return ['TRACE Community Meetup'];
-  }, []);
+  // Registered events tracking for logged-in user
+  const [userRegisteredEvents, setUserRegisteredEvents] = useState(new Set());
+
+  useEffect(() => {
+    const fetchUserRegs = async () => {
+      if (!currentUser?.email) {
+        setUserRegisteredEvents(new Set());
+        return;
+      }
+      try {
+        const res = await fetch(`/api/registrations/user/${encodeURIComponent(currentUser.email.trim())}`);
+        const data = await res.json();
+        if (data.success && data.data) {
+          const registeredSet = new Set();
+          data.data.forEach((reg) => {
+            if (reg.eventId?._id) registeredSet.add(reg.eventId._id.toString());
+            if (reg.eventId && typeof reg.eventId === 'string') registeredSet.add(reg.eventId.toString());
+            if (reg.eventTitle) registeredSet.add(reg.eventTitle.trim());
+          });
+          setUserRegisteredEvents(registeredSet);
+        } else {
+          setUserRegisteredEvents(new Set());
+        }
+      } catch (err) {
+        console.error('Error fetching user registrations for upcoming events:', err);
+        setUserRegisteredEvents(new Set());
+      }
+    };
+
+    fetchUserRegs();
+  }, [currentUser]);
 
   const categories = useMemo(() => {
     const cats = new Set(['All Categories']);
@@ -209,7 +235,10 @@ export default function UpcomingEventsPage({
             {filteredUpcomingEvents.map((event) => {
               const catClass = getCategoryClass(event.category);
               const formattedDate = formatEventDate(event.date, event.time);
-              const isRegistered = registeredEventIds.includes(event.title);
+              const isRegistered = Boolean(
+                currentUser &&
+                (userRegisteredEvents.has(event._id?.toString()) || userRegisteredEvents.has(event.title?.trim()))
+              );
 
               return (
                 <div className="event-card-modern" key={event._id || event.title}>
