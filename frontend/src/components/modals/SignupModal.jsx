@@ -108,12 +108,12 @@ export default function SignupModal({
             <button type="button" className="btn btn-outline" onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" class="btn btn-blue-pill" disabled={submitting}>
+            <button type="submit" className="btn btn-blue-pill" disabled={submitting}>
               {submitting ? 'Registering...' : 'Sign Up'}
             </button>
           </div>
 
-          <p class="auth-switch-text" style={{ marginTop: '15px', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+          <p className="auth-switch-text" style={{ marginTop: '15px', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
             Already have an account?{' '}
             <a
               href="#"

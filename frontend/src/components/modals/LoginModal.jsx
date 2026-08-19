@@ -87,7 +87,7 @@ export default function LoginModal({
             </button>
           </div>
 
-          <p class="auth-switch-text" style={{ marginTop: '15px', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+          <p className="auth-switch-text" style={{ marginTop: '15px', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
             Don't have an account?{' '}
             <a
               href="#"
