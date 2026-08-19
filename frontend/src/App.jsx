@@ -282,10 +282,6 @@ export default function App() {
             showToast={showToast}
           />
         )}
-
-        {activeTab === 'past' && (
-          <PastEventsSection setActiveTab={setActiveTab} />
-        )}
       </main>
 
       {!hideHeaderFooter && <Footer />}

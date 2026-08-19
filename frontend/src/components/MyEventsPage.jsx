@@ -103,6 +103,27 @@ export default function MyEventsPage({
     }
   };
 
+  const handleCancelRegistration = async (registrationId, eventTitle) => {
+    if (!window.confirm(`Are you sure you want to cancel your pass for "${eventTitle}"?`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/registrations/${registrationId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (showToast) showToast(`Cancelled pass for "${eventTitle}"`, 'info');
+        if (currentUser?.email) fetchUserRegistrations(currentUser.email);
+      } else {
+        if (showToast) showToast(data.message || 'Failed to cancel pass', 'error');
+      }
+    } catch (err) {
+      console.error('Cancel pass error:', err);
+      if (showToast) showToast('Network error while cancelling pass', 'error');
+    }
+  };
+
   const formatDate = (dateStr) => {
     if (!dateStr) return 'Nov 12, 2024';
     const d = new Date(dateStr);
@@ -208,7 +229,7 @@ export default function MyEventsPage({
                   </div>
 
                   {/* Action Buttons Row */}
-                  <div className="my-card-actions-row">
+                  <div className="my-card-actions-row" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     <button
                       className="btn-my-view-event"
                       onClick={() => onViewEvent && onViewEvent(item)}
@@ -221,6 +242,25 @@ export default function MyEventsPage({
                     >
                       Add to Calendar
                     </button>
+                    {activeSubTab === 'upcoming' && (
+                      <button
+                        className="btn-my-cancel-pass"
+                        onClick={() => handleCancelRegistration(item._id, item.title)}
+                        style={{
+                          background: 'transparent',
+                          border: '1px solid #ef4444',
+                          color: '#ef4444',
+                          padding: '6px 12px',
+                          borderRadius: '20px',
+                          fontSize: '0.8rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        Cancel Pass
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

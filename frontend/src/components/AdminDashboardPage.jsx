@@ -38,6 +38,97 @@ export default function AdminDashboardPage({
   // Event Edit Modal State
   const [editingEvent, setEditingEvent] = useState(null);
 
+  // Speakers State
+  const [speakers, setSpeakers] = useState([
+    {
+      id: 1,
+      name: 'Dr. Aris Thorne',
+      role: 'Chief AI Architect',
+      organization: 'TRACE AI Research',
+      email: 'aris.thorne@trace.lk',
+      eventsCount: 4,
+      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80',
+      bio: 'Leading researcher in AI systems, multi-agent frameworks, and scalable machine learning infrastructure.',
+    },
+    {
+      id: 2,
+      name: 'Elena Rostova',
+      role: 'Cloud & DevOps Lead',
+      organization: 'CloudScale Asia',
+      email: 'elena.r@cloudscale.io',
+      eventsCount: 3,
+      avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=300&q=80',
+      bio: 'Specialist in cloud-native microservices, Kubernetes orchestration, and high-availability enterprise clusters.',
+    },
+    {
+      id: 3,
+      name: 'Kavinda Perera',
+      role: 'Ecosystem Partner',
+      organization: 'TRACE Sri Lanka',
+      email: 'kavinda.p@trace.lk',
+      eventsCount: 6,
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+      bio: 'Fostering tech ecosystem growth, venture incubation, and industry-university collaborative innovation.',
+    },
+    {
+      id: 4,
+      name: 'Amaya Silva',
+      role: 'Lead Tech Strategist',
+      organization: 'Innovation Hub',
+      email: 'amaya.s@innovate.lk',
+      eventsCount: 2,
+      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80',
+      bio: 'Guiding digital transformation strategies for tech startups and enterprise innovation leaders in Sri Lanka.',
+    },
+  ]);
+
+  // Venues State
+  const [venues, setVenues] = useState([
+    {
+      id: 1,
+      name: 'TRACE Main Auditorium',
+      city: 'Colombo 10, Sri Lanka',
+      address: 'Bay 5, TRACE Expert City, Maradana Rd',
+      capacity: 250,
+      status: 'Available',
+      coverImage: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80',
+      amenities: ['4K Projectors', 'High-Speed WiFi', 'Live Streaming AV', 'Air Conditioned', 'Stage Lighting'],
+    },
+    {
+      id: 2,
+      name: 'Innovation Center Tech Lab',
+      city: 'Colombo 10, Sri Lanka',
+      address: 'Building B, TRACE Expert City',
+      capacity: 120,
+      status: 'Available',
+      coverImage: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80',
+      amenities: ['Interactive Whiteboards', 'Power Outlets at Desk', 'Dual Monitors', 'Catering Station'],
+    },
+    {
+      id: 3,
+      name: 'TRACE Hub Meeting Hall 4',
+      city: 'Colombo 10, Sri Lanka',
+      address: 'Bay 2, TRACE Expert City',
+      capacity: 60,
+      status: 'Reserved',
+      coverImage: 'https://images.unsplash.com/photo-1431540015161-0bf868a2d407?auto=format&fit=crop&w=800&q=80',
+      amenities: ['Conference Cam', 'Surround Audio', 'Whiteboard Wall'],
+    },
+  ]);
+
+  // Settings State
+  const [settingsForm, setSettingsForm] = useState({
+    orgName: 'TRACE Sri Lanka',
+    contactEmail: 'support@trace.lk',
+    contactPhone: '+94 11 234 5678',
+    timezone: 'Asia/Colombo (GMT+5:30)',
+    currency: 'LKR (Rs.)',
+    emailConfirmations: true,
+    smsReminders: true,
+    adminDigest: true,
+    requireDeleteConfirm: true,
+  });
+
   const isAdmin = currentUser && currentUser.role === 'admin';
 
   // Fetch Dashboard Data from Backend APIs
@@ -221,6 +312,37 @@ export default function AdminDashboardPage({
       if (showToast) showToast('Network error updating registration', 'error');
     } finally {
       setSavingReg(false);
+    }
+  };
+
+  // Direct Inline Status Change Handler for Registration Tables
+  const handleDirectStatusChange = async (regId, newStatus) => {
+    try {
+      const response = await fetch(`/api/registrations/${regId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        if (showToast) showToast(`Registration status updated to "${newStatus}"!`, 'success');
+
+        setRegistrations((prevRegs) =>
+          prevRegs.map((r) => (r._id === regId ? { ...r, status: newStatus } : r))
+        );
+
+        if (selectedReg && selectedReg._id === regId) {
+          setSelectedReg((prev) => ({ ...prev, status: newStatus }));
+          setEditingRegStatus(newStatus);
+        }
+      } else {
+        if (showToast) showToast(result.message || 'Failed to update status', 'error');
+      }
+    } catch (err) {
+      console.error('Error changing registration status:', err);
+      if (showToast) showToast('Network error updating registration status', 'error');
     }
   };
 
@@ -580,10 +702,27 @@ export default function AdminDashboardPage({
                               <td>
                                 <span className="cell-event-title">{reg.eventTitle || 'Tech Summit 2024'}</span>
                               </td>
-                              <td>
-                                <span className={`status-pill ${statusClass}`}>
-                                  {currentStatus}
-                                </span>
+                              <td onClick={(e) => e.stopPropagation()}>
+                                <select
+                                  className={`status-pill-select ${statusClass}`}
+                                  value={currentStatus}
+                                  onChange={(e) => handleDirectStatusChange(reg._id, e.target.value)}
+                                  style={{
+                                    padding: '4px 12px',
+                                    borderRadius: '9999px',
+                                    fontSize: '0.82rem',
+                                    fontWeight: '700',
+                                    border: '1px solid transparent',
+                                    cursor: 'pointer',
+                                    outline: 'none',
+                                    backgroundColor: currentStatus === 'Confirmed' ? '#dcfce7' : currentStatus === 'Pending' ? '#fef3c7' : '#fee2e2',
+                                    color: currentStatus === 'Confirmed' ? '#15803d' : currentStatus === 'Pending' ? '#b45309' : '#b91c1c'
+                                  }}
+                                >
+                                  <option value="Confirmed" style={{ background: '#fff', color: '#0f172a' }}>Confirmed</option>
+                                  <option value="Pending" style={{ background: '#fff', color: '#0f172a' }}>Pending</option>
+                                  <option value="Cancelled" style={{ background: '#fff', color: '#0f172a' }}>Cancelled</option>
+                                </select>
                               </td>
                             </tr>
                           );
@@ -606,6 +745,291 @@ export default function AdminDashboardPage({
                     <button className="page-nav-btn">Next</button>
                   </div>
                 </div>
+              </div>
+            </div>
+          ) : activeMenu === 'speakers' ? (
+            /* VIEW: SPEAKERS DIRECTORY VIEW */
+            <div className="manage-speakers-container">
+              <div className="admin-dashboard-title-row">
+                <div>
+                  <h1 className="admin-page-title">Speakers Directory</h1>
+                  <p style={{ fontSize: '0.95rem', color: '#64748b', marginTop: '0.2rem' }}>
+                    Manage event speakers, keynote presenters, and bio profiles.
+                  </p>
+                </div>
+                <button
+                  className="btn-create-event-blue"
+                  onClick={() => {
+                    const name = prompt('Enter Speaker Name:');
+                    if (name) {
+                      const newSpk = {
+                        id: Date.now(),
+                        name,
+                        role: 'Keynote Speaker',
+                        organization: 'TRACE Tech Network',
+                        email: `${name.toLowerCase().replace(/\s+/g, '.')}@trace.lk`,
+                        eventsCount: 1,
+                        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0052cc&color=fff&size=100`,
+                        bio: 'Featured speaker on technology innovation and enterprise software development.',
+                      };
+                      setSpeakers([newSpk, ...speakers]);
+                      if (showToast) showToast(`Added speaker "${name}" successfully!`, 'success');
+                    }
+                  }}
+                >
+                  <i className="fa-solid fa-plus"></i> Add New Speaker
+                </button>
+              </div>
+
+              {/* Speakers Cards Grid */}
+              <div className="speakers-grid-3col">
+                {speakers.map((spk) => (
+                  <div key={spk.id} className="speaker-card">
+                    <div>
+                      <div className="speaker-card-header">
+                        <img src={spk.avatar} alt={spk.name} className="speaker-avatar-img" />
+                        <div>
+                          <h3 className="speaker-info-title">{spk.name}</h3>
+                          <div className="speaker-info-role">{spk.role}</div>
+                          <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{spk.organization}</div>
+                        </div>
+                      </div>
+                      <p className="speaker-bio-text">{spk.bio}</p>
+                    </div>
+
+                    <div className="speaker-card-footer">
+                      <span><i className="fa-regular fa-calendar-check"></i> {spk.eventsCount} Events</span>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                          className="icon-btn-action"
+                          title="Email Speaker"
+                          onClick={() => copyToClipboard(spk.email)}
+                        >
+                          <i className="fa-regular fa-envelope"></i>
+                        </button>
+                        <button
+                          className="icon-btn-action danger"
+                          title="Remove Speaker"
+                          onClick={() => {
+                            if (window.confirm(`Remove ${spk.name} from directory?`)) {
+                              setSpeakers(speakers.filter((s) => s.id !== spk.id));
+                              if (showToast) showToast(`Removed ${spk.name}`, 'info');
+                            }
+                          }}
+                        >
+                          <i className="fa-regular fa-trash-can"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : activeMenu === 'venues' ? (
+            /* VIEW: VENUES MANAGEMENT VIEW */
+            <div className="manage-venues-container">
+              <div className="admin-dashboard-title-row">
+                <div>
+                  <h1 className="admin-page-title">Venues & Facilities</h1>
+                  <p style={{ fontSize: '0.95rem', color: '#64748b', marginTop: '0.2rem' }}>
+                    Manage event spaces, seating capacity, and hall reservations.
+                  </p>
+                </div>
+                <button
+                  className="btn-create-event-blue"
+                  onClick={() => {
+                    const name = prompt('Enter Venue Name:');
+                    if (name) {
+                      const newVenue = {
+                        id: Date.now(),
+                        name,
+                        city: 'Colombo 10, Sri Lanka',
+                        address: 'TRACE Expert City, Maradana Rd',
+                        capacity: 150,
+                        status: 'Available',
+                        coverImage: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80',
+                        amenities: ['WiFi', '4K Projector', 'AC', 'Surround Sound'],
+                      };
+                      setVenues([newVenue, ...venues]);
+                      if (showToast) showToast(`Added venue "${name}" successfully!`, 'success');
+                    }
+                  }}
+                >
+                  <i className="fa-solid fa-plus"></i> Add New Venue
+                </button>
+              </div>
+
+              {/* Venues Grid */}
+              <div className="venues-grid-2col">
+                {venues.map((v) => (
+                  <div key={v.id} className="venue-card">
+                    <img src={v.coverImage} alt={v.name} className="venue-card-banner" />
+                    <div className="venue-card-body">
+                      <span className={`venue-tag-badge ${v.status === 'Available' ? 'venue-tag-available' : 'venue-tag-reserved'}`}>
+                        ● {v.status}
+                      </span>
+                      <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', marginBottom: '0.2rem' }}>
+                        {v.name}
+                      </h3>
+                      <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.75rem' }}>
+                        <i className="fa-solid fa-location-dot" style={{ color: '#0052cc' }}></i> {v.address}
+                      </p>
+
+                      <div style={{ fontSize: '0.88rem', fontWeight: '600', color: '#334155', marginBottom: '0.5rem' }}>
+                        <i className="fa-solid fa-users"></i> Seating Capacity: <strong>{v.capacity} Seats</strong>
+                      </div>
+
+                      <div className="venue-amenities-tags">
+                        {v.amenities.map((am, i) => (
+                          <span key={i} className="amenity-chip">✓ {am}</span>
+                        ))}
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
+                        <button
+                          className="btn-my-view-event"
+                          style={{ fontSize: '0.8rem', padding: '6px 14px' }}
+                          onClick={() => showToast && showToast(`Booking schedule checked for "${v.name}"`, 'info')}
+                        >
+                          Check Schedule
+                        </button>
+                        <button
+                          className="icon-btn-action danger"
+                          onClick={() => {
+                            if (window.confirm(`Delete venue "${v.name}"?`)) {
+                              setVenues(venues.filter((item) => item.id !== v.id));
+                              if (showToast) showToast(`Deleted venue "${v.name}"`, 'info');
+                            }
+                          }}
+                        >
+                          <i className="fa-regular fa-trash-can"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : activeMenu === 'settings' ? (
+            /* VIEW: SETTINGS VIEW */
+            <div className="manage-settings-container">
+              <div className="admin-dashboard-title-row">
+                <div>
+                  <h1 className="admin-page-title">Platform Settings</h1>
+                  <p style={{ fontSize: '0.95rem', color: '#64748b', marginTop: '0.2rem' }}>
+                    Configure enterprise platform details, notifications, and security preferences.
+                  </p>
+                </div>
+                <button
+                  className="btn-create-event-blue"
+                  onClick={() => {
+                    if (showToast) showToast('Platform settings saved successfully!', 'success');
+                  }}
+                >
+                  <i className="fa-regular fa-floppy-disk"></i> Save Settings
+                </button>
+              </div>
+
+              <div className="settings-container-box">
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '1.25rem', color: '#0f172a' }}>
+                  Organization Profile
+                </h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
+                  <div className="form-group">
+                    <label>Organization Name</label>
+                    <input
+                      type="text"
+                      value={settingsForm.orgName}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, orgName: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Support Contact Email</label>
+                    <input
+                      type="email"
+                      value={settingsForm.contactEmail}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, contactEmail: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Support Contact Phone</label>
+                    <input
+                      type="tel"
+                      value={settingsForm.contactPhone}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, contactPhone: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Default Timezone</label>
+                    <input
+                      type="text"
+                      value={settingsForm.timezone}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, timezone: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <hr style={{ borderColor: 'var(--border-light)', margin: '1.5rem 0' }} />
+
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '1rem', color: '#0f172a' }}>
+                  Notifications & Automated Emails
+                </h3>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.92rem', color: '#334155' }}>
+                    <input
+                      type="checkbox"
+                      checked={settingsForm.emailConfirmations}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, emailConfirmations: e.target.checked })}
+                      style={{ width: '18px', height: '18px', accentColor: '#0052cc' }}
+                    />
+                    Send automatic email confirmation with QR pass upon user registration.
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.92rem', color: '#334155' }}>
+                    <input
+                      type="checkbox"
+                      checked={settingsForm.smsReminders}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, smsReminders: e.target.checked })}
+                      style={{ width: '18px', height: '18px', accentColor: '#0052cc' }}
+                    />
+                    Send automated event reminder 24 hours prior to event start.
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.92rem', color: '#334155' }}>
+                    <input
+                      type="checkbox"
+                      checked={settingsForm.adminDigest}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, adminDigest: e.target.checked })}
+                      style={{ width: '18px', height: '18px', accentColor: '#0052cc' }}
+                    />
+                    Daily registration digest summary sent to administrator inbox.
+                  </label>
+                </div>
+
+                <hr style={{ borderColor: 'var(--border-light)', margin: '1.5rem 0' }} />
+
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '1rem', color: '#0f172a' }}>
+                  Security & Access Control
+                </h3>
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.92rem', color: '#334155', marginBottom: '1.5rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={settingsForm.requireDeleteConfirm}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, requireDeleteConfirm: e.target.checked })}
+                    style={{ width: '18px', height: '18px', accentColor: '#0052cc' }}
+                  />
+                  Require explicit admin confirmation dialog for deleting events or user registrations.
+                </label>
+
+                <button
+                  className="btn-save-changes-blue"
+                  onClick={() => {
+                    if (showToast) showToast('Platform settings saved successfully!', 'success');
+                  }}
+                >
+                  Save Platform Configuration
+                </button>
               </div>
             </div>
           ) : isEventsView ? (
@@ -1077,14 +1501,27 @@ export default function AdminDashboardPage({
                                 : 'Today, 08:30 AM'}
                             </span>
                           </td>
-                          <td>
-                            <span
-                              className={`status-pill ${
-                                reg.status === 'Pending' ? 'pending' : 'active'
-                              }`}
+                          <td onClick={(e) => e.stopPropagation()}>
+                            <select
+                              className="status-pill-select"
+                              value={reg.status || 'Confirmed'}
+                              onChange={(e) => handleDirectStatusChange(reg._id, e.target.value)}
+                              style={{
+                                padding: '4px 12px',
+                                borderRadius: '9999px',
+                                fontSize: '0.82rem',
+                                fontWeight: '700',
+                                border: '1px solid transparent',
+                                cursor: 'pointer',
+                                outline: 'none',
+                                backgroundColor: (reg.status || 'Confirmed') === 'Confirmed' ? '#dcfce7' : (reg.status || 'Confirmed') === 'Pending' ? '#fef3c7' : '#fee2e2',
+                                color: (reg.status || 'Confirmed') === 'Confirmed' ? '#15803d' : (reg.status || 'Confirmed') === 'Pending' ? '#b45309' : '#b91c1c'
+                              }}
                             >
-                              {reg.status || 'Confirmed'}
-                            </span>
+                              <option value="Confirmed" style={{ background: '#fff', color: '#0f172a' }}>Confirmed</option>
+                              <option value="Pending" style={{ background: '#fff', color: '#0f172a' }}>Pending</option>
+                              <option value="Cancelled" style={{ background: '#fff', color: '#0f172a' }}>Cancelled</option>
+                            </select>
                           </td>
                         </tr>
                       ))}
