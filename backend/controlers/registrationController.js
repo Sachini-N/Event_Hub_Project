@@ -116,71 +116,7 @@ const getAllRegistrations = async (req, res) => {
   }
 };
 
-// Seed initial registrations if database is empty
-const seedInitialRegistrations = async () => {
-  try {
-    const count = await Registration.countDocuments();
-    if (count === 0) {
-      const sampleEvents = await Event.find({});
-      if (sampleEvents.length > 0) {
-        const sampleRegs = [
-          {
-            eventId: sampleEvents[0]._id,
-            eventTitle: sampleEvents[0].title,
-            eventDate: sampleEvents[0].date,
-            eventLocation: sampleEvents[0].location,
-            name: "Sarah Jenkins",
-            email: "sarah.j@example.com",
-            contactNumber: "+94 77 123 4567",
-            ticketId: "EVT-SRH921",
-            status: "Confirmed",
-            createdAt: new Date(),
-          },
-          {
-            eventId: sampleEvents[1] ? sampleEvents[1]._id : sampleEvents[0]._id,
-            eventTitle: sampleEvents[1] ? sampleEvents[1].title : sampleEvents[0].title,
-            eventDate: sampleEvents[1] ? sampleEvents[1].date : sampleEvents[0].date,
-            eventLocation: sampleEvents[1] ? sampleEvents[1].location : sampleEvents[0].location,
-            name: "Michael Chen",
-            email: "m.chen@designstudio.co",
-            contactNumber: "+94 71 987 6543",
-            ticketId: "EVT-MCH341",
-            status: "Confirmed",
-            createdAt: new Date(Date.now() - 3600000 * 4),
-          },
-          {
-            eventId: sampleEvents[2] ? sampleEvents[2]._id : sampleEvents[0]._id,
-            eventTitle: sampleEvents[2] ? sampleEvents[2].title : sampleEvents[0].title,
-            eventDate: sampleEvents[2] ? sampleEvents[2].date : sampleEvents[0].date,
-            eventLocation: sampleEvents[2] ? sampleEvents[2].location : sampleEvents[0].location,
-            name: "Emily Rodriguez",
-            email: "emily.r@corpnet.org",
-            contactNumber: "+94 76 555 4321",
-            ticketId: "EVT-EMR812",
-            status: "Pending",
-            createdAt: new Date(Date.now() - 3600000 * 24),
-          },
-          {
-            eventId: sampleEvents[0]._id,
-            eventTitle: sampleEvents[0].title,
-            eventDate: sampleEvents[0].date,
-            eventLocation: sampleEvents[0].location,
-            name: "David Kim",
-            email: "dkim88@startup.io",
-            contactNumber: "+94 70 444 3322",
-            ticketId: "EVT-DVK009",
-            status: "Confirmed",
-            createdAt: new Date(Date.now() - 3600000 * 48),
-          },
-        ];
-        await Registration.insertMany(sampleRegs);
-        console.log("Sample registrations seeded successfully!");
-      }
-    }
-  } catch (err) {
-    console.error("Error seeding registrations:", err);
-  }
-};
+
 
 // PUT /api/registrations/:id (Update status / notes)
 const updateRegistration = async (req, res) => {
@@ -208,5 +144,4 @@ module.exports = {
   getEventRegistrations,
   getAllRegistrations,
   updateRegistration,
-  seedInitialRegistrations,
 };

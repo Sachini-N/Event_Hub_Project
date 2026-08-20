@@ -11,7 +11,6 @@ const venueRoutes = require("./route/venueRoutes");
 const venueBookingRoutes = require("./route/venueBookingRoutes");
 const { seedInitialEvents } = require("./controlers/eventController");
 const { seedAdminUser } = require("./controlers/authController");
-const { seedInitialRegistrations } = require("./controlers/registrationController");
 const { seedInitialVenues } = require("./controlers/venueController");
 const { seedInitialVenueBookings } = require("./controlers/venueBookingController");
 
@@ -77,7 +76,6 @@ mongoose
     console.log("Connected to MongoDB successfully!");
     await seedInitialEvents();
     await seedAdminUser();
-    await seedInitialRegistrations();
     await seedInitialVenues();
     await seedInitialVenueBookings();
   })
