@@ -131,6 +131,10 @@ export default function AdminDashboardPage({
   });
 
   const [showAddVenueModal, setShowAddVenueModal] = useState(false);
+  const [venueBookings, setVenueBookings] = useState([]);
+  const [inquirySearchQuery, setInquirySearchQuery] = useState('');
+  const [inquiryBranchFilter, setInquiryBranchFilter] = useState('all');
+  const [inquiryStatusFilter, setInquiryStatusFilter] = useState('all');
 
   const isAdmin = currentUser && currentUser.role === 'admin';
 
@@ -157,6 +161,13 @@ export default function AdminDashboardPage({
       const venuesData = await venuesRes.json();
       if (venuesData.success && venuesData.data && venuesData.data.length > 0) {
         setVenues(venuesData.data);
+      }
+
+      // 4. Fetch Venue Booking Inquiries
+      const bookingsRes = await fetch('/api/venue-bookings');
+      const bookingsData = await bookingsRes.json();
+      if (bookingsData.success) {
+        setVenueBookings(bookingsData.data || []);
       }
     } catch (err) {
       console.error('Error loading admin dashboard data:', err);
@@ -476,6 +487,31 @@ export default function AdminDashboardPage({
     }
     return true;
   });
+
+  // Filter Venue Inquiries logic for Manage Venue Inquiries Page
+  const displayedVenueBookings = venueBookings.filter((bk) => {
+    if (inquiryStatusFilter !== 'all' && (bk.status || 'Pending') !== inquiryStatusFilter) return false;
+    if (inquiryBranchFilter !== 'all' && bk.branch !== inquiryBranchFilter) return false;
+
+    if (inquirySearchQuery) {
+      const q = inquirySearchQuery.toLowerCase();
+      return (
+        (bk.bookingRef && bk.bookingRef.toLowerCase().includes(q)) ||
+        (bk.name && bk.name.toLowerCase().includes(q)) ||
+        (bk.email && bk.email.toLowerCase().includes(q)) ||
+        (bk.phone && bk.phone.toLowerCase().includes(q)) ||
+        (bk.venueName && bk.venueName.toLowerCase().includes(q)) ||
+        (bk.eventTitle && bk.eventTitle.toLowerCase().includes(q)) ||
+        (bk.branch && bk.branch.toLowerCase().includes(q))
+      );
+    }
+    return true;
+  });
+
+  const pendingInquiriesCount = venueBookings.filter((b) => (b.status || 'Pending') === 'Pending').length;
+  const contactedInquiriesCount = venueBookings.filter((b) => b.status === 'Contacted').length;
+  const confirmedInquiriesCount = venueBookings.filter((b) => b.status === 'Confirmed').length;
+  const cancelledInquiriesCount = venueBookings.filter((b) => b.status === 'Cancelled').length;
 
   const isEventsView = activeMenu === 'events' || activeMenu === 'upcoming' || activeMenu === 'past';
 
@@ -855,53 +891,553 @@ export default function AdminDashboardPage({
 
               {/* Venues Grid */}
               <div className="venues-grid-2col">
-                {venues.map((v) => (
-                  <div key={v.id} className="venue-card">
-                    <img src={v.coverImage} alt={v.name} className="venue-card-banner" />
-                    <div className="venue-card-body">
-                      <span className={`venue-tag-badge ${v.status === 'Available' ? 'venue-tag-available' : 'venue-tag-reserved'}`}>
-                        ● {v.status}
-                      </span>
-                      <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', marginBottom: '0.2rem' }}>
-                        {v.name}
-                      </h3>
-                      <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.75rem' }}>
-                        <i className="fa-solid fa-location-dot" style={{ color: '#0052cc' }}></i> {v.address}
-                      </p>
+                {venues.map((v) => {
+                  const venueId = v._id || v.id;
+                  return (
+                    <div key={venueId || Math.random()} className="venue-card">
+                      <img src={v.coverImage} alt={v.name} className="venue-card-banner" />
+                      <div className="venue-card-body">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                          <span className={`venue-tag-badge ${v.status === 'Available' ? 'venue-tag-available' : 'venue-tag-reserved'}`}>
+                            ● {v.status || 'Available'}
+                          </span>
+                          {v.branch && (
+                            <span style={{ fontSize: '0.78rem', fontWeight: '700', color: '#0052cc', background: '#eff6ff', padding: '2px 8px', borderRadius: '4px' }}>
+                              {v.branch}
+                            </span>
+                          )}
+                        </div>
+                        <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', marginBottom: '0.2rem' }}>
+                          {v.name}
+                        </h3>
+                        <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.75rem' }}>
+                          <i className="fa-solid fa-location-dot" style={{ color: '#0052cc' }}></i> {v.address}
+                        </p>
 
-                      <div style={{ fontSize: '0.88rem', fontWeight: '600', color: '#334155', marginBottom: '0.5rem' }}>
-                        <i className="fa-solid fa-users"></i> Seating Capacity: <strong>{v.capacity} Seats</strong>
-                      </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.88rem', fontWeight: '600', color: '#334155', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                          <span><i className="fa-solid fa-users" style={{ color: '#0052cc' }}></i> Seating Capacity: <strong>{v.capacity} Seats</strong></span>
+                          <span style={{ color: '#059669', fontWeight: '700' }}><i className="fa-solid fa-tag"></i> {v.rentalPrice || (v.pricePerHour ? `Rs. ${v.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr')}</span>
+                        </div>
 
-                      <div className="venue-amenities-tags">
-                        {v.amenities.map((am, i) => (
-                          <span key={i} className="amenity-chip">✓ {am}</span>
-                        ))}
-                      </div>
+                        <div className="venue-amenities-tags">
+                          {v.amenities && v.amenities.map((am, i) => (
+                            <span key={i} className="amenity-chip">✓ {am}</span>
+                          ))}
+                        </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
-                        <button
-                          className="btn-my-view-event"
-                          style={{ fontSize: '0.8rem', padding: '6px 14px' }}
-                          onClick={() => showToast && showToast(`Booking schedule checked for "${v.name}"`, 'info')}
-                        >
-                          Check Schedule
-                        </button>
-                        <button
-                          className="icon-btn-action danger"
-                          onClick={() => {
-                            if (window.confirm(`Delete venue "${v.name}"?`)) {
-                              setVenues(venues.filter((item) => item.id !== v.id));
-                              if (showToast) showToast(`Deleted venue "${v.name}"`, 'info');
-                            }
-                          }}
-                        >
-                          <i className="fa-regular fa-trash-can"></i>
-                        </button>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
+                          <button
+                            className="btn-my-view-event"
+                            style={{ fontSize: '0.8rem', padding: '6px 14px' }}
+                            onClick={() => showToast && showToast(`Booking schedule checked for "${v.name}"`, 'info')}
+                          >
+                            Check Schedule
+                          </button>
+                          <button
+                            className="icon-btn-action danger"
+                            onClick={async () => {
+                              if (!venueId) return;
+                              if (window.confirm(`Are you sure you want to delete venue "${v.name}"?`)) {
+                                try {
+                                  const res = await fetch(`/api/venues/${venueId}`, { method: 'DELETE' });
+                                  const data = await res.json();
+                                  if (data.success) {
+                                    setVenues((prev) => prev.filter((item) => (item._id || item.id) !== venueId));
+                                    if (showToast) showToast(`Deleted venue "${v.name}" successfully!`, 'success');
+                                  } else {
+                                    setVenues((prev) => prev.filter((item) => (item._id || item.id) !== venueId));
+                                    if (showToast) showToast(data.message || `Deleted venue "${v.name}"`, 'info');
+                                  }
+                                } catch (err) {
+                                  console.error('Error deleting venue:', err);
+                                  setVenues((prev) => prev.filter((item) => (item._id || item.id) !== venueId));
+                                  if (showToast) showToast(`Deleted venue "${v.name}"`, 'info');
+                                }
+                              }
+                            }}
+                          >
+                            <i className="fa-regular fa-trash-can"></i>
+                          </button>
+                        </div>
                       </div>
                     </div>
+                  );
+                })}
+              </div>
+
+              {/* Received Venue Space Inquiries Section */}
+              <div className="admin-card-panel" style={{ marginTop: '2.5rem', padding: '1.5rem 1.75rem', borderRadius: '16px', border: '1px solid #e2e8f0', background: '#ffffff' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <i className="fa-solid fa-calendar-check" style={{ color: '#0052cc' }}></i>
+                      Received Space Booking Inquiries
+                    </h2>
+                    <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0.2rem 0 0' }}>
+                      Review and manage incoming space reservation inquiries from users across TRACE branches.
+                    </p>
                   </div>
-                ))}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ background: '#eff6ff', color: '#0052cc', border: '1px solid #dbeafe', fontWeight: '700', fontSize: '0.8rem', padding: '0.35rem 0.85rem', borderRadius: '20px' }}>
+                      {venueBookings.length} Requests
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline"
+                      style={{ fontSize: '0.82rem', fontWeight: '700', padding: '0.45rem 0.95rem', borderRadius: '8px', color: '#0052cc', borderColor: '#bfdbfe', background: '#eff6ff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                      onClick={() => setActiveMenu('venue-inquiries')}
+                    >
+                      <i className="fa-solid fa-list-check"></i>
+                      See All Inquiries ({venueBookings.length}) <i className="fa-solid fa-arrow-right" style={{ fontSize: '0.75rem' }}></i>
+                    </button>
+                  </div>
+                </div>
+
+                {venueBookings.length === 0 ? (
+                  <div className="empty-state" style={{ padding: '2.5rem', background: '#f8fafc', borderRadius: '12px', textAlign: 'center' }}>
+                    <i className="fa-solid fa-inbox" style={{ fontSize: '2rem', color: '#94a3b8', marginBottom: '0.5rem' }}></i>
+                    <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#334155' }}>No Venue Booking Inquiries Yet</h3>
+                    <p style={{ color: '#64748b', fontSize: '0.85rem', margin: 0 }}>Submitted user space reservation inquiries will appear here.</p>
+                  </div>
+                ) : (
+                  <div className="table-responsive-wrapper" style={{ overflowX: 'auto' }}>
+                    <table className="admin-data-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                      <thead>
+                        <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                          <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>REF</th>
+                          <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>APPLICANT</th>
+                          <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>VENUE & BRANCH</th>
+                          <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>EVENT PURPOSE</th>
+                          <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>DURATION</th>
+                          <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>DATE & GUESTS</th>
+                          <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>STATUS</th>
+                          <th style={{ padding: '10px 14px', textAlign: 'center', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>ACTIONS</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {venueBookings.map((bk) => (
+                          <tr key={bk._id || bk.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <td style={{ padding: '12px 14px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                              <span style={{ color: '#0052cc', background: '#eff6ff', padding: '3px 8px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '700', fontFamily: 'monospace' }}>
+                                {bk.bookingRef}
+                              </span>
+                            </td>
+                            <td style={{ padding: '12px 14px', verticalAlign: 'middle' }}>
+                              <div style={{ fontWeight: '600', color: '#0f172a', fontSize: '0.86rem' }}>{bk.name}</div>
+                              <div style={{ fontSize: '0.76rem', color: '#64748b', lineHeight: 1.35 }}>{bk.email}</div>
+                              <div style={{ fontSize: '0.76rem', color: '#64748b', lineHeight: 1.35 }}>{bk.phone}</div>
+                            </td>
+                            <td style={{ padding: '12px 14px', verticalAlign: 'middle' }}>
+                              <div style={{ fontWeight: '600', color: '#0f172a', fontSize: '0.86rem' }}>{bk.venueName}</div>
+                              <span style={{ fontSize: '0.72rem', fontWeight: '600', color: '#0284c7', background: '#f0f9ff', border: '1px solid #bae6fd', padding: '2px 7px', borderRadius: '4px', display: 'inline-block', marginTop: '3px' }}>
+                                {bk.branch}
+                              </span>
+                            </td>
+                            <td style={{ padding: '12px 14px', verticalAlign: 'middle', maxWidth: '220px' }}>
+                              <div style={{ fontWeight: '600', color: '#334155', fontSize: '0.86rem' }}>{bk.eventTitle}</div>
+                              {bk.notes && (
+                                <div style={{ fontSize: '0.76rem', color: '#64748b', fontStyle: 'italic', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={bk.notes}>
+                                  "{bk.notes}"
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ padding: '12px 14px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                              <span style={{ fontWeight: '700', color: '#0052cc', background: '#eff6ff', border: '1px solid #dbeafe', padding: '3px 8px', borderRadius: '6px', fontSize: '0.8rem' }}>
+                                <i className="fa-regular fa-clock" style={{ marginRight: '4px' }}></i>
+                                {bk.durationHours || 4} Hours
+                              </span>
+                            </td>
+                            <td style={{ padding: '12px 14px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                              <div style={{ fontWeight: '600', color: '#0f172a', fontSize: '0.85rem' }}>{bk.eventDate}</div>
+                              <div style={{ fontSize: '0.76rem', color: '#64748b' }}>
+                                {bk.guests} Guests • <span style={{ color: '#059669', fontWeight: '600' }}>{bk.price || 'Rs. 25,000 / hr'}</span>
+                              </div>
+                            </td>
+                            <td style={{ padding: '12px 14px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                              <select
+                                className="status-dropdown-select"
+                                value={bk.status || 'Pending'}
+                                onChange={async (e) => {
+                                  const newStatus = e.target.value;
+                                  try {
+                                    const res = await fetch(`/api/venue-bookings/${bk._id}`, {
+                                      method: 'PUT',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ status: newStatus }),
+                                    });
+                                    const data = await res.json();
+                                    if (data.success) {
+                                      setVenueBookings((prev) =>
+                                        prev.map((b) => (b._id === bk._id ? { ...b, status: newStatus } : b))
+                                      );
+                                      if (showToast) showToast(`Booking ${bk.bookingRef} status updated to ${newStatus}`, 'success');
+                                    }
+                                  } catch (err) {
+                                    console.error('Error updating booking status:', err);
+                                  }
+                                }}
+                                style={{
+                                  padding: '5px 12px 5px 8px',
+                                  borderRadius: '8px',
+                                  fontSize: '0.78rem',
+                                  fontWeight: '700',
+                                  minWidth: '120px',
+                                  border: '1px solid #cbd5e1',
+                                  cursor: 'pointer',
+                                  outline: 'none',
+                                  backgroundColor: bk.status === 'Confirmed' ? '#dcfce7' : bk.status === 'Cancelled' ? '#fee2e2' : bk.status === 'Contacted' ? '#e0f2fe' : '#fef3c7',
+                                  color: bk.status === 'Confirmed' ? '#15803d' : bk.status === 'Cancelled' ? '#b91c1c' : bk.status === 'Contacted' ? '#0369a1' : '#b45309',
+                                }}
+                              >
+                                <option value="Pending">Pending</option>
+                                <option value="Contacted">Contacted</option>
+                                <option value="Confirmed">Confirmed</option>
+                                <option value="Cancelled">Cancelled</option>
+                              </select>
+                            </td>
+                            <td style={{ padding: '12px 14px', verticalAlign: 'middle', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                              <button
+                                className="icon-btn-action danger"
+                                title="Delete Booking Inquiry"
+                                onClick={async () => {
+                                  if (window.confirm(`Delete booking request ${bk.bookingRef}?`)) {
+                                    try {
+                                      const res = await fetch(`/api/venue-bookings/${bk._id}`, { method: 'DELETE' });
+                                      const data = await res.json();
+                                      if (data.success) {
+                                        setVenueBookings((prev) => prev.filter((b) => b._id !== bk._id));
+                                        if (showToast) showToast(`Deleted inquiry ${bk.bookingRef}`, 'info');
+                                      }
+                                    } catch (err) {
+                                      console.error('Error deleting venue booking:', err);
+                                    }
+                                  }
+                                }}
+                              >
+                                <i className="fa-regular fa-trash-can"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : activeMenu === 'venue-inquiries' ? (
+            /* VIEW: DEDICATED VENUE INQUIRIES MANAGEMENT VIEW */
+            <div className="manage-venues-container">
+              <div className="admin-dashboard-title-row" style={{ marginBottom: '1.5rem' }}>
+                <div>
+                  <h1 className="admin-page-title" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <i className="fa-solid fa-clipboard-list" style={{ color: '#0052cc' }}></i>
+                    Venue Space Inquiries & Reservations
+                  </h1>
+                  <p style={{ fontSize: '0.95rem', color: '#64748b', marginTop: '0.2rem' }}>
+                    Inspect, search, and filter all incoming space booking inquiries across TRACE Sri Lanka branches.
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: '0.6rem' }}>
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    style={{ fontSize: '0.85rem', fontWeight: '700' }}
+                    onClick={() => setActiveMenu('venues')}
+                  >
+                    <i className="fa-solid fa-arrow-left"></i> Back to Venues
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    style={{ fontSize: '0.85rem', fontWeight: '700' }}
+                    onClick={() => fetchDashboardData()}
+                  >
+                    <i className="fa-solid fa-rotate-right"></i> Refresh List
+                  </button>
+                </div>
+              </div>
+
+              {/* Metric Summary Cards */}
+              <div className="admin-stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div className="stat-card" style={{ padding: '1rem 1.25rem' }}>
+                  <div className="stat-info">
+                    <span className="stat-label">TOTAL INQUIRIES</span>
+                    <div className="stat-value">{venueBookings.length}</div>
+                  </div>
+                  <div className="stat-icon-wrapper" style={{ background: '#eff6ff', color: '#0052cc' }}>
+                    <i className="fa-solid fa-inbox"></i>
+                  </div>
+                </div>
+
+                <div className="stat-card" style={{ padding: '1rem 1.25rem' }}>
+                  <div className="stat-info">
+                    <span className="stat-label">PENDING REVIEW</span>
+                    <div className="stat-value" style={{ color: '#d97706' }}>{pendingInquiriesCount}</div>
+                  </div>
+                  <div className="stat-icon-wrapper" style={{ background: '#fef3c7', color: '#d97706' }}>
+                    <i className="fa-regular fa-clock"></i>
+                  </div>
+                </div>
+
+                <div className="stat-card" style={{ padding: '1rem 1.25rem' }}>
+                  <div className="stat-info">
+                    <span className="stat-label">CONTACTED</span>
+                    <div className="stat-value" style={{ color: '#0284c7' }}>{contactedInquiriesCount}</div>
+                  </div>
+                  <div className="stat-icon-wrapper" style={{ background: '#e0f2fe', color: '#0284c7' }}>
+                    <i className="fa-solid fa-comments"></i>
+                  </div>
+                </div>
+
+                <div className="stat-card" style={{ padding: '1rem 1.25rem' }}>
+                  <div className="stat-info">
+                    <span className="stat-label">CONFIRMED</span>
+                    <div className="stat-value" style={{ color: '#16a34a' }}>{confirmedInquiriesCount}</div>
+                  </div>
+                  <div className="stat-icon-wrapper" style={{ background: '#dcfce7', color: '#16a34a' }}>
+                    <i className="fa-regular fa-circle-check"></i>
+                  </div>
+                </div>
+              </div>
+
+              {/* Filter Toolbar Card */}
+              <div className="admin-card-panel" style={{ padding: '1.25rem 1.5rem', borderRadius: '16px', marginBottom: '1.5rem', background: '#ffffff', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '1rem', alignItems: 'center' }}>
+                  {/* Search Input */}
+                  <div style={{ position: 'relative' }}>
+                    <i className="fa-solid fa-magnifying-glass" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontSize: '0.9rem' }}></i>
+                    <input
+                      type="text"
+                      placeholder="Search by name, email, ref, title, venue..."
+                      value={inquirySearchQuery}
+                      onChange={(e) => setInquirySearchQuery(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 1rem 0.65rem 2.4rem',
+                        fontSize: '0.88rem',
+                        borderRadius: '10px',
+                        border: '1px solid #cbd5e1',
+                        outline: 'none',
+                      }}
+                    />
+                    {inquirySearchQuery && (
+                      <button
+                        onClick={() => setInquirySearchQuery('')}
+                        style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                      >
+                        <i className="fa-solid fa-xmark"></i>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Branch Selector */}
+                  <div>
+                    <select
+                      value={inquiryBranchFilter}
+                      onChange={(e) => setInquiryBranchFilter(e.target.value)}
+                      style={{
+                        padding: '0.65rem 1rem',
+                        fontSize: '0.86rem',
+                        fontWeight: '600',
+                        borderRadius: '10px',
+                        border: '1px solid #cbd5e1',
+                        backgroundColor: '#ffffff',
+                        color: '#0f172a',
+                        cursor: 'pointer',
+                        outline: 'none',
+                      }}
+                    >
+                      <option value="all">🏢 All TRACE Branches</option>
+                      <option value="TRACE Expert City (Colombo)">Colombo Hub</option>
+                      <option value="TRACE Innovation Hub (Kandy)">Kandy Hub</option>
+                      <option value="TRACE Tech Park (Jaffna)">Jaffna Tech Park</option>
+                      <option value="TRACE Coastal Hub (Galle)">Galle Coastal Hub</option>
+                      <option value="TRACE Wayamba Incubator (Kurunegala)">Wayamba Incubator</option>
+                    </select>
+                  </div>
+
+                  {/* Status Pills */}
+                  <div style={{ display: 'flex', gap: '0.4rem', background: '#f1f5f9', padding: '4px', borderRadius: '10px' }}>
+                    {[
+                      { id: 'all', label: `All (${venueBookings.length})` },
+                      { id: 'Pending', label: `Pending (${pendingInquiriesCount})` },
+                      { id: 'Contacted', label: `Contacted (${contactedInquiriesCount})` },
+                      { id: 'Confirmed', label: `Confirmed (${confirmedInquiriesCount})` },
+                      { id: 'Cancelled', label: `Cancelled (${cancelledInquiriesCount})` },
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setInquiryStatusFilter(tab.id)}
+                        style={{
+                          padding: '0.4rem 0.75rem',
+                          fontSize: '0.78rem',
+                          fontWeight: '700',
+                          borderRadius: '8px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          backgroundColor: inquiryStatusFilter === tab.id ? '#ffffff' : 'transparent',
+                          color: inquiryStatusFilter === tab.id ? '#0052cc' : '#64748b',
+                          boxShadow: inquiryStatusFilter === tab.id ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Data Table */}
+              <div className="admin-card-panel" style={{ padding: '0', borderRadius: '16px', border: '1px solid #e2e8f0', background: '#ffffff', overflow: 'hidden' }}>
+                {displayedVenueBookings.length === 0 ? (
+                  <div className="empty-state" style={{ padding: '3.5rem', textAlign: 'center' }}>
+                    <i className="fa-solid fa-filter-circle-xmark" style={{ fontSize: '2.5rem', color: '#cbd5e1', marginBottom: '0.75rem' }}></i>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#334155' }}>No Matching Space Inquiries Found</h3>
+                    <p style={{ color: '#64748b', fontSize: '0.88rem', margin: '0.25rem 0 1rem' }}>
+                      Try adjusting your search query, branch filter, or status filter.
+                    </p>
+                    <button
+                      className="btn btn-sm btn-outline"
+                      onClick={() => {
+                        setInquirySearchQuery('');
+                        setInquiryBranchFilter('all');
+                        setInquiryStatusFilter('all');
+                      }}
+                    >
+                      Reset All Filters
+                    </button>
+                  </div>
+                ) : (
+                  <div className="table-responsive-wrapper" style={{ overflowX: 'auto' }}>
+                    <table className="admin-data-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                      <thead>
+                        <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                          <th style={{ padding: '12px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>REF</th>
+                          <th style={{ padding: '12px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>APPLICANT</th>
+                          <th style={{ padding: '12px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>VENUE & BRANCH</th>
+                          <th style={{ padding: '12px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>EVENT PURPOSE & NOTES</th>
+                          <th style={{ padding: '12px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>DURATION</th>
+                          <th style={{ padding: '12px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>DATE & GUESTS</th>
+                          <th style={{ padding: '12px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>STATUS</th>
+                          <th style={{ padding: '12px 14px', textAlign: 'center', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>ACTIONS</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {displayedVenueBookings.map((bk) => (
+                          <tr key={bk._id || bk.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <td style={{ padding: '14px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                              <span style={{ color: '#0052cc', background: '#eff6ff', border: '1px solid #dbeafe', padding: '4px 10px', borderRadius: '6px', fontSize: '0.82rem', fontWeight: '700', fontFamily: 'monospace' }}>
+                                {bk.bookingRef}
+                              </span>
+                            </td>
+                            <td style={{ padding: '14px', verticalAlign: 'middle' }}>
+                              <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.88rem' }}>{bk.name}</div>
+                              <div style={{ fontSize: '0.78rem', color: '#64748b', lineHeight: 1.35 }}>
+                                <i className="fa-regular fa-envelope" style={{ marginRight: '4px' }}></i>{bk.email}
+                              </div>
+                              <div style={{ fontSize: '0.78rem', color: '#64748b', lineHeight: 1.35 }}>
+                                <i className="fa-solid fa-phone" style={{ marginRight: '4px' }}></i>{bk.phone}
+                              </div>
+                            </td>
+                            <td style={{ padding: '14px', verticalAlign: 'middle' }}>
+                              <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.88rem' }}>{bk.venueName}</div>
+                              <span style={{ fontSize: '0.74rem', fontWeight: '600', color: '#0284c7', background: '#f0f9ff', border: '1px solid #bae6fd', padding: '2px 8px', borderRadius: '4px', display: 'inline-block', marginTop: '3px' }}>
+                                {bk.branch}
+                              </span>
+                            </td>
+                            <td style={{ padding: '14px', verticalAlign: 'middle', maxWidth: '240px' }}>
+                              <div style={{ fontWeight: '600', color: '#334155', fontSize: '0.88rem' }}>{bk.eventTitle}</div>
+                              {bk.notes && (
+                                <div style={{ fontSize: '0.78rem', color: '#64748b', fontStyle: 'italic', marginTop: '3px', background: '#f8fafc', padding: '4px 8px', borderRadius: '6px', borderLeft: '3px solid #cbd5e1' }} title={bk.notes}>
+                                  "{bk.notes}"
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ padding: '14px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                              <span style={{ fontWeight: '700', color: '#0052cc', background: '#eff6ff', border: '1px solid #dbeafe', padding: '4px 10px', borderRadius: '6px', fontSize: '0.82rem' }}>
+                                <i className="fa-regular fa-clock" style={{ marginRight: '4px' }}></i>
+                                {bk.durationHours || 4} Hours
+                              </span>
+                            </td>
+                            <td style={{ padding: '14px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                              <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.86rem' }}>{bk.eventDate}</div>
+                              <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                                {bk.guests} Guests • <span style={{ color: '#059669', fontWeight: '700' }}>{bk.price || 'Rs. 25,000 / hr'}</span>
+                              </div>
+                            </td>
+                            <td style={{ padding: '14px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                              <select
+                                className="status-dropdown-select"
+                                value={bk.status || 'Pending'}
+                                onChange={async (e) => {
+                                  const newStatus = e.target.value;
+                                  try {
+                                    const res = await fetch(`/api/venue-bookings/${bk._id}`, {
+                                      method: 'PUT',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ status: newStatus }),
+                                    });
+                                    const data = await res.json();
+                                    if (data.success) {
+                                      setVenueBookings((prev) =>
+                                        prev.map((b) => (b._id === bk._id ? { ...b, status: newStatus } : b))
+                                      );
+                                      if (showToast) showToast(`Booking ${bk.bookingRef} status updated to ${newStatus}`, 'success');
+                                    }
+                                  } catch (err) {
+                                    console.error('Error updating booking status:', err);
+                                  }
+                                }}
+                                style={{
+                                  padding: '6px 12px',
+                                  borderRadius: '8px',
+                                  fontSize: '0.8rem',
+                                  fontWeight: '700',
+                                  minWidth: '125px',
+                                  border: '1px solid #cbd5e1',
+                                  cursor: 'pointer',
+                                  outline: 'none',
+                                  backgroundColor: bk.status === 'Confirmed' ? '#dcfce7' : bk.status === 'Cancelled' ? '#fee2e2' : bk.status === 'Contacted' ? '#e0f2fe' : '#fef3c7',
+                                  color: bk.status === 'Confirmed' ? '#15803d' : bk.status === 'Cancelled' ? '#b91c1c' : bk.status === 'Contacted' ? '#0369a1' : '#b45309',
+                                }}
+                              >
+                                <option value="Pending">Pending</option>
+                                <option value="Contacted">Contacted</option>
+                                <option value="Confirmed">Confirmed</option>
+                                <option value="Cancelled">Cancelled</option>
+                              </select>
+                            </td>
+                            <td style={{ padding: '14px', verticalAlign: 'middle', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                              <button
+                                className="icon-btn-action danger"
+                                title="Delete Booking Inquiry"
+                                onClick={async () => {
+                                  if (window.confirm(`Delete booking request ${bk.bookingRef}?`)) {
+                                    try {
+                                      const res = await fetch(`/api/venue-bookings/${bk._id}`, { method: 'DELETE' });
+                                      const data = await res.json();
+                                      if (data.success) {
+                                        setVenueBookings((prev) => prev.filter((b) => b._id !== bk._id));
+                                        if (showToast) showToast(`Deleted inquiry ${bk.bookingRef}`, 'info');
+                                      }
+                                    } catch (err) {
+                                      console.error('Error deleting venue booking:', err);
+                                    }
+                                  }
+                                }}
+                              >
+                                <i className="fa-regular fa-trash-can"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           ) : activeMenu === 'settings' ? (

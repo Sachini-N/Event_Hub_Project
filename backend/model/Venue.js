@@ -7,6 +7,11 @@ const venueSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    branch: {
+      type: String,
+      default: "TRACE Expert City (Colombo)",
+      trim: true,
+    },
     city: {
       type: String,
       default: "Colombo, Sri Lanka",
@@ -20,6 +25,15 @@ const venueSchema = new mongoose.Schema(
       type: Number,
       required: true,
       default: 100,
+    },
+    rentalPrice: {
+      type: String,
+      default: "Rs. 25,000 / hr",
+      trim: true,
+    },
+    pricePerHour: {
+      type: Number,
+      default: 25000,
     },
     status: {
       type: String,

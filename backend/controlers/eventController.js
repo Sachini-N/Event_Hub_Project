@@ -8,6 +8,14 @@ const seedInitialEvents = async () => {
 // GET /api/events?status=upcoming|past
 const getEvents = async (req, res) => {
   try {
+    const now = new Date();
+
+    // Auto-update any upcoming non-draft events whose date has passed to 'past' in MongoDB
+    await Event.updateMany(
+      { status: "upcoming", date: { $lt: now } },
+      { $set: { status: "past" } }
+    );
+
     const { status, category } = req.query;
     const filter = {};
     if (status) filter.status = status;
@@ -36,7 +44,18 @@ const getEventById = async (req, res) => {
 // POST /api/events (Create Event)
 const createEvent = async (req, res) => {
   try {
-    const newEvent = new Event(req.body);
+    const eventData = { ...req.body };
+    if (eventData.status !== "draft" && eventData.date) {
+      const eventDate = new Date(eventData.date);
+      const now = new Date();
+      if (eventDate < now) {
+        eventData.status = "past";
+      } else {
+        eventData.status = "upcoming";
+      }
+    }
+
+    const newEvent = new Event(eventData);
     await newEvent.save();
     res.status(201).json({ success: true, message: "Event created successfully", data: newEvent });
   } catch (error) {
@@ -47,7 +66,18 @@ const createEvent = async (req, res) => {
 // PUT /api/events/:id (Update Event)
 const updateEvent = async (req, res) => {
   try {
-    const updatedEvent = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const eventData = { ...req.body };
+    if (eventData.status !== "draft" && eventData.date) {
+      const eventDate = new Date(eventData.date);
+      const now = new Date();
+      if (eventDate < now) {
+        eventData.status = "past";
+      } else {
+        eventData.status = "upcoming";
+      }
+    }
+
+    const updatedEvent = await Event.findByIdAndUpdate(req.params.id, eventData, { new: true, runValidators: true });
     if (!updatedEvent) {
       return res.status(404).json({ success: false, message: "Event not found" });
     }

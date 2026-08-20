@@ -7,8 +7,10 @@ export default function AddVenueModal({
   showToast,
 }) {
   const [name, setName] = useState('');
+  const [branch, setBranch] = useState('TRACE Expert City (Colombo)');
   const [address, setAddress] = useState('');
   const [capacity, setCapacity] = useState('150');
+  const [pricePerHour, setPricePerHour] = useState('25000');
   const [status, setStatus] = useState('Available');
   const [coverImage, setCoverImage] = useState('https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80');
   const [amenities, setAmenities] = useState('High-Speed WiFi, 4K Projectors, Air Conditioned, Sound System');
@@ -33,14 +35,20 @@ export default function AddVenueModal({
     e.preventDefault();
     setSubmitting(true);
 
+    const numPrice = Number(pricePerHour) || 25000;
+    const formattedRentalPrice = `Rs. ${numPrice.toLocaleString()} / hr`;
+
     try {
       const response = await fetch('/api/venues', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
+          branch,
           address,
           capacity: Number(capacity),
+          rentalPrice: formattedRentalPrice,
+          pricePerHour: numPrice,
           status,
           coverImage,
           amenities: amenities.split(',').map((a) => a.trim()).filter(Boolean),
@@ -56,8 +64,10 @@ export default function AddVenueModal({
         onClose();
         // Reset form
         setName('');
+        setBranch('TRACE Expert City (Colombo)');
         setAddress('');
         setCapacity('150');
+        setPricePerHour('25000');
         setDescription('');
       } else {
         if (showToast) showToast(result.message || 'Failed to add venue', 'error');
@@ -83,6 +93,22 @@ export default function AddVenueModal({
         </div>
 
         <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="venue-branch">TRACE Branch *</label>
+            <select
+              id="venue-branch"
+              required
+              value={branch}
+              onChange={(e) => setBranch(e.target.value)}
+            >
+              <option value="TRACE Expert City (Colombo)">TRACE Expert City (Colombo)</option>
+              <option value="TRACE Innovation Hub (Kandy)">TRACE Innovation Hub (Kandy)</option>
+              <option value="TRACE Tech Park (Jaffna)">TRACE Tech Park (Jaffna)</option>
+              <option value="TRACE Hub (Galle)">TRACE Hub (Galle)</option>
+              <option value="TRACE Tech Bay (Kurunegala)">TRACE Tech Bay (Kurunegala)</option>
+            </select>
+          </div>
+
           <div className="form-group">
             <label htmlFor="venue-name">Venue / Hall Name *</label>
             <input
@@ -122,17 +148,30 @@ export default function AddVenueModal({
             </div>
 
             <div className="form-group">
-              <label htmlFor="venue-status">Availability Status</label>
-              <select
-                id="venue-status"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-              >
-                <option value="Available">Available</option>
-                <option value="Reserved">Reserved</option>
-                <option value="Under Maintenance">Under Maintenance</option>
-              </select>
+              <label htmlFor="venue-price">Rental Price (LKR per hour) *</label>
+              <input
+                type="number"
+                id="venue-price"
+                required
+                min="1000"
+                placeholder="25000"
+                value={pricePerHour}
+                onChange={(e) => setPricePerHour(e.target.value)}
+              />
             </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="venue-status">Availability Status</label>
+            <select
+              id="venue-status"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+            >
+              <option value="Available">Available</option>
+              <option value="Reserved">Reserved</option>
+              <option value="Under Maintenance">Under Maintenance</option>
+            </select>
           </div>
 
           {/* Cover Image Upload & URL Input */}

@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function PastEventsSection({ setActiveTab, onSelectPastEvent }) {
+export default function PastEventsSection({ events = [], setActiveTab, onSelectPastEvent }) {
   const samplePastEvents = [
     {
       _id: 'past-evt-1',
@@ -74,6 +74,18 @@ export default function PastEventsSection({ setActiveTab, onSelectPastEvent }) {
     },
   ];
 
+  // Filter real past events from database (events with status === 'past' or past dates)
+  const dbPastEvents = events.filter(
+    (e) => e.status === 'past' || (e.date && new Date(e.date) < new Date() && e.status !== 'draft')
+  );
+
+  // Combine DB past events with sample past events
+  const displayList = dbPastEvents.length > 0 ? [...dbPastEvents, ...samplePastEvents] : samplePastEvents;
+
+  const card1 = displayList[0] || samplePastEvents[0];
+  const card2 = displayList[1] || samplePastEvents[1];
+  const card3 = displayList[2] || samplePastEvents[2];
+
   const handleCardClick = (evt) => {
     if (onSelectPastEvent) {
       onSelectPastEvent(evt);
@@ -95,24 +107,24 @@ export default function PastEventsSection({ setActiveTab, onSelectPastEvent }) {
           <div
             className="past-card past-card-large"
             style={{
-              backgroundImage: `url('${samplePastEvents[0].coverImage}')`,
+              backgroundImage: `url('${card1.coverImage}')`,
               cursor: 'pointer',
             }}
-            onClick={() => handleCardClick(samplePastEvents[0])}
+            onClick={() => handleCardClick(card1)}
           >
             <div className="past-card-overlay"></div>
             <div className="past-card-content">
-              <span className="past-badge">Top Pick</span>
-              <h3 className="past-card-title">{samplePastEvents[0].title}</h3>
-              <p className="past-card-text">{samplePastEvents[0].description}</p>
+              <span className="past-badge">{card1.category || 'Past Event'}</span>
+              <h3 className="past-card-title">{card1.title}</h3>
+              <p className="past-card-text">{card1.description || card1.shortDescription}</p>
               <button
                 className="btn btn-outline-light"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleCardClick(samplePastEvents[0]);
+                  handleCardClick(card1);
                 }}
               >
-                View Gallery & Winners
+                View Event Details
               </button>
             </div>
           </div>
@@ -121,23 +133,23 @@ export default function PastEventsSection({ setActiveTab, onSelectPastEvent }) {
           <div
             className="past-card past-card-medium"
             style={{
-              backgroundImage: `url('${samplePastEvents[1].coverImage}')`,
+              backgroundImage: `url('${card2.coverImage}')`,
               cursor: 'pointer',
             }}
-            onClick={() => handleCardClick(samplePastEvents[1])}
+            onClick={() => handleCardClick(card2)}
           >
             <div className="past-card-overlay"></div>
             <div className="past-card-content">
-              <span className="past-badge">Keynote</span>
-              <h3 className="past-card-title">{samplePastEvents[1].title}</h3>
+              <span className="past-badge">{card2.category || 'Past Event'}</span>
+              <h3 className="past-card-title">{card2.title}</h3>
               <button
                 className="btn btn-solid-white"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleCardClick(samplePastEvents[1]);
+                  handleCardClick(card2);
                 }}
               >
-                Watch Recording
+                View Details
               </button>
             </div>
           </div>
@@ -146,20 +158,20 @@ export default function PastEventsSection({ setActiveTab, onSelectPastEvent }) {
           <div
             className="past-card past-card-medium"
             style={{
-              backgroundImage: `url('${samplePastEvents[2].coverImage}')`,
+              backgroundImage: `url('${card3.coverImage}')`,
               cursor: 'pointer',
             }}
-            onClick={() => handleCardClick(samplePastEvents[2])}
+            onClick={() => handleCardClick(card3)}
           >
             <div className="past-card-overlay"></div>
             <div className="past-card-content">
-              <span className="past-badge">Archive</span>
-              <h3 className="past-card-title">{samplePastEvents[2].title}</h3>
+              <span className="past-badge">{card3.category || 'Archive'}</span>
+              <h3 className="past-card-title">{card3.title}</h3>
               <button
                 className="btn btn-solid-white"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleCardClick(samplePastEvents[2]);
+                  handleCardClick(card3);
                 }}
               >
                 Read Summary
@@ -171,7 +183,7 @@ export default function PastEventsSection({ setActiveTab, onSelectPastEvent }) {
           <div
             className="past-card archive-banner-card"
             style={{ cursor: 'pointer' }}
-            onClick={() => handleCardClick(samplePastEvents[0])}
+            onClick={() => handleCardClick(card1)}
           >
             <div className="archive-watermark">ARCHIVE</div>
             <div className="past-card-content">
@@ -183,10 +195,10 @@ export default function PastEventsSection({ setActiveTab, onSelectPastEvent }) {
                 className="btn btn-white-pill"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleCardClick(samplePastEvents[0]);
+                  handleCardClick(card1);
                 }}
               >
-                Browse All Past Events <i className="fa-solid fa-arrow-right-long"></i>
+                Browse All Past Events ({dbPastEvents.length} Published) <i className="fa-solid fa-arrow-right-long"></i>
               </button>
             </div>
           </div>

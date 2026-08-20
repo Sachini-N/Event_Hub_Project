@@ -26,23 +26,54 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast })
 
   const [submitting, setSubmitting] = useState(false);
 
+  // Image File Compression Helper (Resizes large photos into lightweight JPEGs)
+  const compressImageFile = (file, maxWidth, maxHeight, quality, onSuccess) => {
+    const reader = new FileReader();
+    reader.onerror = () => {
+      if (showToast) showToast('Error reading image file', 'error');
+    };
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onerror = () => {
+        if (showToast) showToast('Invalid image format', 'error');
+      };
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+        if (height > maxHeight) {
+          width = Math.round((width * maxHeight) / height);
+          height = maxHeight;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        onSuccess(dataUrl);
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Cover Image File Upload Handler
   const handleImageFile = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 3 * 1024 * 1024) {
-      if (showToast) showToast('Please select an image smaller than 3MB', 'error');
-      return;
-    }
-
     setCoverFileName(file.name);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setCoverImage(reader.result);
-      if (showToast) showToast('Cover image loaded successfully!', 'info');
-    };
-    reader.readAsDataURL(file);
+    compressImageFile(file, 1200, 800, 0.8, (compressedBase64) => {
+      setCoverImage(compressedBase64);
+      if (showToast) showToast('Cover image optimized & loaded!', 'success');
+    });
   };
 
   // Speaker Avatar File Upload Handler
@@ -50,12 +81,10 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast })
     const file = e.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setSpeakerAvatar(reader.result);
-      if (showToast) showToast('Speaker avatar photo loaded!', 'info');
-    };
-    reader.readAsDataURL(file);
+    compressImageFile(file, 400, 400, 0.85, (compressedBase64) => {
+      setSpeakerAvatar(compressedBase64);
+      if (showToast) showToast('Speaker photo optimized & loaded!', 'success');
+    });
   };
 
   // Form Submit Handler
@@ -80,11 +109,18 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast })
         ? `${startTime} - ${endTime}`
         : startTime || '09:00 AM';
 
+    let isoDate;
+    try {
+      isoDate = date ? new Date(date).toISOString() : new Date().toISOString();
+    } catch (err) {
+      isoDate = new Date().toISOString();
+    }
+
     const payload = {
       title: title.trim(),
       category: category !== 'Select a category' ? category : 'Workshop',
-      status: isDraft ? 'draft' : 'upcoming',
-      date: new Date(date).toISOString(),
+      status: isDraft ? 'draft' : (new Date(isoDate) < new Date() ? 'past' : 'upcoming'),
+      date: isoDate,
       time: formattedTime,
       location: eventLocation,
       description: fullDescription.trim() || shortDescription.trim() || 'Join us for this exciting TRACE event!',
@@ -124,11 +160,12 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast })
         }
         if (onEventCreated) onEventCreated();
       } else {
-        if (showToast) showToast(result.message || 'Failed to publish event', 'error');
+        const detailedMsg = result.error ? `${result.message}: ${result.error}` : (result.message || 'Failed to publish event');
+        if (showToast) showToast(detailedMsg, 'error');
       }
     } catch (error) {
       console.error('Error publishing event:', error);
-      if (showToast) showToast('Failed to publish event. Please check image size or fields.', 'error');
+      if (showToast) showToast(`Failed to publish event: ${error.message || 'Please check fields'}`, 'error');
     } finally {
       setSubmitting(false);
     }
