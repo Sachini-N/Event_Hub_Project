@@ -1,9 +1,14 @@
 const mongoose = require('mongoose');
 const Event = require('./model/Event');
+require('dotenv').config();
+
+const mongoUri =
+  process.env.MONGO_URI ||
+  'mongodb+srv://admin:3fg96tRd1iREyBza@cluster0.tkag7mg.mongodb.net/eventhub?retryWrites=true&w=majority&appName=Cluster0';
 
 async function clean() {
   try {
-    await mongoose.connect('mongodb://localhost:27017/eventhub');
+    await mongoose.connect(mongoUri);
     const result = await Event.deleteMany({
       title: {
         $in: [
@@ -17,7 +22,7 @@ async function clean() {
         ],
       },
     });
-    console.log('Successfully cleaned sample events:', result);
+    console.log('Successfully cleaned sample events from MongoDB:', result);
   } catch (err) {
     console.error('Error cleaning sample events:', err);
   } finally {

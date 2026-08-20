@@ -32,12 +32,13 @@ export default function AdminModal({ isOpen, onClose, onEventCreated, showToast 
         body: JSON.stringify({
           title,
           category,
-          status,
+          status: new Date(date) < new Date() ? 'past' : status,
           capacity: parseInt(capacity, 10),
           date: new Date(date).toISOString(),
           time,
           location,
           description,
+          createdBy: 'TRACE Admin',
           coverImage: coverImage.trim() || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
         }),
       });

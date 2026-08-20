@@ -64,6 +64,8 @@ export default function UpcomingEventsPage({
 
   const filteredUpcomingEvents = useMemo(() => {
     return events.filter((event) => {
+      if (event.status === 'past') return false;
+      if (event.date && new Date(event.date) < new Date()) return false;
       if (event.status !== 'upcoming') return false;
 
       // Search Query

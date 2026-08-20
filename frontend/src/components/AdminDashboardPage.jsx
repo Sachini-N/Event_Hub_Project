@@ -623,6 +623,7 @@ export default function AdminDashboardPage({
                 setActiveMenu('events');
               }}
               showToast={showToast}
+              currentUser={currentUser}
             />
           ) : activeMenu === 'registrations' ? (
             /* VIEW 2: EVENT REGISTRATIONS VIEW (Matching exact reference screenshot) */

@@ -74,22 +74,23 @@ export default function PastEventDetailsPage({
               <div className="past-meta-pill">
                 <i className="fa-regular fa-calendar"></i>
                 <span>
-                  {new Date(pastEvent.date).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
+                  {pastEvent.date ? (() => {
+                    try {
+                      const d = new Date(pastEvent.date);
+                      return isNaN(d.getTime()) ? 'Past Event' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    } catch (e) { return 'Past Event'; }
+                  })() : 'Past Event'}
                 </span>
               </div>
 
               <div className="past-meta-pill">
                 <i className="fa-solid fa-location-dot"></i>
-                <span>{pastEvent.location}</span>
+                <span>{pastEvent.location || 'TRACE Expert City'}</span>
               </div>
 
               <div className="past-meta-pill">
                 <i className="fa-solid fa-users"></i>
-                <span>{pastEvent.attendeesCount || '300+ Attendees'}</span>
+                <span>{pastEvent.attendeesCount || (pastEvent.registeredCount ? `${pastEvent.registeredCount} Attendees` : '300+ Attendees')}</span>
               </div>
 
               {pastEvent.winners && (
@@ -162,21 +163,24 @@ export default function PastEventDetailsPage({
                   <i className="fa-solid fa-images"></i> Event Photo Gallery & Moments
                 </h2>
                 <div className="past-gallery-grid-4col">
-                  {pastEvent.gallery.map((imgUrl, gIdx) => (
-                    <div
-                      key={gIdx}
-                      className="past-gallery-thumb"
-                      onClick={() =>
-                        onOpenGalleryLightbox &&
-                        onOpenGalleryLightbox({ coverImage: imgUrl, title: `${pastEvent.title} Gallery #${gIdx + 1}` }, gIdx)
-                      }
-                    >
-                      <img src={imgUrl} alt={`Gallery moment ${gIdx + 1}`} />
-                      <div className="thumb-hover-overlay">
-                        <i className="fa-solid fa-magnifying-glass-plus"></i>
+                  {pastEvent.gallery.map((item, gIdx) => {
+                    const imgUrl = typeof item === 'string' ? item : (item.url || item);
+                    return (
+                      <div
+                        key={gIdx}
+                        className="past-gallery-thumb"
+                        onClick={() =>
+                          onOpenGalleryLightbox &&
+                          onOpenGalleryLightbox({ coverImage: imgUrl, title: `${pastEvent.title} Gallery #${gIdx + 1}` }, gIdx)
+                        }
+                      >
+                        <img src={imgUrl} alt={`Gallery moment ${gIdx + 1}`} />
+                        <div className="thumb-hover-overlay">
+                          <i className="fa-solid fa-magnifying-glass-plus"></i>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

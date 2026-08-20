@@ -183,6 +183,7 @@ export default function App() {
               openGalleryLightbox={(evt, index) => setLightboxData({ event: evt, index })}
             />
             <PastEventsSection
+              events={events}
               setActiveTab={setActiveTab}
               onSelectPastEvent={(evt) => {
                 setSelectedPastEvent(evt);
@@ -204,7 +205,9 @@ export default function App() {
 
         {activeTab === 'past' && (
           <PastEventsSection
+            events={events}
             setActiveTab={setActiveTab}
+            isFullView={true}
             onSelectPastEvent={(evt) => {
               setSelectedPastEvent(evt);
               setActiveTab('past-details');

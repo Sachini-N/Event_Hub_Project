@@ -10,20 +10,21 @@ export default function UpcomingEventsSection({
   openRegistrationModal,
   openGalleryLightbox,
 }) {
-  const upcomingCount = events.filter((e) => e.status === 'upcoming').length;
-  const pastCount = events.filter((e) => e.status === 'past').length;
+  const upcomingCount = events.filter((e) => e.status === 'upcoming' && (!e.date || new Date(e.date) >= new Date())).length;
+  const pastCount = events.filter((e) => e.status === 'past' || (e.date && new Date(e.date) < new Date() && e.status !== 'draft')).length;
 
   const currentTab = activeTab === 'past' ? 'past' : 'upcoming';
 
   const filteredEvents = events.filter((event) => {
-    const matchesTab = event.status === currentTab;
+    const isPast = event.status === 'past' || (event.date && new Date(event.date) < new Date() && event.status !== 'draft');
+    const matchesTab = currentTab === 'past' ? isPast : (!isPast && event.status === 'upcoming');
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
       !q ||
-      event.title.toLowerCase().includes(q) ||
-      event.description.toLowerCase().includes(q) ||
-      event.category.toLowerCase().includes(q) ||
-      (event.speaker && event.speaker.name.toLowerCase().includes(q));
+      (event.title && event.title.toLowerCase().includes(q)) ||
+      (event.description && event.description.toLowerCase().includes(q)) ||
+      (event.category && event.category.toLowerCase().includes(q)) ||
+      (event.speaker && event.speaker.name && event.speaker.name.toLowerCase().includes(q));
 
     return matchesTab && matchesSearch;
   });

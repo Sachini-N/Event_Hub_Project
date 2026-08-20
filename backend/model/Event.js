@@ -44,6 +44,10 @@ const eventSchema = new mongoose.Schema(
       type: String,
       default: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80",
     },
+    createdBy: {
+      type: String,
+      default: "Community User",
+    },
     gallery: [
       {
         url: String,

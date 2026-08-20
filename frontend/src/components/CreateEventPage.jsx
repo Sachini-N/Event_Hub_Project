@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function CreateEventPage({ onCancel, onEventCreated, showToast }) {
+export default function CreateEventPage({ onCancel, onEventCreated, showToast, currentUser }) {
   // Form State
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Select a category');
@@ -127,6 +127,7 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast })
       shortDescription: shortDescription.trim(),
       capacity: parseInt(capacity, 10) || 100,
       registeredCount: 0,
+      createdBy: currentUser?.name || currentUser?.email || 'Uploaded Event',
       coverImage:
         coverImage ||
         'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',

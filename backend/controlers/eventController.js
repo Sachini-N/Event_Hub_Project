@@ -10,9 +10,9 @@ const getEvents = async (req, res) => {
   try {
     const now = new Date();
 
-    // Auto-update any upcoming non-draft events whose date has passed to 'past' in MongoDB
+    // Auto-update any non-draft events whose date has passed to 'past' in MongoDB
     await Event.updateMany(
-      { status: "upcoming", date: { $lt: now } },
+      { status: { $ne: "draft" }, date: { $lt: now } },
       { $set: { status: "past" } }
     );
 

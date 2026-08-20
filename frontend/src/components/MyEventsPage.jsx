@@ -34,7 +34,7 @@ export default function MyEventsPage({
             time: evt.time || reg.eventTime || '10:00 AM',
             location: evt.location || reg.eventLocation || 'TRACE Expert City',
             coverImage: evt.coverImage || reg.coverImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
-            status: evt.status === 'past' ? 'past' : 'upcoming',
+            status: (evt.status === 'past' || (evt.date && new Date(evt.date) < new Date())) ? 'past' : 'upcoming',
             ticketId: reg.ticketId,
           };
         });
