@@ -292,7 +292,7 @@ export default function App() {
         )}
       </main>
 
-      {!hideHeaderFooter && <Footer />}
+      {!hideHeaderFooter && <Footer setActiveTab={setActiveTab} />}
 
       {/* Modals */}
       <RegistrationModal

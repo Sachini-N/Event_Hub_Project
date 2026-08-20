@@ -94,6 +94,10 @@ const deleteEvent = async (req, res) => {
     if (!deletedEvent) {
       return res.status(404).json({ success: false, message: "Event not found" });
     }
+    // Delete associated registrations for this deleted event
+    const Registration = require("../model/Registration");
+    await Registration.deleteMany({ eventId: req.params.id });
+
     res.json({ success: true, message: "Event deleted successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to delete event", error: error.message });

@@ -22,22 +22,24 @@ export default function MyEventsPage({
       const result = await response.json();
 
       if (result.success && result.data && result.data.length > 0) {
-        // Map backend registrations to display items using populated eventId
-        const mapped = result.data.map((reg) => {
-          const evt = reg.eventId && typeof reg.eventId === 'object' ? reg.eventId : {};
-          return {
-            _id: reg._id,
-            eventId: evt._id || reg.eventId,
-            title: evt.title || reg.eventTitle || 'TRACE Event',
-            description: evt.description || '',
-            date: evt.date || reg.eventDate || new Date(),
-            time: evt.time || reg.eventTime || '10:00 AM',
-            location: evt.location || reg.eventLocation || 'TRACE Expert City',
-            coverImage: evt.coverImage || reg.coverImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
-            status: (evt.status === 'past' || (evt.date && new Date(evt.date) < new Date())) ? 'past' : 'upcoming',
-            ticketId: reg.ticketId,
-          };
-        });
+        // Map backend registrations to display items, strictly filtering out deleted/non-existent events
+        const mapped = result.data
+          .filter((reg) => reg.eventId && typeof reg.eventId === 'object' && reg.eventId._id)
+          .map((reg) => {
+            const evt = reg.eventId;
+            return {
+              _id: reg._id,
+              eventId: evt._id,
+              title: evt.title,
+              description: evt.description || '',
+              date: evt.date || new Date(),
+              time: evt.time || '10:00 AM',
+              location: evt.location || 'TRACE Expert City',
+              coverImage: evt.coverImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
+              status: (evt.status === 'past' || (evt.date && new Date(evt.date) < new Date())) ? 'past' : 'upcoming',
+              ticketId: reg.ticketId,
+            };
+          });
         setRegistrations(mapped);
       } else {
         setRegistrations([]);

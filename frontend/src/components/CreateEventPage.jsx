@@ -131,14 +131,16 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
       coverImage:
         coverImage ||
         'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
-      speaker: {
-        name: speakerName.trim() || 'TRACE Speaker',
-        role: speakerRole.trim() || 'Tech Expert',
-        bio: speakerBio.trim() || '',
-        avatar:
-          speakerAvatar ||
-          'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80',
-      },
+      speaker: speakerName.trim()
+        ? {
+            name: speakerName.trim(),
+            role: speakerRole.trim() || 'Guest Speaker',
+            bio: speakerBio.trim() || '',
+            avatar:
+              speakerAvatar ||
+              'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80',
+          }
+        : null,
     };
 
     try {

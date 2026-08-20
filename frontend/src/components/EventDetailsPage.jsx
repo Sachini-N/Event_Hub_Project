@@ -279,31 +279,34 @@ export default function EventDetailsPage({
                     </div>
                   </div>
 
-                  {/* Featured Speaker Profile Card */}
-                  {event.speaker && (event.speaker.name || event.speaker.role) && (
-                    <div className="details-speaker-card">
-                      <div className="speaker-card-header">
-                        <i className="fa-solid fa-user-tie"></i>
-                        <h3>Featured Speaker</h3>
-                      </div>
-                      <div className="speaker-card-body">
-                        <div className="speaker-avatar">
-                          <img
-                            src={
-                              event.speaker.avatar ||
-                              'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80'
-                            }
-                            alt={event.speaker.name || 'Speaker'}
-                          />
+                  {/* Featured Speaker Profile Card (Render ONLY if a real speaker was added) */}
+                  {event.speaker &&
+                    event.speaker.name &&
+                    event.speaker.name.trim() !== '' &&
+                    event.speaker.name !== 'TRACE Speaker' && (
+                      <div className="details-speaker-card">
+                        <div className="speaker-card-header">
+                          <i className="fa-solid fa-user-tie"></i>
+                          <h3>Featured Speaker</h3>
                         </div>
-                        <div className="speaker-info">
-                          <h4>{event.speaker.name || 'Guest Speaker'}</h4>
-                          <span className="speaker-role">{event.speaker.role || 'Tech Leader'}</span>
-                          {event.speaker.bio && <p className="speaker-bio">{event.speaker.bio}</p>}
+                        <div className="speaker-card-body">
+                          <div className="speaker-avatar">
+                            <img
+                              src={
+                                event.speaker.avatar ||
+                                'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80'
+                              }
+                              alt={event.speaker.name || 'Speaker'}
+                            />
+                          </div>
+                          <div className="speaker-info">
+                            <h4>{event.speaker.name}</h4>
+                            {event.speaker.role && <span className="speaker-role">{event.speaker.role}</span>}
+                            {event.speaker.bio && <p className="speaker-bio">{event.speaker.bio}</p>}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
                   {/* Key Highlights / Agenda */}
                   {event.highlights && event.highlights.length > 0 && (

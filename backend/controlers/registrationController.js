@@ -87,7 +87,9 @@ const getUserRegistrations = async (req, res) => {
   try {
     const email = req.params.email.toLowerCase();
     const registrations = await Registration.find({ email }).populate("eventId").sort({ createdAt: -1 });
-    res.json({ success: true, count: registrations.length, data: registrations });
+    // Filter out orphaned registrations where event was deleted from DB
+    const validRegistrations = registrations.filter((reg) => reg.eventId && reg.eventId._id);
+    res.json({ success: true, count: validRegistrations.length, data: validRegistrations });
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to fetch user registrations", error: error.message });
   }
@@ -107,7 +109,8 @@ const getEventRegistrations = async (req, res) => {
 const getAllRegistrations = async (req, res) => {
   try {
     const registrations = await Registration.find().populate("eventId").sort({ createdAt: -1 });
-    res.json({ success: true, count: registrations.length, data: registrations });
+    const validRegistrations = registrations.filter((reg) => reg.eventId && reg.eventId._id);
+    res.json({ success: true, count: validRegistrations.length, data: validRegistrations });
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to fetch registrations", error: error.message });
   }

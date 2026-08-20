@@ -68,9 +68,7 @@ export default function Navbar({
             </>
           )}
 
-          <div className="nav-search-trigger" onClick={focusSearch} title="Search Events">
-            <i className="fa-solid fa-magnifying-glass"></i>
-          </div>
+
 
           {!currentUser ? (
             <div className="nav-auth-group">
