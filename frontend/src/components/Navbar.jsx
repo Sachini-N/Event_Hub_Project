@@ -39,6 +39,15 @@ export default function Navbar({
           >
             Past Events
           </button>
+          <button
+            className={`nav-link ${activeTab === 'venues-page' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('venues-page');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            Venues
+          </button>
           {currentUser && !(currentUser?.isAdmin || currentUser?.role === 'admin' || currentUser?.email === 'admin@trace.lk') && (
             <>
               <button

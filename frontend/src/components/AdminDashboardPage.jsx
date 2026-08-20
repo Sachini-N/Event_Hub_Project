@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import EditEventModal from './modals/EditEventModal';
+import AddVenueModal from './modals/AddVenueModal';
 import CreateEventPage from './CreateEventPage';
 
 export default function AdminDashboardPage({
@@ -129,6 +130,8 @@ export default function AdminDashboardPage({
     requireDeleteConfirm: true,
   });
 
+  const [showAddVenueModal, setShowAddVenueModal] = useState(false);
+
   const isAdmin = currentUser && currentUser.role === 'admin';
 
   // Fetch Dashboard Data from Backend APIs
@@ -147,6 +150,13 @@ export default function AdminDashboardPage({
       const regsData = await regsRes.json();
       if (regsData.success) {
         setRegistrations(regsData.data || []);
+      }
+
+      // 3. Fetch Venues
+      const venuesRes = await fetch('/api/venues');
+      const venuesData = await venuesRes.json();
+      if (venuesData.success && venuesData.data && venuesData.data.length > 0) {
+        setVenues(venuesData.data);
       }
     } catch (err) {
       console.error('Error loading admin dashboard data:', err);
@@ -837,23 +847,7 @@ export default function AdminDashboardPage({
                 </div>
                 <button
                   className="btn-create-event-blue"
-                  onClick={() => {
-                    const name = prompt('Enter Venue Name:');
-                    if (name) {
-                      const newVenue = {
-                        id: Date.now(),
-                        name,
-                        city: 'Colombo 10, Sri Lanka',
-                        address: 'TRACE Expert City, Maradana Rd',
-                        capacity: 150,
-                        status: 'Available',
-                        coverImage: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80',
-                        amenities: ['WiFi', '4K Projector', 'AC', 'Surround Sound'],
-                      };
-                      setVenues([newVenue, ...venues]);
-                      if (showToast) showToast(`Added venue "${name}" successfully!`, 'success');
-                    }
-                  }}
+                  onClick={() => setShowAddVenueModal(true)}
                 >
                   <i className="fa-solid fa-plus"></i> Add New Venue
                 </button>
@@ -1712,6 +1706,17 @@ export default function AdminDashboardPage({
         onClose={() => setEditingEvent(null)}
         event={editingEvent}
         onEventUpdated={fetchDashboardData}
+        showToast={showToast}
+      />
+
+      {/* Add Venue Modal */}
+      <AddVenueModal
+        isOpen={showAddVenueModal}
+        onClose={() => setShowAddVenueModal(false)}
+        onVenueCreated={(newVenue) => {
+          setVenues([newVenue, ...venues]);
+          fetchDashboardData();
+        }}
         showToast={showToast}
       />
     </div>

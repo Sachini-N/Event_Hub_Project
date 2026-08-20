@@ -7,9 +7,11 @@ const path = require("path");
 const eventRoutes = require("./route/eventRoutes");
 const registrationRoutes = require("./route/registrationRoutes");
 const authRoutes = require("./route/authRoutes");
+const venueRoutes = require("./route/venueRoutes");
 const { seedInitialEvents } = require("./controlers/eventController");
 const { seedAdminUser } = require("./controlers/authController");
 const { seedInitialRegistrations } = require("./controlers/registrationController");
+const { seedInitialVenues } = require("./controlers/venueController");
 
 const app = express();
 
@@ -32,6 +34,7 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/registrations", registrationRoutes);
+app.use("/api/venues", venueRoutes);
 
 // Return JSON 404 for unhandled /api requests (Prevents returning HTML to API callers)
 app.use((req, res, next) => {
@@ -72,5 +75,6 @@ mongoose
     await seedInitialEvents();
     await seedAdminUser();
     await seedInitialRegistrations();
+    await seedInitialVenues();
   })
   .catch((err) => console.log("MongoDB connection error:", err));

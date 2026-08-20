@@ -11,6 +11,7 @@ import CalendarPage from './components/CalendarPage';
 import AdminDashboardPage from './components/AdminDashboardPage';
 import PastEventsSection from './components/PastEventsSection';
 import PastEventDetailsPage from './components/PastEventDetailsPage';
+import VenuesPage from './components/VenuesPage';
 import Footer from './components/Footer';
 
 import RegistrationModal from './components/modals/RegistrationModal';
@@ -265,6 +266,10 @@ export default function App() {
             showToast={showToast}
             openLoginModal={() => setShowLogin(true)}
           />
+        )}
+
+        {activeTab === 'venues-page' && (
+          <VenuesPage showToast={showToast} />
         )}
 
         {activeTab === 'admin' && (
