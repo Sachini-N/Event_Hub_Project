@@ -94,6 +94,7 @@ export default function AdminDashboardPage({
   const [inquirySearchQuery, setInquirySearchQuery] = useState('');
   const [inquiryBranchFilter, setInquiryBranchFilter] = useState('all');
   const [inquiryStatusFilter, setInquiryStatusFilter] = useState('all');
+  const [sidebarHidden, setSidebarHidden] = useState(false);
 
   const isAdmin = currentUser && currentUser.role === 'admin';
 
@@ -482,9 +483,9 @@ export default function AdminDashboardPage({
   const isEventsView = activeMenu === 'events' || activeMenu === 'upcoming' || activeMenu === 'past';
 
   return (
-    <div className="admin-dashboard-layout">
+    <div className={`admin-dashboard-layout ${sidebarHidden ? 'sidebar-hidden' : ''}`}>
       {/* Left Sidebar */}
-      <aside className="admin-sidebar">
+      <aside className={`admin-sidebar ${sidebarHidden ? 'hidden' : ''}`}>
         <div className="admin-brand">
           <span className="brand-title">EventPro Admin</span>
           <span className="brand-subtitle">Enterprise Suite</span>
@@ -550,8 +551,29 @@ export default function AdminDashboardPage({
       <div className="admin-main-container">
         {/* Top Header Bar */}
         <header className="admin-top-bar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0052cc' }}>TRACE Event Hub</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <button
+              className="btn-hamburger-toggle"
+              onClick={() => setSidebarHidden(!sidebarHidden)}
+              title={sidebarHidden ? "Open Sidebar Menu" : "Close Sidebar Menu"}
+              style={{
+                width: '38px',
+                height: '38px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '8px',
+                border: '1px solid #cbd5e1',
+                background: '#ffffff',
+                color: '#1e293b',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+              }}
+            >
+              <i className="fa-solid fa-bars" style={{ fontSize: '1.15rem' }}></i>
+            </button>
+            <span style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0052cc' }}>TRACE Tracker</span>
           </div>
 
           <div className="admin-search-box">
@@ -564,18 +586,7 @@ export default function AdminDashboardPage({
             />
           </div>
 
-          <div className="admin-top-actions">
-            <div className="admin-profile-badge">
-              <img
-                src={
-                  (currentUser?.avatar && currentUser.avatar.trim() !== '')
-                    ? currentUser.avatar
-                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.name || 'Admin')}&background=0052cc&color=fff&size=100`
-                }
-                alt={currentUser?.name}
-              />
-            </div>
-          </div>
+
         </header>
 
         {/* Body Content */}
