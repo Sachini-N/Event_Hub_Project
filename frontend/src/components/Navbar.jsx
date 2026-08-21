@@ -17,8 +17,7 @@ export default function Navbar({
     <header className="navbar">
       <div className="nav-container">
         <div className="brand" onClick={scrollToHero} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-          <img src="/TEN.png" alt="TEN Logo" className="navbar-logo-img" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
-          <span className="logo-text">TEN</span>
+          <span className="logo-text">TRACE <span className="logo-tracker-sub">Tracker</span></span>
         </div>
 
         <nav className="nav-links">

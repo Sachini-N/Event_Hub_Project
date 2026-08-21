@@ -398,12 +398,6 @@ export default function CalendarPage({
                     >
                       <i className="fa-regular fa-calendar-plus"></i> Add to Google Calendar
                     </button>
-                    <button
-                      className="btn-side-ics"
-                      onClick={() => downloadIcs(selectedEvent)}
-                    >
-                      <i className="fa-solid fa-download"></i> Download .ics
-                    </button>
                   </div>
                 </div>
               </div>
