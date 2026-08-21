@@ -12,6 +12,11 @@ const venueSchema = new mongoose.Schema(
       default: "TRACE Expert City (Colombo)",
       trim: true,
     },
+    province: {
+      type: String,
+      default: "Western Province",
+      trim: true,
+    },
     city: {
       type: String,
       default: "Colombo, Sri Lanka",

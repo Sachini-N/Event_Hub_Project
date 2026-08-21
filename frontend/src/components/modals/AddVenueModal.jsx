@@ -10,6 +10,7 @@ export default function AddVenueModal({
 }) {
   const [name, setName] = useState('');
   const [branch, setBranch] = useState('TRACE Expert City (Colombo)');
+  const [province, setProvince] = useState('Western Province');
   const [address, setAddress] = useState('');
   const [capacity, setCapacity] = useState('150');
   const [pricePerHour, setPricePerHour] = useState('25000');
@@ -19,10 +20,27 @@ export default function AddVenueModal({
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const getProvinceForBranch = (bName) => {
+    if (!bName) return 'Western Province';
+    if (bName.includes('Colombo')) return 'Western Province';
+    if (bName.includes('Kandy')) return 'Central Province';
+    if (bName.includes('Jaffna')) return 'Northern Province';
+    if (bName.includes('Galle')) return 'Southern Province';
+    if (bName.includes('Kurunegala')) return 'North Western Province';
+    return 'Western Province';
+  };
+
+  const handleBranchChange = (newBranch) => {
+    setBranch(newBranch);
+    setProvince(getProvinceForBranch(newBranch));
+  };
+
   useEffect(() => {
     if (editingVenue) {
       setName(editingVenue.name || '');
-      setBranch(editingVenue.branch || 'TRACE Expert City (Colombo)');
+      const b = editingVenue.branch || 'TRACE Expert City (Colombo)';
+      setBranch(b);
+      setProvince(editingVenue.province || getProvinceForBranch(b));
       setAddress(editingVenue.address || '');
       setCapacity(editingVenue.capacity ? String(editingVenue.capacity) : '150');
       const numPrice = editingVenue.pricePerHour 
@@ -36,6 +54,7 @@ export default function AddVenueModal({
     } else {
       setName('');
       setBranch('TRACE Expert City (Colombo)');
+      setProvince('Western Province');
       setAddress('');
       setCapacity('150');
       setPricePerHour('25000');
@@ -79,6 +98,7 @@ export default function AddVenueModal({
         body: JSON.stringify({
           name,
           branch,
+          province,
           address,
           capacity: Number(capacity),
           rentalPrice: formattedRentalPrice,
@@ -130,13 +150,33 @@ export default function AddVenueModal({
               id="venue-branch"
               required
               value={branch}
-              onChange={(e) => setBranch(e.target.value)}
+              onChange={(e) => handleBranchChange(e.target.value)}
             >
               <option value="TRACE Expert City (Colombo)">TRACE Expert City (Colombo)</option>
               <option value="TRACE Innovation Hub (Kandy)">TRACE Innovation Hub (Kandy)</option>
               <option value="TRACE Tech Park (Jaffna)">TRACE Tech Park (Jaffna)</option>
               <option value="TRACE Hub (Galle)">TRACE Hub (Galle)</option>
               <option value="TRACE Tech Bay (Kurunegala)">TRACE Tech Bay (Kurunegala)</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="venue-province">Sri Lanka Province *</label>
+            <select
+              id="venue-province"
+              required
+              value={province}
+              onChange={(e) => setProvince(e.target.value)}
+            >
+              <option value="Western Province">Western Province (Colombo)</option>
+              <option value="Central Province">Central Province (Kandy)</option>
+              <option value="Northern Province">Northern Province (Jaffna)</option>
+              <option value="Southern Province">Southern Province (Galle)</option>
+              <option value="North Western Province">North Western Province (Kurunegala)</option>
+              <option value="Eastern Province">Eastern Province</option>
+              <option value="North Central Province">North Central Province</option>
+              <option value="Uva Province">Uva Province</option>
+              <option value="Sabaragamuwa Province">Sabaragamuwa Province</option>
             </select>
           </div>
 

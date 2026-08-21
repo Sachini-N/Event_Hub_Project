@@ -59,9 +59,33 @@ export default function VenuesPage({ showToast }) {
   const [venues, setVenues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedBranch, setSelectedBranch] = useState('All');
+  const [provinceFilter, setProvinceFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [capacityFilter, setCapacityFilter] = useState('All');
+
+  // Helper function to derive province for any space
+  const getSpaceProvince = (v) => {
+    if (v.province) return v.province;
+    const str = `${v.branch || ''} ${v.city || ''} ${v.address || ''} ${v.name || ''}`.toLowerCase();
+
+    if (str.includes('colombo') || str.includes('maradana') || str.includes('western') || str.includes('expert city')) {
+      return 'Western Province';
+    }
+    if (str.includes('kandy') || str.includes('peradeniya') || str.includes('central')) {
+      return 'Central Province';
+    }
+    if (str.includes('jaffna') || str.includes('palaly') || str.includes('northern')) {
+      return 'Northern Province';
+    }
+    if (str.includes('galle') || str.includes('fort') || str.includes('southern')) {
+      return 'Southern Province';
+    }
+    if (str.includes('kurunegala') || str.includes('wayamba') || str.includes('north western')) {
+      return 'North Western Province';
+    }
+    return 'Western Province';
+  };
 
   // Modal State for Venue Details & Booking Inquiry
   const [activeVenueModal, setActiveVenueModal] = useState(null);
@@ -98,13 +122,13 @@ export default function VenuesPage({ showToast }) {
 
   // Filter logic
   const filteredVenues = venues.filter((v) => {
-    // 1. Branch Filter
-    if (selectedBranch !== 'All') {
-      const vBranch = v.branch || 'TRACE Expert City (Colombo)';
-      if (vBranch.toLowerCase() !== selectedBranch.toLowerCase()) return false;
+    // 0. Province Filter
+    if (provinceFilter !== 'All') {
+      const vProvince = getSpaceProvince(v);
+      if (vProvince.toLowerCase() !== provinceFilter.toLowerCase()) return false;
     }
 
-    // 2. Status Filter
+    // 1. Status Filter
     if (statusFilter !== 'All' && v.status !== statusFilter) {
       return false;
     }
@@ -224,82 +248,67 @@ export default function VenuesPage({ showToast }) {
           </p>
         </div>
 
-        {/* 2. TRACE Branches Filter Tabs */}
-        <div className="branch-filter-section">
-          <div className="branch-filter-header">
-            <div>
-              <h2 className="branch-filter-title">
-                <i className="fa-solid fa-code-branch" style={{ color: '#0052cc', marginRight: '8px' }}></i>
-                Select TRACE Branch
-              </h2>
-              <p className="branch-filter-subtitle">
-                Switch between TRACE branches to view available spaces in each location
-              </p>
+        {/* 2. Province Selection Filter Section */}
+        <div className="province-filter-card" style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.25rem 1.75rem', marginBottom: '1.5rem', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#eff6ff', color: '#0052cc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.35rem', flexShrink: 0 }}>
+                <i className="fa-solid fa-map-location-dot"></i>
+              </div>
+              <div>
+                <h2 style={{ fontSize: '1.15rem', fontWeight: '800', color: '#0f172a', margin: '0 0 0.2rem 0' }}>
+                  Select Province
+                </h2>
+                <p style={{ fontSize: '0.88rem', color: '#64748b', margin: 0 }}>
+                  Choose a Sri Lankan province below to view available spaces in that area.
+                </p>
+              </div>
             </div>
-            {selectedBranch !== 'All' && (
-              <button
-                className="btn-reset-branch"
-                onClick={() => setSelectedBranch('All')}
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <select
+                className="province-large-dropdown"
+                value={provinceFilter}
+                onChange={(e) => setProvinceFilter(e.target.value)}
+                style={{
+                  padding: '0.65rem 1.25rem 0.65rem 1rem',
+                  fontSize: '0.95rem',
+                  fontWeight: '700',
+                  borderRadius: '12px',
+                  border: '2px solid #0052cc',
+                  backgroundColor: '#ffffff',
+                  color: '#0052cc',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  boxShadow: '0 2px 6px rgba(0, 82, 204, 0.1)',
+                  minWidth: '270px',
+                }}
               >
-                <i className="fa-solid fa-rotate-left"></i> View All Branches
-              </button>
-            )}
-          </div>
+                <option value="All">📍 All Sri Lanka Provinces</option>
+                <option value="Western Province">Western Province (Colombo)</option>
+                <option value="Central Province">Central Province (Kandy)</option>
+                <option value="Northern Province">Northern Province (Jaffna)</option>
+                <option value="Southern Province">Southern Province (Galle)</option>
+                <option value="North Western Province">North Western Province (Kurunegala)</option>
+                <option value="Eastern Province">Eastern Province</option>
+                <option value="North Central Province">North Central Province</option>
+                <option value="Uva Province">Uva Province</option>
+                <option value="Sabaragamuwa Province">Sabaragamuwa Province</option>
+              </select>
 
-          <div className="branch-tabs-scroll-container">
-            {/* "All Branches" Tab */}
-            <button
-              className={`branch-tab-pill ${selectedBranch === 'All' ? 'active' : ''}`}
-              onClick={() => setSelectedBranch('All')}
-            >
-              <i className="fa-solid fa-globe"></i>
-              <span>All TRACE Branches</span>
-              <span className="branch-count-badge">{totalVenuesCount}</span>
-            </button>
-
-            {/* Individual Branch Tabs */}
-            {TRACE_BRANCHES_META.map((b) => {
-              const count = getBranchVenueCount(b.id);
-              const isActive = selectedBranch.toLowerCase() === b.id.toLowerCase();
-              return (
+              {provinceFilter !== 'All' && (
                 <button
-                  key={b.id}
-                  className={`branch-tab-pill ${isActive ? 'active' : ''}`}
-                  onClick={() => setSelectedBranch(b.id)}
+                  type="button"
+                  className="btn btn-outline"
+                  style={{ borderRadius: '12px', fontSize: '0.88rem', fontWeight: '700', padding: '0.6rem 1rem' }}
+                  onClick={() => setProvinceFilter('All')}
                 >
-                  <i className={`fa-solid ${b.icon}`}></i>
-                  <span>{b.shortName}</span>
-                  <span className="branch-count-badge">{count}</span>
+                  <i className="fa-solid fa-rotate-left"></i> View All
                 </button>
-              );
-            })}
+              )}
+            </div>
           </div>
         </div>
-
-        {/* 3. Selected Branch Highlight Header Banner (If specific branch selected) */}
-        {activeBranchMeta && (
-          <div
-            className="selected-branch-banner"
-            style={{ background: activeBranchMeta.bannerGradient }}
-          >
-            <div className="branch-banner-content">
-              <div className="branch-badge-tag">
-                <i className={`fa-solid ${activeBranchMeta.icon}`}></i> {activeBranchMeta.location}
-              </div>
-              <h3>{activeBranchMeta.name}</h3>
-              <p>{activeBranchMeta.description}</p>
-            </div>
-            <div className="branch-banner-meta">
-              <div className="meta-pill">
-                <i className="fa-solid fa-building-circle-check"></i>{' '}
-                <strong>{getBranchVenueCount(activeBranchMeta.id)}</strong> Places in this Branch
-              </div>
-              <div className="meta-pill">
-                <i className="fa-solid fa-map-pin"></i> {activeBranchMeta.location}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* 4. Secondary Filter Toolbar */}
         <div className="venues-filter-toolbar">
@@ -368,6 +377,7 @@ export default function VenuesPage({ showToast }) {
               style={{ marginTop: '1rem' }}
               onClick={() => {
                 setSelectedBranch('All');
+                setProvinceFilter('All');
                 setSearchQuery('');
                 setStatusFilter('All');
                 setCapacityFilter('All');
@@ -425,9 +435,14 @@ export default function VenuesPage({ showToast }) {
                   <div className="venue-card-content">
                     {/* Branch Label & Rental Price Row */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem', flexWrap: 'wrap', gap: '0.4rem' }}>
-                      <div className="venue-branch-tag" style={{ margin: 0 }}>
-                        <i className={`fa-solid ${branchMeta?.icon || 'fa-building'}`}></i>
-                        <span>{branchMeta?.shortName || venueBranchName}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                        <div className="venue-branch-tag" style={{ margin: 0 }}>
+                          <i className={`fa-solid ${branchMeta?.icon || 'fa-building'}`}></i>
+                          <span>{branchMeta?.shortName || venueBranchName}</span>
+                        </div>
+                        <span style={{ fontSize: '0.74rem', fontWeight: '700', color: '#0052cc', background: '#eff6ff', border: '1px solid #dbeafe', padding: '2px 7px', borderRadius: '6px' }}>
+                          📍 {getSpaceProvince(v)}
+                        </span>
                       </div>
                       <span className="venue-card-price-tag">
                         <i className="fa-solid fa-tag"></i> {v.rentalPrice || (v.pricePerHour ? `Rs. ${v.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr')}

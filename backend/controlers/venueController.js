@@ -13,7 +13,7 @@ const getVenues = async (req, res) => {
 // POST /api/venues (Create new venue)
 const createVenue = async (req, res) => {
   try {
-    const { name, branch, city, address, capacity, rentalPrice, pricePerHour, status, coverImage, amenities, description } = req.body;
+    const { name, branch, city, province, address, capacity, rentalPrice, pricePerHour, status, coverImage, amenities, description } = req.body;
 
     if (!name || !address || !capacity) {
       return res.status(400).json({ success: false, message: "Please provide Venue Name, Address, and Capacity." });
@@ -26,6 +26,7 @@ const createVenue = async (req, res) => {
       name,
       branch: branch || "TRACE Expert City (Colombo)",
       city: city || "Colombo, Sri Lanka",
+      province: province || "Western Province",
       address,
       capacity: Number(capacity),
       rentalPrice: formattedPrice,
@@ -46,7 +47,7 @@ const createVenue = async (req, res) => {
 // PUT /api/venues/:id (Update existing venue)
 const updateVenue = async (req, res) => {
   try {
-    const { name, branch, city, address, capacity, rentalPrice, pricePerHour, status, coverImage, amenities, description } = req.body;
+    const { name, branch, city, province, address, capacity, rentalPrice, pricePerHour, status, coverImage, amenities, description } = req.body;
 
     const numericPrice = pricePerHour !== undefined ? Number(pricePerHour) : undefined;
     const formattedPrice = rentalPrice || (numericPrice !== undefined ? `Rs. ${numericPrice.toLocaleString()} / hr` : undefined);
@@ -55,6 +56,7 @@ const updateVenue = async (req, res) => {
     if (name !== undefined) updateFields.name = name;
     if (branch !== undefined) updateFields.branch = branch;
     if (city !== undefined) updateFields.city = city;
+    if (province !== undefined) updateFields.province = province;
     if (address !== undefined) updateFields.address = address;
     if (capacity !== undefined) updateFields.capacity = Number(capacity);
     if (numericPrice !== undefined) updateFields.pricePerHour = numericPrice;
