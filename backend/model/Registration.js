@@ -44,6 +44,11 @@ const registrationSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    status: {
+      type: String,
+      enum: ["Confirmed", "Pending", "Cancelled"],
+      default: "Confirmed",
+    },
   },
   { timestamps: true }
 );

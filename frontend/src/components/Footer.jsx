@@ -14,9 +14,12 @@ export default function Footer({ setActiveTab }) {
       <div className="footer-container">
         {/* Brand & Summary Column */}
         <div className="footer-brand">
-          <h3 className="footer-logo">
-            TRACE <span className="logo-sub">Sri Lanka</span>
-          </h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.75rem' }}>
+            <img src="/TEN.png" alt="TEN Logo" style={{ height: '34px', width: 'auto', objectFit: 'contain' }} />
+            <h3 className="footer-logo" style={{ margin: 0 }}>
+              TEN
+            </h3>
+          </div>
           <p className="footer-desc">
             Sri Lanka’s premier technology & innovation hub. Fostering tech entrepreneurs, innovation events, and world-class developer communities.
           </p>

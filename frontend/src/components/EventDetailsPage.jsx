@@ -138,9 +138,9 @@ export default function EventDetailsPage({
       {/* Top Bar Header matching screenshot */}
       <header className="details-header">
         <div className="details-header-container">
-          <div className="brand-logo">
-            <span className="logo-icon">✶</span>
-            <span className="brand-title">TRACE Event Hub</span>
+          <div className="brand-logo" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <img src="/TEN.png" alt="TEN Logo" style={{ height: '32px', width: 'auto', objectFit: 'contain' }} />
+            <span className="logo-text" style={{ fontSize: '1.2rem' }}>TEN</span>
           </div>
           <button className="btn-back-link" onClick={onBack}>
             <i className="fa-solid fa-arrow-left"></i> Back to Events

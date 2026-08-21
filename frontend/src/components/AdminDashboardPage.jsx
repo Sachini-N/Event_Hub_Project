@@ -451,8 +451,8 @@ export default function AdminDashboardPage({
   const upcomingCount = upcomingEvents.length;
   const pastEvents = events.filter((e) => e.status === 'past');
   const pastCount = pastEvents.length;
-  const totalRegsCount = registrations.length || 1284;
-  const confirmedRegsCount = registrations.filter((r) => r.status === 'Confirmed').length || 1150;
+  const totalRegsCount = registrations.length;
+  const confirmedRegsCount = registrations.filter((r) => (r.status || 'Confirmed') === 'Confirmed').length;
 
   // Filter Events logic for Manage Events Page
   const displayedEvents = events.filter((evt) => {
@@ -726,15 +726,14 @@ export default function AdminDashboardPage({
                             currentStatus === 'Confirmed'
                               ? 'confirmed'
                               : currentStatus === 'Pending'
-                              ? 'pending'
-                              : 'cancelled';
+                                ? 'pending'
+                                : 'cancelled';
 
                           return (
                             <tr
                               key={reg._id}
-                              className={`reg-row-clickable ${
-                                selectedReg?._id === reg._id ? 'selected-row' : ''
-                              }`}
+                              className={`reg-row-clickable ${selectedReg?._id === reg._id ? 'selected-row' : ''
+                                }`}
                               onClick={() => setSelectedReg(reg)}
                             >
                               <td>
@@ -1695,9 +1694,8 @@ export default function AdminDashboardPage({
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                 <div className="progress-bar-track" style={{ width: '80px', height: '6px' }}>
                                   <div
-                                    className={`progress-fill ${
-                                      evt.status === 'upcoming' ? 'fill-blue' : 'fill-slate'
-                                    }`}
+                                    className={`progress-fill ${evt.status === 'upcoming' ? 'fill-blue' : 'fill-slate'
+                                      }`}
                                     style={{
                                       width: `${Math.min(
                                         100,
@@ -1713,9 +1711,8 @@ export default function AdminDashboardPage({
                             </td>
                             <td>
                               <span
-                                className={`status-pill ${
-                                  evt.status === 'upcoming' ? 'active' : 'draft'
-                                }`}
+                                className={`status-pill ${evt.status === 'upcoming' ? 'active' : 'draft'
+                                  }`}
                               >
                                 {evt.status === 'upcoming' ? 'Upcoming' : 'Past'}
                               </span>
@@ -2024,11 +2021,11 @@ export default function AdminDashboardPage({
                             <span className="cell-date-text">
                               {reg.createdAt
                                 ? new Date(reg.createdAt).toLocaleDateString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  })
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })
                                 : 'Today, 08:30 AM'}
                             </span>
                           </td>
@@ -2114,13 +2111,12 @@ export default function AdminDashboardPage({
                 ) : (
                   <div className="current-status-value">
                     <span
-                      className={`status-indicator-dot ${
-                        editingRegStatus === 'Confirmed'
+                      className={`status-indicator-dot ${editingRegStatus === 'Confirmed'
                           ? 'dot-confirmed'
                           : editingRegStatus === 'Pending'
-                          ? 'dot-pending'
-                          : 'dot-cancelled'
-                      }`}
+                            ? 'dot-pending'
+                            : 'dot-cancelled'
+                        }`}
                     ></span>
                     <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>{editingRegStatus}</strong>
                   </div>
@@ -2141,12 +2137,12 @@ export default function AdminDashboardPage({
                   <div className="info-val-muted">
                     {selectedReg.createdAt
                       ? new Date(selectedReg.createdAt).toLocaleString('en-US', {
-                          month: 'long',
-                          day: 'numeric',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
                       : 'October 24, 2023 at 10:45 AM'}
                   </div>
                 </div>
