@@ -234,6 +234,10 @@ export default function App() {
               fetchEvents();
             }}
             onOpenMyEvents={() => setActiveTab('my-events')}
+            onOpenCalendar={() => {
+              setActiveTab('calendar');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
             showToast={showToast}
           />
         )}
@@ -242,6 +246,10 @@ export default function App() {
           <MyEventsPage
             currentUser={currentUser}
             onViewEvent={openEventDetails}
+            onOpenCalendar={() => {
+              setActiveTab('calendar');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
             showToast={showToast}
             openLoginModal={() => setShowLogin(true)}
           />

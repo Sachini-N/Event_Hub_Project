@@ -19,7 +19,7 @@ export default function Navbar({
         <div className="brand" onClick={scrollToHero} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
           <span className="logo-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
             <img src="/trace-logo.png" alt="TRACE" className="trace-logo-img" />
-            <span className="logo-tracker-sub">Event Tracker</span>
+            <span className="logo-tracker-sub">Spaces Tracker</span>
           </span>
         </div>
 
@@ -49,7 +49,7 @@ export default function Navbar({
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           >
-            Venues
+            Spaces
           </button>
           {currentUser && !(currentUser?.isAdmin || currentUser?.role === 'admin' || currentUser?.email === 'admin@trace.lk') && (
             <>

@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function AddVenueModal({
   isOpen,
   onClose,
   onVenueCreated,
+  onVenueUpdated,
+  editingVenue,
   showToast,
 }) {
   const [name, setName] = useState('');
@@ -16,6 +18,33 @@ export default function AddVenueModal({
   const [amenities, setAmenities] = useState('High-Speed WiFi, 4K Projectors, Air Conditioned, Sound System');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (editingVenue) {
+      setName(editingVenue.name || '');
+      setBranch(editingVenue.branch || 'TRACE Expert City (Colombo)');
+      setAddress(editingVenue.address || '');
+      setCapacity(editingVenue.capacity ? String(editingVenue.capacity) : '150');
+      const numPrice = editingVenue.pricePerHour 
+        ? String(editingVenue.pricePerHour) 
+        : (editingVenue.rentalPrice ? String(editingVenue.rentalPrice).replace(/[^0-9]/g, '') : '25000');
+      setPricePerHour(numPrice || '25000');
+      setStatus(editingVenue.status || 'Available');
+      setCoverImage(editingVenue.coverImage || 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80');
+      setAmenities(Array.isArray(editingVenue.amenities) ? editingVenue.amenities.join(', ') : (editingVenue.amenities || ''));
+      setDescription(editingVenue.description || '');
+    } else {
+      setName('');
+      setBranch('TRACE Expert City (Colombo)');
+      setAddress('');
+      setCapacity('150');
+      setPricePerHour('25000');
+      setStatus('Available');
+      setCoverImage('https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80');
+      setAmenities('High-Speed WiFi, 4K Projectors, Air Conditioned, Sound System');
+      setDescription('');
+    }
+  }, [editingVenue, isOpen]);
 
   if (!isOpen) return null;
 
@@ -38,9 +67,14 @@ export default function AddVenueModal({
     const numPrice = Number(pricePerHour) || 25000;
     const formattedRentalPrice = `Rs. ${numPrice.toLocaleString()} / hr`;
 
+    const isEdit = Boolean(editingVenue);
+    const venueId = editingVenue?._id || editingVenue?.id;
+    const url = isEdit ? `/api/venues/${venueId}` : '/api/venues';
+    const method = isEdit ? 'PUT' : 'POST';
+
     try {
-      const response = await fetch('/api/venues', {
-        method: 'POST',
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
@@ -59,22 +93,17 @@ export default function AddVenueModal({
       const result = await response.json();
 
       if (result.success) {
-        if (showToast) showToast(`Venue "${name}" added successfully!`, 'success');
-        if (onVenueCreated) onVenueCreated(result.data);
+        const msg = isEdit ? `Venue "${name}" updated successfully!` : `Venue "${name}" added successfully!`;
+        if (showToast) showToast(msg, 'success');
+        if (isEdit && onVenueUpdated) onVenueUpdated(result.data);
+        else if (onVenueCreated) onVenueCreated(result.data);
         onClose();
-        // Reset form
-        setName('');
-        setBranch('TRACE Expert City (Colombo)');
-        setAddress('');
-        setCapacity('150');
-        setPricePerHour('25000');
-        setDescription('');
       } else {
-        if (showToast) showToast(result.message || 'Failed to add venue', 'error');
+        if (showToast) showToast(result.message || 'Failed to save venue', 'error');
       }
     } catch (err) {
-      console.error('Error adding venue:', err);
-      if (showToast) showToast('Network error while adding venue', 'error');
+      console.error('Error saving venue:', err);
+      if (showToast) showToast('Network error while saving venue', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -88,8 +117,10 @@ export default function AddVenueModal({
         </button>
 
         <div className="modal-header">
-          <h2>Add New Venue</h2>
-          <p className="modal-sub">Create a new hall, auditorium, or event facility space.</p>
+          <h2>{editingVenue ? 'Edit Space Facility' : 'Add New Space'}</h2>
+          <p className="modal-sub">
+            {editingVenue ? 'Modify details, capacity, rental price, and amenities for this space.' : 'Create a new hall, auditorium, or event facility space.'}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -235,7 +266,13 @@ export default function AddVenueModal({
               Cancel
             </button>
             <button type="submit" className="btn btn-primary" disabled={submitting}>
-              {submitting ? 'Creating...' : 'Save Venue'}
+              {submitting
+                ? editingVenue
+                  ? 'Updating...'
+                  : 'Creating...'
+                : editingVenue
+                ? 'Update Venue'
+                : 'Save Venue'}
             </button>
           </div>
         </form>

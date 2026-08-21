@@ -17,7 +17,7 @@ export default function Footer({ setActiveTab }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.75rem' }}>
             <h3 className="footer-logo" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
               <img src="/trace-logo.png" alt="TRACE" className="trace-logo-img" />
-              <span className="logo-tracker-sub">Event Tracker</span>
+              <span className="logo-tracker-sub">Spaces Tracker</span>
             </h3>
           </div>
           <p className="footer-desc">
@@ -52,7 +52,7 @@ export default function Footer({ setActiveTab }) {
               <a href="#past" onClick={(e) => handleNavClick('past', e)}>Past Events Archive</a>
             </li>
             <li>
-              <a href="#venues" onClick={(e) => handleNavClick('venues', e)}>Explore Venues</a>
+              <a href="#venues" onClick={(e) => handleNavClick('venues', e)}>Explore Spaces</a>
             </li>
             <li>
               <a href="#admin" onClick={(e) => handleNavClick('admin', e)}>Admin Portal</a>

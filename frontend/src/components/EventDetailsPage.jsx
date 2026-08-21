@@ -6,6 +6,7 @@ export default function EventDetailsPage({
   currentUser,
   onRegistrationSuccess,
   onOpenMyEvents,
+  onOpenCalendar,
   showToast,
 }) {
   const [name, setName] = useState('');
@@ -140,7 +141,7 @@ export default function EventDetailsPage({
         <div className="details-header-container">
           <div className="brand-logo" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <img src="/trace-logo.png" alt="TRACE" className="trace-logo-img" />
-            <span className="logo-tracker-sub">Event Tracker</span>
+            <span className="logo-tracker-sub">Spaces Tracker</span>
           </div>
           <button className="btn-back-link" onClick={onBack}>
             <i className="fa-solid fa-arrow-left"></i> Back to Events
@@ -191,7 +192,12 @@ export default function EventDetailsPage({
 
                 {/* Action Buttons Row matching screenshot */}
                 <div className="success-actions-row">
-                  <button className="btn-add-calendar-blue" onClick={downloadIcs}>
+                  <button
+                    className="btn-add-calendar-blue"
+                    onClick={() => {
+                      if (onOpenCalendar) onOpenCalendar();
+                    }}
+                  >
                     <i className="fa-regular fa-calendar-plus"></i> Add to Calendar
                   </button>
                   <button className="btn-view-my-events-outline" onClick={onOpenMyEvents}>

@@ -43,6 +43,41 @@ const createVenue = async (req, res) => {
   }
 };
 
+// PUT /api/venues/:id (Update existing venue)
+const updateVenue = async (req, res) => {
+  try {
+    const { name, branch, city, address, capacity, rentalPrice, pricePerHour, status, coverImage, amenities, description } = req.body;
+
+    const numericPrice = pricePerHour !== undefined ? Number(pricePerHour) : undefined;
+    const formattedPrice = rentalPrice || (numericPrice !== undefined ? `Rs. ${numericPrice.toLocaleString()} / hr` : undefined);
+
+    const updateFields = {};
+    if (name !== undefined) updateFields.name = name;
+    if (branch !== undefined) updateFields.branch = branch;
+    if (city !== undefined) updateFields.city = city;
+    if (address !== undefined) updateFields.address = address;
+    if (capacity !== undefined) updateFields.capacity = Number(capacity);
+    if (numericPrice !== undefined) updateFields.pricePerHour = numericPrice;
+    if (formattedPrice !== undefined) updateFields.rentalPrice = formattedPrice;
+    if (status !== undefined) updateFields.status = status;
+    if (coverImage !== undefined) updateFields.coverImage = coverImage;
+    if (amenities !== undefined) {
+      updateFields.amenities = Array.isArray(amenities)
+        ? amenities
+        : amenities.split(",").map(a => a.trim()).filter(Boolean);
+    }
+    if (description !== undefined) updateFields.description = description;
+
+    const venue = await Venue.findByIdAndUpdate(req.params.id, updateFields, { new: true, runValidators: true });
+    if (!venue) {
+      return res.status(404).json({ success: false, message: "Venue not found" });
+    }
+    res.json({ success: true, message: "Venue updated successfully!", data: venue });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to update venue", error: error.message });
+  }
+};
+
 // DELETE /api/venues/:id (Delete venue)
 const deleteVenue = async (req, res) => {
   try {
@@ -200,6 +235,7 @@ const seedInitialVenues = async () => {
 module.exports = {
   getVenues,
   createVenue,
+  updateVenue,
   deleteVenue,
   seedInitialVenues,
 };

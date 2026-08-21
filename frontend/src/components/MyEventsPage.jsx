@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 export default function MyEventsPage({
   currentUser,
   onViewEvent,
+  onOpenCalendar,
   showToast,
   openLoginModal,
 }) {
@@ -240,7 +241,9 @@ export default function MyEventsPage({
                     </button>
                     <button
                       className="btn-my-add-calendar"
-                      onClick={() => downloadIcs(item)}
+                      onClick={() => {
+                        if (onOpenCalendar) onOpenCalendar();
+                      }}
                     >
                       Add to Calendar
                     </button>

@@ -9,8 +9,8 @@
   --primary-blue-hover: #003d99;
   --primary-navy: #0f172a;
 
-  --teal-accent: #0d9488;
-  --teal-hover: #0f766e;
+  --teal-accent: #1e3a8a;
+  --teal-hover: #1e40af;
 
   --text-primary: #0f172a;
   --text-secondary: #475569;
@@ -1685,7 +1685,7 @@ textarea:focus {
 
 .btn-register-solid {
   flex: 1;
-  background-color: #0d9488;
+  background-color: #1e3a8a;
   color: #ffffff;
   border: none;
   border-radius: 6px;
@@ -1698,7 +1698,7 @@ textarea:focus {
 }
 
 .btn-register-solid:hover {
-  background-color: #0f766e;
+  background-color: #1e40af;
 }
 
 .btn-registered-disabled {

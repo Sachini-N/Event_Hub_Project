@@ -218,9 +218,9 @@ export default function VenuesPage({ showToast }) {
       <div className="section-container" style={{ paddingTop: '2.5rem', paddingBottom: '4rem' }}>
         {/* Page Title & Subtitle Header */}
         <div className="page-header" style={{ marginBottom: '2rem' }}>
-          <h1 className="page-title">Venues & Event Spaces</h1>
+          <h1 className="page-title">Spaces & Facilities</h1>
           <p className="page-subtitle">
-            Explore world-class auditoriums, technology labs, and event spaces stationed across TRACE branches.
+            Explore world-class auditoriums, technology labs, and facilities stationed across TRACE branches.
           </p>
         </div>
 
@@ -233,7 +233,7 @@ export default function VenuesPage({ showToast }) {
                 Select TRACE Branch
               </h2>
               <p className="branch-filter-subtitle">
-                Switch between TRACE branches to view available spaces & venues in each location
+                Switch between TRACE branches to view available spaces in each location
               </p>
             </div>
             {selectedBranch !== 'All' && (

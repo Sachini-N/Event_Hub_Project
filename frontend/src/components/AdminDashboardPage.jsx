@@ -38,6 +38,7 @@ export default function AdminDashboardPage({
 
   // Event Edit Modal State
   const [editingEvent, setEditingEvent] = useState(null);
+  const [editingVenue, setEditingVenue] = useState(null);
 
   // Registered Users State
   const [registeredUsers, setRegisteredUsers] = useState([]);
@@ -539,7 +540,7 @@ export default function AdminDashboardPage({
             className={`admin-nav-item ${activeMenu === 'venues' ? 'active' : ''}`}
             onClick={() => setActiveMenu('venues')}
           >
-            <i className="fa-solid fa-location-dot"></i> Venues
+            <i className="fa-solid fa-location-dot"></i> Spaces
           </button>
           <button
             className={`admin-nav-item ${activeMenu === 'settings' ? 'active' : ''}`}
@@ -584,7 +585,7 @@ export default function AdminDashboardPage({
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <img src="/trace-logo.png" alt="TRACE" className="trace-logo-img" />
-              <span className="logo-tracker-sub">Event Tracker</span>
+              <span className="logo-tracker-sub">Spaces Tracker</span>
             </div>
           </div>
 
@@ -789,7 +790,7 @@ export default function AdminDashboardPage({
                 <div>
                   <h1 className="admin-page-title">Registered App Members</h1>
                   <p style={{ fontSize: '0.95rem', color: '#64748b', marginTop: '0.2rem' }}>
-                    View and manage user accounts registered on TRACE Tracker.
+                    View and manage user accounts registered on TRACE Spaces Tracker.
                   </p>
                 </div>
               </div>
@@ -951,7 +952,7 @@ export default function AdminDashboardPage({
             <div className="manage-venues-container">
               <div className="admin-dashboard-title-row">
                 <div>
-                  <h1 className="admin-page-title">Venues & Facilities</h1>
+                  <h1 className="admin-page-title">Spaces & Facilities</h1>
                   <p style={{ fontSize: '0.95rem', color: '#64748b', marginTop: '0.2rem' }}>
                     Manage event spaces, seating capacity, and hall reservations.
                   </p>
@@ -960,7 +961,7 @@ export default function AdminDashboardPage({
                   className="btn-create-event-blue"
                   onClick={() => setShowAddVenueModal(true)}
                 >
-                  <i className="fa-solid fa-plus"></i> Add New Venue
+                  <i className="fa-solid fa-plus"></i> Add New Space
                 </button>
               </div>
 
@@ -1007,6 +1008,14 @@ export default function AdminDashboardPage({
                             onClick={() => showToast && showToast(`Booking schedule checked for "${v.name}"`, 'info')}
                           >
                             Check Schedule
+                          </button>
+                          <button
+                            className="btn-my-view-event"
+                            style={{ fontSize: '0.8rem', padding: '6px 14px', background: '#eff6ff', color: '#0052cc', border: '1px solid #bfdbfe' }}
+                            onClick={() => setEditingVenue(v)}
+                            title="Edit Venue Facility"
+                          >
+                            <i className="fa-regular fa-pen-to-square" style={{ marginRight: '4px' }}></i> Edit Facility
                           </button>
                           <button
                             className="icon-btn-action danger"
@@ -2317,12 +2326,24 @@ export default function AdminDashboardPage({
         showToast={showToast}
       />
 
-      {/* Add Venue Modal */}
+      {/* Add / Edit Venue Modal */}
       <AddVenueModal
-        isOpen={showAddVenueModal}
-        onClose={() => setShowAddVenueModal(false)}
+        isOpen={showAddVenueModal || Boolean(editingVenue)}
+        onClose={() => {
+          setShowAddVenueModal(false);
+          setEditingVenue(null);
+        }}
+        editingVenue={editingVenue}
         onVenueCreated={(newVenue) => {
-          setVenues([newVenue, ...venues]);
+          setVenues((prev) => [newVenue, ...prev]);
+          fetchDashboardData();
+        }}
+        onVenueUpdated={(updatedVenue) => {
+          setVenues((prev) =>
+            prev.map((v) =>
+              (v._id || v.id) === (updatedVenue._id || updatedVenue.id) ? updatedVenue : v
+            )
+          );
           fetchDashboardData();
         }}
         showToast={showToast}
