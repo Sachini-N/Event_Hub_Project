@@ -39,49 +39,8 @@ export default function AdminDashboardPage({
   // Event Edit Modal State
   const [editingEvent, setEditingEvent] = useState(null);
 
-  // Speakers State
-  const [speakers, setSpeakers] = useState([
-    {
-      id: 1,
-      name: 'Dr. Aris Thorne',
-      role: 'Chief AI Architect',
-      organization: 'TRACE AI Research',
-      email: 'aris.thorne@trace.lk',
-      eventsCount: 4,
-      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80',
-      bio: 'Leading researcher in AI systems, multi-agent frameworks, and scalable machine learning infrastructure.',
-    },
-    {
-      id: 2,
-      name: 'Elena Rostova',
-      role: 'Cloud & DevOps Lead',
-      organization: 'CloudScale Asia',
-      email: 'elena.r@cloudscale.io',
-      eventsCount: 3,
-      avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=300&q=80',
-      bio: 'Specialist in cloud-native microservices, Kubernetes orchestration, and high-availability enterprise clusters.',
-    },
-    {
-      id: 3,
-      name: 'Kavinda Perera',
-      role: 'Ecosystem Partner',
-      organization: 'TRACE Sri Lanka',
-      email: 'kavinda.p@trace.lk',
-      eventsCount: 6,
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
-      bio: 'Fostering tech ecosystem growth, venture incubation, and industry-university collaborative innovation.',
-    },
-    {
-      id: 4,
-      name: 'Amaya Silva',
-      role: 'Lead Tech Strategist',
-      organization: 'Innovation Hub',
-      email: 'amaya.s@innovate.lk',
-      eventsCount: 2,
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80',
-      bio: 'Guiding digital transformation strategies for tech startups and enterprise innovation leaders in Sri Lanka.',
-    },
-  ]);
+  // Registered Users State
+  const [registeredUsers, setRegisteredUsers] = useState([]);
 
   // Venues State
   const [venues, setVenues] = useState([
@@ -168,6 +127,13 @@ export default function AdminDashboardPage({
       const bookingsData = await bookingsRes.json();
       if (bookingsData.success) {
         setVenueBookings(bookingsData.data || []);
+      }
+
+      // 5. Fetch Registered Users
+      const usersRes = await fetch('/api/auth/users');
+      const usersData = await usersRes.json();
+      if (usersData.success) {
+        setRegisteredUsers(usersData.data || []);
       }
     } catch (err) {
       console.error('Error loading admin dashboard data:', err);
@@ -554,10 +520,10 @@ export default function AdminDashboardPage({
             <i className="fa-solid fa-users-gear"></i> Registrations
           </button>
           <button
-            className={`admin-nav-item ${activeMenu === 'speakers' ? 'active' : ''}`}
-            onClick={() => setActiveMenu('speakers')}
+            className={`admin-nav-item ${activeMenu === 'users' ? 'active' : ''}`}
+            onClick={() => setActiveMenu('users')}
           >
-            <i className="fa-solid fa-user-tie"></i> Speakers
+            <i className="fa-solid fa-users"></i> Registered Members
           </button>
           <button
             className={`admin-nav-item ${activeMenu === 'venues' ? 'active' : ''}`}
@@ -793,82 +759,168 @@ export default function AdminDashboardPage({
                 </div>
               </div>
             </div>
-          ) : activeMenu === 'speakers' ? (
-            /* VIEW: SPEAKERS DIRECTORY VIEW */
-            <div className="manage-speakers-container">
+          ) : activeMenu === 'users' ? (
+            /* VIEW: REGISTERED APP USERS DIRECTORY VIEW */
+            <div className="manage-registrations-container">
               <div className="admin-dashboard-title-row">
                 <div>
-                  <h1 className="admin-page-title">Speakers Directory</h1>
+                  <h1 className="admin-page-title">Registered App Members</h1>
                   <p style={{ fontSize: '0.95rem', color: '#64748b', marginTop: '0.2rem' }}>
-                    Manage event speakers, keynote presenters, and bio profiles.
+                    View and manage user accounts registered on TRACE Tracker.
                   </p>
                 </div>
-                <button
-                  className="btn-create-event-blue"
-                  onClick={() => {
-                    const name = prompt('Enter Speaker Name:');
-                    if (name) {
-                      const newSpk = {
-                        id: Date.now(),
-                        name,
-                        role: 'Keynote Speaker',
-                        organization: 'TRACE Tech Network',
-                        email: `${name.toLowerCase().replace(/\s+/g, '.')}@trace.lk`,
-                        eventsCount: 1,
-                        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0052cc&color=fff&size=100`,
-                        bio: 'Featured speaker on technology innovation and enterprise software development.',
-                      };
-                      setSpeakers([newSpk, ...speakers]);
-                      if (showToast) showToast(`Added speaker "${name}" successfully!`, 'success');
-                    }
-                  }}
-                >
-                  <i className="fa-solid fa-plus"></i> Add New Speaker
-                </button>
               </div>
 
-              {/* Speakers Cards Grid */}
-              <div className="speakers-grid-3col">
-                {speakers.map((spk) => (
-                  <div key={spk.id} className="speaker-card">
-                    <div>
-                      <div className="speaker-card-header">
-                        <img src={spk.avatar} alt={spk.name} className="speaker-avatar-img" />
-                        <div>
-                          <h3 className="speaker-info-title">{spk.name}</h3>
-                          <div className="speaker-info-role">{spk.role}</div>
-                          <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{spk.organization}</div>
-                        </div>
-                      </div>
-                      <p className="speaker-bio-text">{spk.bio}</p>
-                    </div>
-
-                    <div className="speaker-card-footer">
-                      <span><i className="fa-regular fa-calendar-check"></i> {spk.eventsCount} Events</span>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button
-                          className="icon-btn-action"
-                          title="Email Speaker"
-                          onClick={() => copyToClipboard(spk.email)}
-                        >
-                          <i className="fa-regular fa-envelope"></i>
-                        </button>
-                        <button
-                          className="icon-btn-action danger"
-                          title="Remove Speaker"
-                          onClick={() => {
-                            if (window.confirm(`Remove ${spk.name} from directory?`)) {
-                              setSpeakers(speakers.filter((s) => s.id !== spk.id));
-                              if (showToast) showToast(`Removed ${spk.name}`, 'info');
-                            }
-                          }}
-                        >
-                          <i className="fa-regular fa-trash-can"></i>
-                        </button>
-                      </div>
+              {/* Stats Row */}
+              <div className="reg-stats-grid" style={{ marginBottom: '1.5rem' }}>
+                <div className="stat-card">
+                  <div className="stat-info">
+                    <span className="stat-label">TOTAL REGISTERED MEMBERS</span>
+                    <div className="stat-value">{registeredUsers.length}</div>
+                    <div className="stat-trend positive">
+                      <i className="fa-solid fa-users"></i> App Members
                     </div>
                   </div>
-                ))}
+                  <div className="stat-icon-wrapper">
+                    <i className="fa-solid fa-user-check"></i>
+                  </div>
+                </div>
+
+                <div className="stat-card">
+                  <div className="stat-info">
+                    <span className="stat-label">ADMIN ACCOUNTS</span>
+                    <div className="stat-value">{registeredUsers.filter((u) => u.role === 'admin').length}</div>
+                    <div className="stat-trend positive-pill">System Administrators</div>
+                  </div>
+                  <div className="stat-icon-wrapper">
+                    <i className="fa-solid fa-user-shield"></i>
+                  </div>
+                </div>
+              </div>
+
+              {/* Users Data Table */}
+              <div className="admin-card-panel" style={{ padding: 0, overflow: 'hidden' }}>
+                <div className="table-responsive-wrapper">
+                  <table className="admin-data-table reg-table-interactive">
+                    <thead>
+                      <tr>
+                        <th>USER</th>
+                        <th>EMAIL</th>
+                        <th>CONTACT NUMBER</th>
+                        <th>ROLE</th>
+                        <th>REGISTERED DATE</th>
+                        <th style={{ textAlign: 'center' }}>ACTIONS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {registeredUsers.length === 0 ? (
+                        <tr>
+                          <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
+                            No registered user accounts found.
+                          </td>
+                        </tr>
+                      ) : (
+                        registeredUsers
+                          .filter((u) => {
+                            if (!searchQuery) return true;
+                            const q = searchQuery.toLowerCase();
+                            return (
+                              u.name.toLowerCase().includes(q) ||
+                              u.email.toLowerCase().includes(q) ||
+                              (u.contactNumber && u.contactNumber.includes(q))
+                            );
+                          })
+                          .map((u) => (
+                            <tr key={u._id || u.id}>
+                              <td>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                  <img
+                                    src={
+                                      u.avatar ||
+                                      `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=0052cc&color=fff&size=80`
+                                    }
+                                    alt={u.name}
+                                    style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
+                                  />
+                                  <strong style={{ color: '#0f172a' }}>{u.name}</strong>
+                                </div>
+                              </td>
+                              <td>
+                                <span style={{ color: '#0052cc', fontWeight: '500' }}>{u.email}</span>
+                              </td>
+                              <td>
+                                <span style={{ color: '#475569' }}>{u.contactNumber || 'N/A'}</span>
+                              </td>
+                              <td>
+                                <span
+                                  style={{
+                                    padding: '4px 12px',
+                                    borderRadius: '9999px',
+                                    fontSize: '0.78rem',
+                                    fontWeight: '700',
+                                    backgroundColor: u.role === 'admin' ? '#eff6ff' : '#f1f5f9',
+                                    color: u.role === 'admin' ? '#0052cc' : '#475569',
+                                    border: u.role === 'admin' ? '1px solid #bfdbfe' : '1px solid #cbd5e1',
+                                  }}
+                                >
+                                  {u.role === 'admin' ? '● Admin' : 'User'}
+                                </span>
+                              </td>
+                              <td>
+                                <span style={{ color: '#64748b', fontSize: '0.85rem' }}>
+                                  {u.createdAt
+                                    ? new Date(u.createdAt).toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric',
+                                      })
+                                    : 'N/A'}
+                                </span>
+                              </td>
+                              <td style={{ textAlign: 'center' }}>
+                                <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+                                  <button
+                                    className="icon-btn-action"
+                                    title="Copy Email"
+                                    onClick={() => copyToClipboard(u.email)}
+                                  >
+                                    <i className="fa-regular fa-envelope"></i>
+                                  </button>
+                                  <button
+                                    className="icon-btn-action danger"
+                                    title="Delete User"
+                                    onClick={async () => {
+                                      if (
+                                        window.confirm(
+                                          `Are you sure you want to delete user account "${u.name}" (${u.email})?`
+                                        )
+                                      ) {
+                                        try {
+                                          const res = await fetch(`/api/auth/users/${u._id}`, { method: 'DELETE' });
+                                          const data = await res.json();
+                                          if (data.success) {
+                                            setRegisteredUsers((prev) => prev.filter((item) => item._id !== u._id));
+                                            if (showToast) showToast(`Deleted user account ${u.email}`, 'success');
+                                          } else {
+                                            if (showToast) showToast(data.message || 'Failed to delete user', 'error');
+                                          }
+                                        } catch (err) {
+                                          console.error('Error deleting user:', err);
+                                          if (showToast) showToast('Network error deleting user', 'error');
+                                        }
+                                      }
+                                    }}
+                                  >
+                                    <i className="fa-regular fa-trash-can"></i>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           ) : activeMenu === 'venues' ? (
