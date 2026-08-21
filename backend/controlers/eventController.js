@@ -9,6 +9,7 @@ const seedInitialEvents = async () => {
 const getEvents = async (req, res) => {
   try {
     const now = new Date();
+    const Registration = require("../model/Registration");
 
     // Auto-update any non-draft events whose date has passed to 'past' in MongoDB
     await Event.updateMany(
@@ -22,7 +23,22 @@ const getEvents = async (req, res) => {
     if (category) filter.category = category;
 
     const events = await Event.find(filter).sort({ date: status === "past" ? -1 : 1 });
-    res.json({ success: true, count: events.length, data: events });
+
+    // Sync real registration counts from Registration collection
+    const eventsWithRealCounts = await Promise.all(
+      events.map(async (evt) => {
+        const actualRegCount = await Registration.countDocuments({
+          $or: [{ eventId: evt._id }, { eventTitle: evt.title }],
+        });
+        if (evt.registeredCount !== actualRegCount) {
+          evt.registeredCount = actualRegCount;
+          await evt.save();
+        }
+        return evt;
+      })
+    );
+
+    res.json({ success: true, count: eventsWithRealCounts.length, data: eventsWithRealCounts });
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to fetch events", error: error.message });
   }

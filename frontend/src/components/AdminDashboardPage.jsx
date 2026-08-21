@@ -478,9 +478,18 @@ export default function AdminDashboardPage({
   const pendingInquiriesCount = venueBookings.filter((b) => (b.status || 'Pending') === 'Pending').length;
   const contactedInquiriesCount = venueBookings.filter((b) => b.status === 'Contacted').length;
   const confirmedInquiriesCount = venueBookings.filter((b) => b.status === 'Confirmed').length;
-  const cancelledInquiriesCount = venueBookings.filter((b) => b.status === 'Cancelled').length;
-
   const isEventsView = activeMenu === 'events' || activeMenu === 'upcoming' || activeMenu === 'past';
+
+  // Get live registration count for an event dynamically
+  const getEventRegCount = (evt) => {
+    if (!evt) return 0;
+    const matchedRegs = registrations.filter(
+      (r) =>
+        (r.eventId && (r.eventId._id === evt._id || r.eventId === evt._id)) ||
+        (r.eventTitle && r.eventTitle === evt.title)
+    );
+    return Math.max(evt.registeredCount || 0, matchedRegs.length);
+  };
 
   return (
     <div className={`admin-dashboard-layout ${sidebarHidden ? 'sidebar-hidden' : ''}`}>
@@ -573,7 +582,10 @@ export default function AdminDashboardPage({
             >
               <i className="fa-solid fa-bars" style={{ fontSize: '1.15rem' }}></i>
             </button>
-            <span style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0052cc' }}>TRACE Tracker</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <img src="/trace-logo.png" alt="TRACE" className="trace-logo-img" />
+              <span className="logo-tracker-sub">Event Tracker</span>
+            </div>
           </div>
 
           <div className="admin-search-box">
@@ -1762,13 +1774,13 @@ export default function AdminDashboardPage({
                                     style={{
                                       width: `${Math.min(
                                         100,
-                                        ((evt.registeredCount || 0) / (evt.capacity || 100)) * 100
+                                        (getEventRegCount(evt) / (evt.capacity || 100)) * 100
                                       )}%`,
                                     }}
                                   ></div>
                                 </div>
                                 <span className="cell-reg-ratio" style={{ fontSize: '0.82rem' }}>
-                                  {evt.registeredCount || 0} / {evt.capacity || 100}
+                                  {getEventRegCount(evt)} / {evt.capacity || 100}
                                 </span>
                               </div>
                             </td>
@@ -1961,7 +1973,7 @@ export default function AdminDashboardPage({
                             </td>
                             <td>
                               <span className="cell-reg-ratio">
-                                {evt.registeredCount || 0} / {evt.capacity || 100}
+                                {getEventRegCount(evt)} / {evt.capacity || 100}
                               </span>
                             </td>
                             <td>

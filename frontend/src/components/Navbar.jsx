@@ -16,8 +16,11 @@ export default function Navbar({
   return (
     <header className="navbar">
       <div className="nav-container">
-        <div className="brand" onClick={scrollToHero} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-          <span className="logo-text">TRACE <span className="logo-tracker-sub">Tracker</span></span>
+        <div className="brand" onClick={scrollToHero} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+          <span className="logo-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <img src="/trace-logo.png" alt="TRACE" className="trace-logo-img" />
+            <span className="logo-tracker-sub">Event Tracker</span>
+          </span>
         </div>
 
         <nav className="nav-links">

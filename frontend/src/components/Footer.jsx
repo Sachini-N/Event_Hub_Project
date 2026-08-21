@@ -15,8 +15,9 @@ export default function Footer({ setActiveTab }) {
         {/* Brand & Summary Column */}
         <div className="footer-brand">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.75rem' }}>
-            <h3 className="footer-logo" style={{ margin: 0 }}>
-              TRACE <span className="logo-tracker-sub">Tracker</span>
+            <h3 className="footer-logo" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <img src="/trace-logo.png" alt="TRACE" className="trace-logo-img" />
+              <span className="logo-tracker-sub">Event Tracker</span>
             </h3>
           </div>
           <p className="footer-desc">
