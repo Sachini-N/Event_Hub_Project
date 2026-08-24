@@ -16,6 +16,7 @@ export default function EditEventModal({
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [coverImage, setCoverImage] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
   const [gallery, setGallery] = useState([]);
   const [newPhotoCaption, setNewPhotoCaption] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -35,6 +36,7 @@ export default function EditEventModal({
       setLocation(event.location || '');
       setDescription(event.description || '');
       setCoverImage(event.coverImage || '');
+      setVideoUrl(event.videoUrl || '');
       setGallery(event.gallery || []);
     }
   }, [event, isOpen]);
@@ -106,6 +108,7 @@ export default function EditEventModal({
           location,
           description,
           coverImage,
+          videoUrl: videoUrl.trim(),
           gallery,
         }),
       });
@@ -269,6 +272,21 @@ export default function EditEventModal({
                 onChange={handleCoverUpload}
               />
             </div>
+          </div>
+
+          {/* YouTube Video Link Field */}
+          <div className="form-group">
+            <label htmlFor="edit-video-url" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <i className="fa-brands fa-youtube" style={{ color: '#ff0000', fontSize: '1.1rem' }}></i>
+              YouTube Video Link / Keynote Recording URL
+            </label>
+            <input
+              type="url"
+              id="edit-video-url"
+              placeholder="e.g. https://www.youtube.com/watch?v=..."
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+            />
           </div>
 
           {/* Past Event Photo Gallery Section */}

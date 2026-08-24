@@ -293,7 +293,6 @@ export default function PastEventsSection({
                   {card1.category || 'Past Event'}
                 </span>
                 <h3 className="past-card-title">{card1.title}</h3>
-                <p className="past-card-text">{card1.description || card1.shortDescription}</p>
                 <button
                   className="btn btn-outline-light"
                   onClick={(e) => {

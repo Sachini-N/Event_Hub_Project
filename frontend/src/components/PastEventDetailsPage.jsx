@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function PastEventDetailsPage({
   event,
@@ -6,6 +6,14 @@ export default function PastEventDetailsPage({
   showToast,
   onOpenGalleryLightbox,
 }) {
+  const [isPlayingVideo, setIsPlayingVideo] = useState(false);
+
+  const getYouTubeEmbedUrl = (url) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}?autoplay=1` : null;
+  };
   // Default fallback data if event object is partial or missing
   const pastEvent = event || {
     _id: 'default-past-1',
@@ -135,24 +143,45 @@ export default function PastEventDetailsPage({
               <h2 className="past-card-heading">
                 <i className="fa-solid fa-circle-play"></i> Keynote Recording & Media Session
               </h2>
-              <div className="video-player-container">
-                <img
-                  src={pastEvent.coverImage}
-                  alt="Keynote Recording Thumbnail"
-                  className="video-thumbnail"
-                />
-                <div className="video-play-overlay">
-                  <div
-                    className="video-play-btn"
-                    onClick={() => {
-                      if (showToast) showToast('Opening Keynote Recording Video...', 'info');
-                      window.open(pastEvent.videoUrl || 'https://www.youtube.com', '_blank');
-                    }}
-                  >
-                    <i className="fa-solid fa-play"></i>
-                  </div>
-                  <span className="video-label">Watch Full Keynote & Winner Presentation</span>
-                </div>
+              <div className="video-player-container" style={{ position: 'relative', overflow: 'hidden', borderRadius: '12px', minHeight: '320px' }}>
+                {isPlayingVideo && getYouTubeEmbedUrl(pastEvent.videoUrl) ? (
+                  <iframe
+                    src={getYouTubeEmbedUrl(pastEvent.videoUrl)}
+                    title={`${pastEvent.title} Keynote Recording`}
+                    style={{ width: '100%', height: '320px', border: 0, borderRadius: '12px' }}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
+                ) : (
+                  <>
+                    <img
+                      src={pastEvent.coverImage}
+                      alt="Keynote Recording Thumbnail"
+                      className="video-thumbnail"
+                    />
+                    <div className="video-play-overlay">
+                      <div
+                        className="video-play-btn"
+                        onClick={() => {
+                          const embedUrl = getYouTubeEmbedUrl(pastEvent.videoUrl);
+                          if (embedUrl) {
+                            setIsPlayingVideo(true);
+                            if (showToast) showToast('Playing Keynote Recording Video...', 'info');
+                          } else if (pastEvent.videoUrl) {
+                            if (showToast) showToast('Opening Keynote Recording Video...', 'info');
+                            window.open(pastEvent.videoUrl, '_blank');
+                          } else {
+                            if (showToast) showToast('Opening YouTube Keynote Video...', 'info');
+                            window.open('https://www.youtube.com', '_blank');
+                          }
+                        }}
+                      >
+                        <i className="fa-solid fa-play"></i>
+                      </div>
+                      <span className="video-label">Watch Full Keynote & Winner Presentation</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 

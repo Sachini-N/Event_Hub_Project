@@ -20,6 +20,7 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
 
   const [coverImage, setCoverImage] = useState('');
   const [coverFileName, setCoverFileName] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
   const [enableRegistration, setEnableRegistration] = useState(true);
   const [capacity, setCapacity] = useState(100);
   const [deadline, setDeadline] = useState('');
@@ -131,6 +132,7 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
       coverImage:
         coverImage ||
         'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
+      videoUrl: videoUrl.trim(),
       speaker: speakerName.trim()
         ? {
             name: speakerName.trim(),
@@ -479,6 +481,24 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
                 style={{ display: 'none' }}
                 onChange={handleImageFile}
               />
+            </div>
+
+            {/* YouTube Video Link Input */}
+            <div className="profile-form-group" style={{ marginBottom: '1.5rem' }}>
+              <label htmlFor="evt-video-url" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <i className="fa-brands fa-youtube" style={{ color: '#ff0000', fontSize: '1.1rem' }}></i>
+                YouTube Video Link / Keynote Recording
+              </label>
+              <input
+                type="url"
+                id="evt-video-url"
+                placeholder="https://www.youtube.com/watch?v=..."
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+              />
+              <span className="char-count" style={{ display: 'block', marginTop: '0.25rem', fontSize: '0.78rem', color: '#64748b' }}>
+                Paste YouTube video URL to display in Keynote Recording section
+              </span>
             </div>
 
             {/* Enable Registration Toggle Switch */}
