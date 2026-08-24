@@ -530,35 +530,43 @@ export default function VenuesPage({ showToast }) {
             <div className="venue-modal-body">
               {/* Venue Quick Specs */}
               <div className="venue-specs-grid">
-                <div className="spec-box">
-                  <i className="fa-solid fa-users spec-icon"></i>
-                  <div>
+                <div className="spec-box spec-capacity">
+                  <div className="spec-icon-wrapper">
+                    <i className="fa-solid fa-users"></i>
+                  </div>
+                  <div className="spec-info">
                     <span className="spec-label">Capacity</span>
                     <strong className="spec-val">{activeVenueModal.capacity} Guests</strong>
                   </div>
                 </div>
 
-                <div className="spec-box">
-                  <i className="fa-solid fa-circle-check spec-icon" style={{ color: '#16a34a' }}></i>
-                  <div>
+                <div className="spec-box spec-status">
+                  <div className="spec-icon-wrapper">
+                    <i className="fa-solid fa-circle-check"></i>
+                  </div>
+                  <div className="spec-info">
                     <span className="spec-label">Status</span>
                     <strong className="spec-val">{activeVenueModal.status || 'Available'}</strong>
                   </div>
                 </div>
 
-                <div className="spec-box">
-                  <i className="fa-solid fa-location-dot spec-icon" style={{ color: '#e11d48' }}></i>
-                  <div>
+                <div className="spec-box spec-city">
+                  <div className="spec-icon-wrapper">
+                    <i className="fa-solid fa-location-dot"></i>
+                  </div>
+                  <div className="spec-info">
                     <span className="spec-label">City</span>
                     <strong className="spec-val">{activeVenueModal.city || 'Colombo, Sri Lanka'}</strong>
                   </div>
                 </div>
 
-                <div className="spec-box">
-                  <i className="fa-solid fa-tag spec-icon" style={{ color: '#059669' }}></i>
-                  <div>
+                <div className="spec-box spec-price">
+                  <div className="spec-icon-wrapper">
+                    <i className="fa-solid fa-tag"></i>
+                  </div>
+                  <div className="spec-info">
                     <span className="spec-label">Rental Price</span>
-                    <strong className="spec-val" style={{ color: '#059669' }}>
+                    <strong className="spec-val">
                       {activeVenueModal.rentalPrice || (activeVenueModal.pricePerHour ? `Rs. ${activeVenueModal.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr')}
                     </strong>
                   </div>

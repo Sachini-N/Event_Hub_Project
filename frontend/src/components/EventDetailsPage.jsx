@@ -259,24 +259,11 @@ export default function EventDetailsPage({
                 </div>
 
                 <div className="event-info-box">
-                  {/* Category Badge, Registered Members Card & Seats Remaining Pill */}
+                  {/* Category Badge & Seats Remaining Pill */}
                   <div className="details-tags-row" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
                     <span className="event-category-badge">
                       {(event.category || 'WORKSHOP').toUpperCase()}
                     </span>
-
-                    {/* Registered Members Card */}
-                    <div className="registered-members-card">
-                      <div className="registered-members-icon-box">
-                        <i className="fa-solid fa-users"></i>
-                      </div>
-                      <div className="registered-members-info">
-                        <span className="registered-members-title">Registered Members</span>
-                        <span className="registered-members-count">
-                          {event.registeredCount || 0} Members Registered
-                        </span>
-                      </div>
-                    </div>
 
                     <span className="seats-left-pill">
                       <i className="fa-solid fa-chair"></i>{' '}
@@ -325,14 +312,14 @@ export default function EventDetailsPage({
                       title="Click to view location pin on Google Maps"
                       style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
                     >
-                      <div className="meta-icon-wrapper" style={{ background: '#eff6ff', color: '#0052cc' }}>
+                      <div className="meta-icon-wrapper">
                         <i className="fa-solid fa-location-dot"></i>
                       </div>
                       <div className="meta-text">
                         <span className="meta-label" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          LOCATION <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.68rem', color: '#0052cc' }}></i>
+                          LOCATION <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.68rem', color: '#2563eb' }}></i>
                         </span>
-                        <span className="meta-value" style={{ color: '#0052cc', textDecoration: 'underline', fontWeight: '600' }}>
+                        <span className="meta-value" style={{ color: '#2563eb', fontWeight: '700' }}>
                           {event.location || 'TRACE Expert City'}
                         </span>
                       </div>
