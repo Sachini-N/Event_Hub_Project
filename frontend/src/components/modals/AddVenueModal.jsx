@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import RichTextEditor from '../RichTextEditor';
 
 export default function AddVenueModal({
   isOpen,
@@ -16,6 +17,11 @@ export default function AddVenueModal({
   const [pricePerHour, setPricePerHour] = useState('25000');
   const [status, setStatus] = useState('Available');
   const [coverImage, setCoverImage] = useState('https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80');
+  const [imageList, setImageList] = useState([
+    'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1431540015161-0bf868a2d407?auto=format&fit=crop&w=800&q=80'
+  ]);
   const [amenities, setAmenities] = useState('High-Speed WiFi, 4K Projectors, Air Conditioned, Sound System');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -48,7 +54,11 @@ export default function AddVenueModal({
         : (editingVenue.rentalPrice ? String(editingVenue.rentalPrice).replace(/[^0-9]/g, '') : '25000');
       setPricePerHour(numPrice || '25000');
       setStatus(editingVenue.status || 'Available');
-      setCoverImage(editingVenue.coverImage || 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80');
+      const existingImgs = Array.isArray(editingVenue.images) && editingVenue.images.length > 0
+        ? editingVenue.images
+        : (editingVenue.coverImage ? [editingVenue.coverImage] : []);
+      setImageList(existingImgs);
+      setCoverImage(editingVenue.coverImage || existingImgs[0] || 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80');
       setAmenities(Array.isArray(editingVenue.amenities) ? editingVenue.amenities.join(', ') : (editingVenue.amenities || ''));
       setDescription(editingVenue.description || '');
     } else {
@@ -59,7 +69,13 @@ export default function AddVenueModal({
       setCapacity('150');
       setPricePerHour('25000');
       setStatus('Available');
-      setCoverImage('https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80');
+      const defaultImgs = [
+        'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1431540015161-0bf868a2d407?auto=format&fit=crop&w=800&q=80'
+      ];
+      setCoverImage(defaultImgs[0]);
+      setImageList(defaultImgs);
       setAmenities('High-Speed WiFi, 4K Projectors, Air Conditioned, Sound System');
       setDescription('');
     }
@@ -68,14 +84,40 @@ export default function AddVenueModal({
   if (!isOpen) return null;
 
   const handleFileChange = (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setCoverImage(reader.result);
-        if (showToast) showToast('Image uploaded successfully!', 'info');
-      };
-      reader.readAsDataURL(file);
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImageList((prev) => {
+            const next = [...prev, reader.result];
+            setCoverImage(next[0]);
+            return next;
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+      if (showToast) showToast(`${files.length} image(s) uploaded successfully!`, 'info');
+    }
+  };
+
+  const handleAddUrl = () => {
+    if (coverImage && coverImage.trim()) {
+      const trimmed = coverImage.trim();
+      if (!imageList.includes(trimmed)) {
+        setImageList((prev) => [...prev, trimmed]);
+        if (showToast) showToast('Image URL added to gallery!', 'info');
+      }
+    }
+  };
+
+  const handleRemoveImage = (index) => {
+    const updated = imageList.filter((_, idx) => idx !== index);
+    setImageList(updated);
+    if (updated.length > 0) {
+      setCoverImage(updated[0]);
+    } else {
+      setCoverImage('');
     }
   };
 
@@ -91,6 +133,8 @@ export default function AddVenueModal({
     const url = isEdit ? `/api/venues/${venueId}` : '/api/venues';
     const method = isEdit ? 'PUT' : 'POST';
 
+    const finalImages = imageList.length > 0 ? imageList : [coverImage].filter(Boolean);
+
     try {
       const response = await fetch(url, {
         method,
@@ -104,7 +148,8 @@ export default function AddVenueModal({
           rentalPrice: formattedRentalPrice,
           pricePerHour: numPrice,
           status,
-          coverImage,
+          coverImage: finalImages[0] || coverImage,
+          images: finalImages,
           amenities: amenities.split(',').map((a) => a.trim()).filter(Boolean),
           description,
         }),
@@ -247,34 +292,95 @@ export default function AddVenueModal({
 
           {/* Cover Image Upload & URL Input */}
           <div className="form-group">
-            <label htmlFor="venue-image">Cover Image (Upload File or Enter Image URL)</label>
+            <label htmlFor="venue-image">Venue Photos (Upload 2, 3, or more photos to slide/view)</label>
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
               <input
                 type="text"
                 id="venue-image"
-                placeholder="https://images.unsplash.com/photo-..."
+                placeholder="Paste Image URL..."
                 value={coverImage}
                 onChange={(e) => setCoverImage(e.target.value)}
                 style={{ flex: 1 }}
               />
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={handleAddUrl}
+                style={{ whiteSpace: 'nowrap', padding: '0.65rem 0.9rem', fontSize: '0.85rem' }}
+              >
+                + Add URL
+              </button>
               <label
                 htmlFor="venue-file-upload"
-                className="btn btn-outline"
+                className="btn btn-primary"
                 style={{ cursor: 'pointer', whiteSpace: 'nowrap', padding: '0.65rem 0.9rem', fontSize: '0.85rem' }}
               >
-                <i className="fa-solid fa-cloud-arrow-up"></i> Upload Image
+                <i className="fa-solid fa-cloud-arrow-up"></i> Upload Photos
               </label>
               <input
                 type="file"
                 id="venue-file-upload"
                 accept="image/*"
+                multiple
                 style={{ display: 'none' }}
                 onChange={handleFileChange}
               />
             </div>
-            {coverImage && (
-              <div style={{ marginTop: '0.65rem', borderRadius: '8px', overflow: 'hidden', height: '130px', border: '1px solid #cbd5e1' }}>
-                <img src={coverImage} alt="Venue Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+
+            {/* Thumbnail Gallery of Uploaded Photos */}
+            {imageList.length > 0 && (
+              <div style={{ marginTop: '0.75rem' }}>
+                <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>
+                  Uploaded Gallery ({imageList.length} Photos - Click ✕ to remove):
+                </span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem' }}>
+                  {imageList.map((url, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        position: 'relative',
+                        width: '100px',
+                        height: '70px',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        border: idx === 0 ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+                      }}
+                      title={idx === 0 ? 'Primary Cover Photo' : `Gallery Photo #${idx + 1}`}
+                    >
+                      <img src={url} alt={`Preview ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      {idx === 0 && (
+                        <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(37, 99, 235, 0.85)', color: '#fff', fontSize: '9px', fontWeight: 'bold', textAlign: 'center', padding: '1px 0' }}>
+                          COVER
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(idx)}
+                        style={{
+                          position: 'absolute',
+                          top: '3px',
+                          right: '3px',
+                          background: 'rgba(220, 38, 38, 0.9)',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '20px',
+                          height: '20px',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                        title="Remove photo"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -292,13 +398,13 @@ export default function AddVenueModal({
 
           <div className="form-group">
             <label htmlFor="venue-desc">Description (Optional)</label>
-            <textarea
+            <RichTextEditor
               id="venue-desc"
-              rows="3"
+              rows={4}
               placeholder="Provide a brief overview of the venue facilities..."
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            ></textarea>
+              onChange={setDescription}
+            />
           </div>
 
           <div className="form-actions">

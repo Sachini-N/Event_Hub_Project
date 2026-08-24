@@ -13,7 +13,7 @@ const getVenues = async (req, res) => {
 // POST /api/venues (Create new venue)
 const createVenue = async (req, res) => {
   try {
-    const { name, branch, city, province, address, capacity, rentalPrice, pricePerHour, status, coverImage, amenities, description } = req.body;
+    const { name, branch, city, province, address, capacity, rentalPrice, pricePerHour, status, coverImage, images, amenities, description } = req.body;
 
     if (!name || !address || !capacity) {
       return res.status(400).json({ success: false, message: "Please provide Venue Name, Address, and Capacity." });
@@ -21,6 +21,10 @@ const createVenue = async (req, res) => {
 
     const numericPrice = pricePerHour ? Number(pricePerHour) : 25000;
     const formattedPrice = rentalPrice || `Rs. ${numericPrice.toLocaleString()} / hr`;
+
+    const venueImages = Array.isArray(images) && images.length > 0 
+      ? images 
+      : [coverImage || "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80"];
 
     const venue = new Venue({
       name,
@@ -32,7 +36,8 @@ const createVenue = async (req, res) => {
       rentalPrice: formattedPrice,
       pricePerHour: numericPrice,
       status: status || "Available",
-      coverImage: coverImage || "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80",
+      coverImage: venueImages[0],
+      images: venueImages,
       amenities: Array.isArray(amenities) ? amenities : (amenities ? amenities.split(",").map(a => a.trim()) : ["High-Speed WiFi", "Air Conditioned"]),
       description: description || "",
     });
@@ -47,7 +52,7 @@ const createVenue = async (req, res) => {
 // PUT /api/venues/:id (Update existing venue)
 const updateVenue = async (req, res) => {
   try {
-    const { name, branch, city, province, address, capacity, rentalPrice, pricePerHour, status, coverImage, amenities, description } = req.body;
+    const { name, branch, city, province, address, capacity, rentalPrice, pricePerHour, status, coverImage, images, amenities, description } = req.body;
 
     const numericPrice = pricePerHour !== undefined ? Number(pricePerHour) : undefined;
     const formattedPrice = rentalPrice || (numericPrice !== undefined ? `Rs. ${numericPrice.toLocaleString()} / hr` : undefined);
@@ -63,6 +68,7 @@ const updateVenue = async (req, res) => {
     if (formattedPrice !== undefined) updateFields.rentalPrice = formattedPrice;
     if (status !== undefined) updateFields.status = status;
     if (coverImage !== undefined) updateFields.coverImage = coverImage;
+    if (images !== undefined) updateFields.images = images;
     if (amenities !== undefined) {
       updateFields.amenities = Array.isArray(amenities)
         ? amenities

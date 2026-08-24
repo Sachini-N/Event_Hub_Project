@@ -73,11 +73,11 @@ export default function Footer({ setActiveTab }) {
           <span className="footer-social-title">Follow Us</span>
           <div className="social-icons-group">
             <a
-              href="https://facebook.com"
+              href="https://www.facebook.com/TRACE.SL.info"
               target="_blank"
               rel="noopener noreferrer"
               className="social-icon-btn"
-              title="Facebook"
+              title="Official TRACE Sri Lanka Facebook Page"
             >
               <i className="fa-brands fa-facebook-f"></i>
             </a>
@@ -91,20 +91,20 @@ export default function Footer({ setActiveTab }) {
               <i className="fa-brands fa-x-twitter"></i>
             </a>
             <a
-              href="https://instagram.com"
+              href="https://www.instagram.com/trace_srilanka/"
               target="_blank"
               rel="noopener noreferrer"
               className="social-icon-btn"
-              title="Instagram"
+              title="Official TRACE Sri Lanka Instagram Profile"
             >
               <i className="fa-brands fa-instagram"></i>
             </a>
             <a
-              href="https://linkedin.com"
+              href="https://www.linkedin.com/company/trace-srilanka/posts/?feedView=all"
               target="_blank"
               rel="noopener noreferrer"
               className="social-icon-btn"
-              title="LinkedIn"
+              title="Official TRACE Sri Lanka LinkedIn Company Page"
             >
               <i className="fa-brands fa-linkedin-in"></i>
             </a>

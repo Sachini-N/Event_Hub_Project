@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import RichTextEditor from '../RichTextEditor';
 
 export default function EditEventModal({
   isOpen,
@@ -237,16 +238,16 @@ export default function EditEventModal({
 
           <div className="form-group">
             <label htmlFor="edit-description">Description *</label>
-            <textarea
+            <RichTextEditor
               id="edit-description"
-              rows="3"
-              required
+              rows={4}
+              placeholder="Detailed event information..."
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            ></textarea>
+              onChange={setDescription}
+            />
           </div>
 
-          {/* Cover Image URL / File Upload */}
+          {/* Cover Image URL / File Upload & Visual Preview */}
           <div className="form-group">
             <label>Cover Image</label>
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
@@ -262,7 +263,7 @@ export default function EditEventModal({
                 className="btn btn-outline"
                 style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
               >
-                <i className="fa-solid fa-upload"></i> Upload
+                <i className="fa-solid fa-cloud-arrow-up"></i> Upload
               </label>
               <input
                 type="file"
@@ -272,6 +273,29 @@ export default function EditEventModal({
                 onChange={handleCoverUpload}
               />
             </div>
+
+            {/* Live Uploaded Photo Preview Card */}
+            {coverImage && (
+              <div style={{ marginTop: '0.75rem', position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '1px solid #cbd5e1', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                <img
+                  src={coverImage}
+                  alt="Uploaded Cover Preview"
+                  style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', display: 'block' }}
+                />
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(180deg, transparent 0%, rgba(15,23,42,0.85) 100%)', padding: '0.5rem 0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#ffffff', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <i className="fa-solid fa-circle-check" style={{ color: '#4ade80' }}></i> Uploaded Photo Preview
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setCoverImage('')}
+                    style={{ background: 'rgba(220, 38, 38, 0.9)', color: '#ffffff', border: 'none', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    <i className="fa-solid fa-trash-can"></i> Remove Photo
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* YouTube Video Link Field */}

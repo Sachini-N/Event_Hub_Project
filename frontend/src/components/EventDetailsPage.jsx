@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import Footer from './Footer';
+import FormattedText from './FormattedText';
 
 export default function EventDetailsPage({
   event,
@@ -126,13 +128,26 @@ export default function EventDetailsPage({
     }
   };
 
+  // Extract all uploaded gallery/images for event so side photos use uploaded images
+  const galleryList = Array.isArray(event.gallery)
+    ? event.gallery.map((g) => (typeof g === 'string' ? g : g.url)).filter(Boolean)
+    : (Array.isArray(event.images) ? event.images.filter(Boolean) : []);
+
+  const hasUploadedCover = Boolean(event.coverImage);
+  const uploadedPhotos = galleryList.length > 0
+    ? galleryList
+    : (hasUploadedCover ? [event.coverImage] : []);
+
   const imgMain =
-    event.coverImage ||
+    uploadedPhotos[0] ||
     'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80';
   const imgTopRight =
-    'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=600&q=80';
+    uploadedPhotos[1] ||
+    (hasUploadedCover ? uploadedPhotos[0] : 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=600&q=80');
   const imgBottomRight =
-    'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=600&q=80';
+    uploadedPhotos[2] ||
+    uploadedPhotos[1] ||
+    (hasUploadedCover ? uploadedPhotos[0] : 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=600&q=80');
 
   return (
     <div className="event-details-page">
@@ -177,10 +192,18 @@ export default function EventDetailsPage({
                       <i className="fa-regular fa-clock"></i>
                       <span>{event.time || '10:00 AM - 1:00 PM'}</span>
                     </div>
-                    <div className="summary-meta-item">
-                      <i className="fa-solid fa-location-dot"></i>
-                      <span>{event.location || 'TRACE Expert City'}</span>
-                    </div>
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location || 'TRACE Expert City')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="summary-meta-item"
+                      title="Click to open location on Google Maps"
+                      style={{ color: 'inherit', textDecoration: 'none', cursor: 'pointer' }}
+                    >
+                      <i className="fa-solid fa-location-dot" style={{ color: '#0052cc' }}></i>
+                      <span style={{ textDecoration: 'underline', color: '#0052cc', fontWeight: '600' }}>{event.location || 'TRACE Expert City'}</span>
+                      <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.68rem', color: '#0052cc', marginLeft: '2px' }}></i>
+                    </a>
                   </div>
                 </div>
 
@@ -214,27 +237,47 @@ export default function EventDetailsPage({
             <div className="details-grid-layout">
               {/* Left Column: Media Collage & Event Info */}
               <div className="details-left-column">
-                <div className="media-collage-grid">
+                <div className={`media-collage-grid ${uploadedPhotos.length === 1 ? 'single-photo-mode' : ''}`}>
                   <div className="collage-main-photo">
                     <img src={imgMain} alt={event.title} />
                     <span className="free-event-badge">FREE EVENT</span>
                   </div>
-                  <div className="collage-side-photos">
-                    <div className="side-photo-top">
-                      <img src={imgTopRight} alt="Event audience" />
+                  {uploadedPhotos.length > 1 && (
+                    <div className="collage-side-photos">
+                      {uploadedPhotos[1] && (
+                        <div className="side-photo-top">
+                          <img src={uploadedPhotos[1]} alt="Event photo 2" />
+                        </div>
+                      )}
+                      {uploadedPhotos[2] && (
+                        <div className="side-photo-bottom">
+                          <img src={uploadedPhotos[2]} alt="Event photo 3" />
+                        </div>
+                      )}
                     </div>
-                    <div className="side-photo-bottom">
-                      <img src={imgBottomRight} alt="Event presentation" />
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="event-info-box">
-                  {/* Category Badge & Seats Remaining Pill */}
-                  <div className="details-tags-row">
+                  {/* Category Badge, Registered Members Card & Seats Remaining Pill */}
+                  <div className="details-tags-row" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
                     <span className="event-category-badge">
                       {(event.category || 'WORKSHOP').toUpperCase()}
                     </span>
+
+                    {/* Registered Members Card */}
+                    <div className="registered-members-card">
+                      <div className="registered-members-icon-box">
+                        <i className="fa-solid fa-users"></i>
+                      </div>
+                      <div className="registered-members-info">
+                        <span className="registered-members-title">Registered Members</span>
+                        <span className="registered-members-count">
+                          {event.registeredCount || 0} Members Registered
+                        </span>
+                      </div>
+                    </div>
+
                     <span className="seats-left-pill">
                       <i className="fa-solid fa-chair"></i>{' '}
                       {Math.max(0, (event.capacity || 100) - (event.registeredCount || 0))} Seats Remaining
@@ -251,7 +294,7 @@ export default function EventDetailsPage({
                     </div>
                   )}
 
-                  <p className="details-event-description">{event.description}</p>
+                  <FormattedText content={event.description} className="details-event-description" />
 
                   <div className="event-meta-row">
                     <div className="meta-item">
@@ -274,15 +317,26 @@ export default function EventDetailsPage({
                       </div>
                     </div>
 
-                    <div className="meta-item">
-                      <div className="meta-icon-wrapper">
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location || 'TRACE Expert City')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="meta-item location-map-link"
+                      title="Click to view location pin on Google Maps"
+                      style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
+                    >
+                      <div className="meta-icon-wrapper" style={{ background: '#eff6ff', color: '#0052cc' }}>
                         <i className="fa-solid fa-location-dot"></i>
                       </div>
                       <div className="meta-text">
-                        <span className="meta-label">LOCATION</span>
-                        <span className="meta-value">{event.location || 'TRACE Expert City'}</span>
+                        <span className="meta-label" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          LOCATION <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.68rem', color: '#0052cc' }}></i>
+                        </span>
+                        <span className="meta-value" style={{ color: '#0052cc', textDecoration: 'underline', fontWeight: '600' }}>
+                          {event.location || 'TRACE Expert City'}
+                        </span>
                       </div>
-                    </div>
+                    </a>
                   </div>
 
                   {/* Featured Speaker Profile Card (Render ONLY if a real speaker was added) */}
@@ -450,21 +504,8 @@ export default function EventDetailsPage({
         </div>
       </main>
 
-      {/* Footer matching screenshot */}
-      <footer className="details-footer">
-        <div className="details-footer-container">
-          <div className="footer-left-info">
-            <span className="footer-brand-title">TRACE Event Hub</span>
-            <p className="footer-copy-text">&copy; 2024 TRACE Event Hub. All rights reserved.</p>
-          </div>
-          <div className="footer-right-nav">
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
-            <a href="#">Contact Support</a>
-            <a href="#">Sponsorships</a>
-          </div>
-        </div>
-      </footer>
+      {/* Master TRACE Event Hub Footer */}
+      <Footer setActiveTab={onBack} />
     </div>
   );
 }

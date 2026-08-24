@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import RichTextEditor from './RichTextEditor';
 
 // Interactive Location Picker Map Component (OpenStreetMap + Leaflet + Nominatim Reverse Geocoding)
 function InteractiveLocationPicker({ onSelectAddress, onSelectVenue }) {
@@ -527,28 +528,14 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
             </div>
 
             <div className="profile-form-group">
-              <label>Full Description</label>
-              <div className="rich-toolbar-preview">
-                <button type="button" className="toolbar-btn" title="Bold">
-                  <i className="fa-solid fa-bold"></i>
-                </button>
-                <button type="button" className="toolbar-btn" title="Italic">
-                  <i className="fa-solid fa-italic"></i>
-                </button>
-                <button type="button" className="toolbar-btn" title="List">
-                  <i className="fa-solid fa-list-ul"></i>
-                </button>
-                <button type="button" className="toolbar-btn" title="Link">
-                  <i className="fa-solid fa-link"></i>
-                </button>
-              </div>
-              <textarea
-                rows="5"
+              <label htmlFor="evt-full-desc">Full Description</label>
+              <RichTextEditor
+                id="evt-full-desc"
+                rows={5}
                 placeholder="Detailed event information..."
                 value={fullDescription}
-                onChange={(e) => setFullDescription(e.target.value)}
-                style={{ borderTopLeftRadius: 0, borderTopRightRadius: 0 }}
-              ></textarea>
+                onChange={setFullDescription}
+              />
             </div>
           </div>
 

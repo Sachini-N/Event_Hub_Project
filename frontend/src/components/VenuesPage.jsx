@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import FormattedText from './FormattedText';
+import ImageCarouselSlider from './ImageCarouselSlider';
 
 // TRACE Branch metadata definition for rich display & badges
 const TRACE_BRANCHES_META = [
@@ -456,7 +458,7 @@ export default function VenuesPage({ showToast }) {
                     </p>
 
                     {v.description && (
-                      <p className="venue-card-description">{v.description}</p>
+                      <FormattedText content={v.description} className="venue-card-description" />
                     )}
 
                     {/* Amenities Chips */}
@@ -506,14 +508,16 @@ export default function VenuesPage({ showToast }) {
               <i className="fa-solid fa-xmark"></i>
             </button>
 
-            <div className="venue-modal-banner">
-              <img
-                src={
-                  activeVenueModal.coverImage ||
-                  'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80'
-                }
-                alt={activeVenueModal.name}
-              />
+            <ImageCarouselSlider
+              images={
+                activeVenueModal.images && activeVenueModal.images.length > 0
+                  ? activeVenueModal.images
+                  : [activeVenueModal.coverImage]
+              }
+              fallbackImage="https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80"
+              alt={activeVenueModal.name}
+              className="venue-modal-banner"
+            >
               <div className="venue-modal-banner-overlay">
                 <span className="modal-branch-pill">
                   <i className="fa-solid fa-building"></i>{' '}
@@ -521,7 +525,7 @@ export default function VenuesPage({ showToast }) {
                 </span>
                 <h2>{activeVenueModal.name}</h2>
               </div>
-            </div>
+            </ImageCarouselSlider>
 
             <div className="venue-modal-body">
               {/* Venue Quick Specs */}
@@ -568,7 +572,7 @@ export default function VenuesPage({ showToast }) {
                   <strong>Location:</strong> {activeVenueModal.address}
                 </p>
                 {activeVenueModal.description && (
-                  <p className="venue-desc-full">{activeVenueModal.description}</p>
+                  <FormattedText content={activeVenueModal.description} className="venue-desc-full" />
                 )}
               </div>
 

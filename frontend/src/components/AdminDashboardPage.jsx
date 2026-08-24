@@ -536,7 +536,14 @@ export default function AdminDashboardPage({
   // Filter Venue Inquiries logic for Manage Venue Inquiries Page
   const displayedVenueBookings = venueBookings.filter((bk) => {
     if (inquiryStatusFilter !== 'all' && (bk.status || 'Pending') !== inquiryStatusFilter) return false;
-    if (inquiryBranchFilter !== 'all' && bk.branch !== inquiryBranchFilter) return false;
+    if (inquiryBranchFilter !== 'all') {
+      if (!bk.branch) return false;
+      const targetBranch = inquiryBranchFilter.toLowerCase();
+      const currentBranch = bk.branch.toLowerCase();
+      if (!currentBranch.includes(targetBranch) && !targetBranch.includes(currentBranch)) {
+        return false;
+      }
+    }
 
     if (inquirySearchQuery) {
       const q = inquirySearchQuery.toLowerCase();
@@ -556,6 +563,7 @@ export default function AdminDashboardPage({
   const pendingInquiriesCount = venueBookings.filter((b) => (b.status || 'Pending') === 'Pending').length;
   const contactedInquiriesCount = venueBookings.filter((b) => b.status === 'Contacted').length;
   const confirmedInquiriesCount = venueBookings.filter((b) => b.status === 'Confirmed').length;
+  const cancelledInquiriesCount = venueBookings.filter((b) => b.status === 'Cancelled').length;
   const isEventsView = activeMenu === 'events' || activeMenu === 'upcoming' || activeMenu === 'past';
 
   // Get live registration count for an event dynamically
@@ -605,7 +613,7 @@ export default function AdminDashboardPage({
             className={`admin-nav-item ${activeMenu === 'registrations' ? 'active' : ''}`}
             onClick={() => setActiveMenu('registrations')}
           >
-            <i className="fa-solid fa-users-gear"></i> Registrations
+            <i className="fa-solid fa-users-gear"></i> Event Registrations
           </button>
           <button
             className={`admin-nav-item ${activeMenu === 'users' ? 'active' : ''}`}
@@ -617,7 +625,24 @@ export default function AdminDashboardPage({
             className={`admin-nav-item ${activeMenu === 'venues' ? 'active' : ''}`}
             onClick={() => setActiveMenu('venues')}
           >
-            <i className="fa-solid fa-location-dot"></i> Spaces
+            <i className="fa-solid fa-building"></i> Spaces & Facilities
+          </button>
+          <button
+            className={`admin-nav-item ${activeMenu === 'venue-inquiries' ? 'active' : ''}`}
+            onClick={() => {
+              setInquirySearchQuery('');
+              setInquiryBranchFilter('all');
+              setInquiryStatusFilter('all');
+              setActiveMenu('venue-inquiries');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            <i className="fa-solid fa-list-check"></i> Space Inquiries
+            {pendingInquiriesCount > 0 && (
+              <span style={{ marginLeft: 'auto', background: '#d97706', color: '#fff', fontSize: '0.72rem', padding: '2px 8px', borderRadius: '10px', fontWeight: '700' }}>
+                {pendingInquiriesCount}
+              </span>
+            )}
           </button>
           <button
             className={`admin-nav-item ${activeMenu === 'settings' ? 'active' : ''}`}
@@ -1180,7 +1205,13 @@ export default function AdminDashboardPage({
                       type="button"
                       className="btn btn-sm btn-outline"
                       style={{ fontSize: '0.82rem', fontWeight: '700', padding: '0.45rem 0.95rem', borderRadius: '8px', color: '#0052cc', borderColor: '#bfdbfe', background: '#eff6ff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                      onClick={() => setActiveMenu('venue-inquiries')}
+                      onClick={() => {
+                        setInquirySearchQuery('');
+                        setInquiryBranchFilter('all');
+                        setInquiryStatusFilter('all');
+                        setActiveMenu('venue-inquiries');
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
                     >
                       <i className="fa-solid fa-list-check"></i>
                       See All Inquiries ({venueBookings.length}) <i className="fa-solid fa-arrow-right" style={{ fontSize: '0.75rem' }}></i>

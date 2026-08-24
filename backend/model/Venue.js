@@ -49,6 +49,10 @@ const venueSchema = new mongoose.Schema(
       type: String,
       default: "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80",
     },
+    images: {
+      type: [String],
+      default: [],
+    },
     amenities: {
       type: [String],
       default: ["High-Speed WiFi", "Air Conditioned", "4K AV Display"],

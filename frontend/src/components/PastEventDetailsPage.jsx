@@ -91,10 +91,18 @@ export default function PastEventDetailsPage({
                 </span>
               </div>
 
-              <div className="past-meta-pill">
-                <i className="fa-solid fa-location-dot"></i>
-                <span>{pastEvent.location || 'TRACE Expert City'}</span>
-              </div>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pastEvent.location || 'TRACE Expert City')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="past-meta-pill location-link-pill"
+                title="Click to view location pin on Google Maps"
+                style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
+              >
+                <i className="fa-solid fa-location-dot" style={{ color: '#0052cc' }}></i>
+                <span style={{ textDecoration: 'underline', color: '#0052cc', fontWeight: '600' }}>{pastEvent.location || 'TRACE Expert City'}</span>
+                <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.68rem', color: '#0052cc', marginLeft: '2px' }}></i>
+              </a>
 
               <div className="past-meta-pill">
                 <i className="fa-solid fa-users"></i>
@@ -235,7 +243,16 @@ export default function PastEventDetailsPage({
                 </div>
                 <div className="stat-item">
                   <span className="stat-label">Location</span>
-                  <span className="stat-value">{pastEvent.location}</span>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pastEvent.location || 'TRACE Expert City')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="stat-value"
+                    title="Click to view location pin on Google Maps"
+                    style={{ color: '#0052cc', textDecoration: 'underline', fontWeight: '600', cursor: 'pointer' }}
+                  >
+                    {pastEvent.location} <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.68rem' }}></i>
+                  </a>
                 </div>
               </div>
             </div>

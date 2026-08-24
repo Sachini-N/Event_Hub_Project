@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import RichTextEditor from '../RichTextEditor';
 
 export default function AdminModal({ isOpen, onClose, onEventCreated, showToast }) {
   const [title, setTitle] = useState('');
@@ -20,6 +21,18 @@ export default function AdminModal({ isOpen, onClose, onEventCreated, showToast 
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const handleFileChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCoverImage(reader.result);
+        if (showToast) showToast('Cover image loaded!', 'info');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -155,25 +168,64 @@ export default function AdminModal({ isOpen, onClose, onEventCreated, showToast 
 
           <div className="form-group">
             <label htmlFor="admin-description">Description *</label>
-            <textarea
+            <RichTextEditor
               id="admin-description"
-              rows="3"
-              required
+              rows={4}
               placeholder="Event details and agenda..."
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            ></textarea>
+              onChange={setDescription}
+            />
           </div>
 
-          <div class="form-group">
-            <label htmlFor="admin-image">Cover Image URL</label>
-            <input
-              type="url"
-              id="admin-image"
-              placeholder="https://images.unsplash.com/..."
-              value={coverImage}
-              onChange={(e) => setCoverImage(e.target.value)}
-            />
+          <div className="form-group">
+            <label htmlFor="admin-image">Cover Image (Upload File or Enter Image URL)</label>
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <input
+                type="text"
+                id="admin-image"
+                placeholder="Image URL or upload file..."
+                value={coverImage}
+                onChange={(e) => setCoverImage(e.target.value)}
+                style={{ flex: 1 }}
+              />
+              <label
+                htmlFor="admin-file-upload"
+                className="btn btn-outline"
+                style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
+              >
+                <i className="fa-solid fa-cloud-arrow-up"></i> Upload
+              </label>
+              <input
+                type="file"
+                id="admin-file-upload"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
+              />
+            </div>
+
+            {/* Live Uploaded Photo Preview Card */}
+            {coverImage && (
+              <div style={{ marginTop: '0.75rem', position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '1px solid #cbd5e1', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                <img
+                  src={coverImage}
+                  alt="Uploaded Cover Preview"
+                  style={{ width: '100%', maxHeight: '180px', objectFit: 'cover', display: 'block' }}
+                />
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(180deg, transparent 0%, rgba(15,23,42,0.85) 100%)', padding: '0.5rem 0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#ffffff', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <i className="fa-solid fa-circle-check" style={{ color: '#4ade80' }}></i> Uploaded Photo Preview
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setCoverImage('')}
+                    style={{ background: 'rgba(220, 38, 38, 0.9)', color: '#ffffff', border: 'none', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    <i className="fa-solid fa-trash-can"></i> Remove Photo
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div class="form-actions">
