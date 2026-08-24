@@ -29,9 +29,14 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["user", "admin"],
+      enum: ["user", "admin", "branch_admin", "super_admin"],
       default: "user",
     },
+    branch: {
+      type: String,
+      default: "TRACE Main Branch (Colombo)",
+    },
+    permissions: [String],
   },
   { timestamps: true }
 );

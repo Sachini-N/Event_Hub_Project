@@ -40,8 +40,85 @@ export default function AdminDashboardPage({
   const [editingEvent, setEditingEvent] = useState(null);
   const [editingVenue, setEditingVenue] = useState(null);
 
-  // Registered Users State
+  // Registered Users & Branch Admins State
   const [registeredUsers, setRegisteredUsers] = useState([]);
+  const [showAddBranchAdminModal, setShowAddBranchAdminModal] = useState(false);
+  const [branchAdminForm, setBranchAdminForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    branch: 'TRACE Expert City (Colombo)',
+    permissions: ['manage_events', 'manage_registrations'],
+  });
+  const [emailNotificationModalData, setEmailNotificationModalData] = useState(null);
+  const [submittingBranchAdmin, setSubmittingBranchAdmin] = useState(false);
+
+  const handleCreateBranchAdmin = async (e) => {
+    e.preventDefault();
+    if (!branchAdminForm.name || !branchAdminForm.email || !branchAdminForm.password) {
+      if (showToast) showToast('Please enter Name, Email, and Password.', 'error');
+      return;
+    }
+
+    setSubmittingBranchAdmin(true);
+    try {
+      const res = await fetch('/api/auth/create-branch-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(branchAdminForm),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setShowAddBranchAdminModal(false);
+        if (showToast) showToast(data.message, 'success');
+        
+        // Show Email Dispatch Notification Modal to Admin
+        setEmailNotificationModalData(data.emailNotification);
+
+        // Refresh registered users list
+        fetchDashboardData();
+        
+        // Reset form
+        setBranchAdminForm({
+          name: '',
+          email: '',
+          password: '',
+          branch: 'TRACE Expert City (Colombo)',
+          permissions: ['manage_events', 'manage_registrations'],
+        });
+      } else {
+        if (showToast) showToast(data.message || 'Failed to assign branch admin', 'error');
+      }
+    } catch (err) {
+      console.error('Error creating branch admin:', err);
+      if (showToast) showToast('Network error creating branch admin', 'error');
+    } finally {
+      setSubmittingBranchAdmin(false);
+    }
+  };
+
+  const handleSendEmailCredentials = async (user) => {
+    if (showToast) showToast(`Dispatching credentials email to ${user.email}...`, 'info');
+    try {
+      const res = await fetch('/api/auth/send-credentials-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user._id, email: user.email }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (showToast) showToast(`Credentials email dispatched to ${user.email}!`, 'success');
+        setEmailNotificationModalData(data.emailNotification);
+      } else {
+        if (showToast) showToast(data.message || 'Failed to send credentials email', 'error');
+      }
+    } catch (err) {
+      console.error('Error sending credentials email:', err);
+      if (showToast) showToast('Network error sending email', 'error');
+    }
+  };
 
   // Venues State
   const [venues, setVenues] = useState([
@@ -784,25 +861,32 @@ export default function AdminDashboardPage({
               </div>
             </div>
           ) : activeMenu === 'users' ? (
-            /* VIEW: REGISTERED APP USERS DIRECTORY VIEW */
+            /* VIEW: REGISTERED APP USERS & BRANCH ADMINS DIRECTORY VIEW */
             <div className="manage-registrations-container">
               <div className="admin-dashboard-title-row">
                 <div>
-                  <h1 className="admin-page-title">Registered App Members</h1>
+                  <h1 className="admin-page-title">Registered Members & Branch Access Control</h1>
                   <p style={{ fontSize: '0.95rem', color: '#64748b', marginTop: '0.2rem' }}>
-                    View and manage user accounts registered on TRACE Spaces Tracker.
+                    View registered platform users, assign branch admins for individual hubs, set permissions, and send credential emails.
                   </p>
                 </div>
+                <button
+                  className="btn-create-event-blue"
+                  onClick={() => setShowAddBranchAdminModal(true)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <i className="fa-solid fa-user-shield"></i> Assign New Branch Admin
+                </button>
               </div>
 
               {/* Stats Row */}
-              <div className="reg-stats-grid" style={{ marginBottom: '1.5rem' }}>
+              <div className="reg-stats-grid" style={{ marginBottom: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
                 <div className="stat-card">
                   <div className="stat-info">
                     <span className="stat-label">TOTAL REGISTERED MEMBERS</span>
                     <div className="stat-value">{registeredUsers.length}</div>
                     <div className="stat-trend positive">
-                      <i className="fa-solid fa-users"></i> App Members
+                      <i className="fa-solid fa-users"></i> Platform Accounts
                     </div>
                   </div>
                   <div className="stat-icon-wrapper">
@@ -812,26 +896,39 @@ export default function AdminDashboardPage({
 
                 <div className="stat-card">
                   <div className="stat-info">
-                    <span className="stat-label">ADMIN ACCOUNTS</span>
-                    <div className="stat-value">{registeredUsers.filter((u) => u.role === 'admin').length}</div>
-                    <div className="stat-trend positive-pill">System Administrators</div>
+                    <span className="stat-label">BRANCH ADMINS</span>
+                    <div className="stat-value" style={{ color: '#0052cc' }}>
+                      {registeredUsers.filter((u) => u.role === 'branch_admin' || u.role === 'admin').length}
+                    </div>
+                    <div className="stat-trend positive-pill">Hub Administrators</div>
                   </div>
-                  <div className="stat-icon-wrapper">
+                  <div className="stat-icon-wrapper" style={{ background: '#eff6ff', color: '#0052cc' }}>
                     <i className="fa-solid fa-user-shield"></i>
+                  </div>
+                </div>
+
+                <div className="stat-card">
+                  <div className="stat-info">
+                    <span className="stat-label">ACTIVE TRACE BRANCHES</span>
+                    <div className="stat-value" style={{ color: '#059669' }}>6</div>
+                    <div className="stat-trend positive">Colombo, Kandy, Galle, Jaffna</div>
+                  </div>
+                  <div className="stat-icon-wrapper" style={{ background: '#dcfce7', color: '#059669' }}>
+                    <i className="fa-solid fa-building"></i>
                   </div>
                 </div>
               </div>
 
-              {/* Users Data Table */}
+              {/* Users & Branch Admins Data Table */}
               <div className="admin-card-panel" style={{ padding: 0, overflow: 'hidden' }}>
                 <div className="table-responsive-wrapper">
                   <table className="admin-data-table reg-table-interactive">
                     <thead>
                       <tr>
-                        <th>USER</th>
-                        <th>EMAIL</th>
-                        <th>CONTACT NUMBER</th>
-                        <th>ROLE</th>
+                        <th>USER / ADMIN</th>
+                        <th>EMAIL ADDRESS</th>
+                        <th>ASSIGNED BRANCH</th>
+                        <th>ROLE & PERMISSIONS</th>
                         <th>REGISTERED DATE</th>
                         <th style={{ textAlign: 'center' }}>ACTIONS</th>
                       </tr>
@@ -873,22 +970,33 @@ export default function AdminDashboardPage({
                                 <span style={{ color: '#0052cc', fontWeight: '500' }}>{u.email}</span>
                               </td>
                               <td>
-                                <span style={{ color: '#475569' }}>{u.contactNumber || 'N/A'}</span>
+                                <span style={{ fontSize: '0.82rem', fontWeight: '600', color: '#0f172a' }}>
+                                  {u.branch || 'TRACE Main (Colombo)'}
+                                </span>
                               </td>
                               <td>
-                                <span
-                                  style={{
-                                    padding: '4px 12px',
-                                    borderRadius: '9999px',
-                                    fontSize: '0.78rem',
-                                    fontWeight: '700',
-                                    backgroundColor: u.role === 'admin' ? '#eff6ff' : '#f1f5f9',
-                                    color: u.role === 'admin' ? '#0052cc' : '#475569',
-                                    border: u.role === 'admin' ? '1px solid #bfdbfe' : '1px solid #cbd5e1',
-                                  }}
-                                >
-                                  {u.role === 'admin' ? '● Admin' : 'User'}
-                                </span>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                  <span
+                                    style={{
+                                      padding: '3px 10px',
+                                      borderRadius: '9999px',
+                                      fontSize: '0.76rem',
+                                      fontWeight: '700',
+                                      display: 'inline-block',
+                                      width: 'fit-content',
+                                      backgroundColor: u.role === 'admin' || u.role === 'super_admin' ? '#eff6ff' : u.role === 'branch_admin' ? '#f0fdf4' : '#f1f5f9',
+                                      color: u.role === 'admin' || u.role === 'super_admin' ? '#0052cc' : u.role === 'branch_admin' ? '#16a34a' : '#475569',
+                                      border: u.role === 'admin' || u.role === 'super_admin' ? '1px solid #bfdbfe' : u.role === 'branch_admin' ? '1px solid #bbf7d0' : '1px solid #cbd5e1',
+                                    }}
+                                  >
+                                    {u.role === 'admin' ? '● Super Admin' : u.role === 'branch_admin' ? '● Branch Admin' : 'User Member'}
+                                  </span>
+                                  {u.permissions && u.permissions.length > 0 && (
+                                    <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                                      {u.permissions.map((p) => p.replace('manage_', '')).join(', ')}
+                                    </div>
+                                  )}
+                                </div>
                               </td>
                               <td>
                                 <span style={{ color: '#64748b', fontSize: '0.85rem' }}>
@@ -903,13 +1011,16 @@ export default function AdminDashboardPage({
                               </td>
                               <td style={{ textAlign: 'center' }}>
                                 <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
-                                  <button
-                                    className="icon-btn-action"
-                                    title="Copy Email"
-                                    onClick={() => copyToClipboard(u.email)}
-                                  >
-                                    <i className="fa-regular fa-envelope"></i>
-                                  </button>
+                                  {(u.role === 'branch_admin' || u.role === 'admin' || u.role === 'super_admin') && (
+                                    <button
+                                      className="icon-btn-action"
+                                      title="Resend Credentials Email to Branch Admin"
+                                      onClick={() => handleSendEmailCredentials(u)}
+                                      style={{ color: '#0052cc', background: '#eff6ff', border: '1px solid #bfdbfe' }}
+                                    >
+                                      <i className="fa-solid fa-paper-plane"></i>
+                                    </button>
+                                  )}
                                   <button
                                     className="icon-btn-action danger"
                                     title="Delete User"
@@ -2348,6 +2459,203 @@ export default function AdminDashboardPage({
         }}
         showToast={showToast}
       />
+      {/* Assign Branch Admin Modal */}
+      {showAddBranchAdminModal && (
+        <div className="modal-overlay" onClick={() => setShowAddBranchAdminModal(false)}>
+          <div
+            className="modal-card admin-card"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '640px', padding: '2rem' }}
+          >
+            <button className="modal-close" onClick={() => setShowAddBranchAdminModal(false)}>
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+
+            <div className="modal-header" style={{ marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.35rem', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <i className="fa-solid fa-user-shield" style={{ color: '#0052cc' }}></i>
+                Assign Branch Admin & Grant Access
+              </h2>
+              <p className="modal-sub">
+                Assign an admin for a specific TRACE branch. Credentials and assigned permissions will be dispatched to their email inbox automatically.
+              </p>
+            </div>
+
+            <form onSubmit={handleCreateBranchAdmin}>
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label>Branch Admin Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Kasun Perera"
+                  value={branchAdminForm.name}
+                  onChange={(e) => setBranchAdminForm({ ...branchAdminForm, name: e.target.value })}
+                />
+              </div>
+
+              <div className="form-row" style={{ marginBottom: '1.25rem' }}>
+                <div className="form-group">
+                  <label>Email Address *</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="kasun@trace.lk"
+                    value={branchAdminForm.email}
+                    onChange={(e) => setBranchAdminForm({ ...branchAdminForm, email: e.target.value })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Assign Temporary Password *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. BranchAdmin@2026"
+                    value={branchAdminForm.password}
+                    onChange={(e) => setBranchAdminForm({ ...branchAdminForm, password: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label>Assigned TRACE Branch / Hub *</label>
+                <select
+                  value={branchAdminForm.branch}
+                  onChange={(e) => setBranchAdminForm({ ...branchAdminForm, branch: e.target.value })}
+                  style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontWeight: '600' }}
+                >
+                  <option value="TRACE Expert City (Colombo)">🏢 TRACE Expert City (Colombo Hub)</option>
+                  <option value="CodeGen Branch (Bay 01-04)">💻 CodeGen Branch (Bay 01-04)</option>
+                  <option value="LSEG Sri Lanka Branch (Bay 11-12)">📈 LSEG Branch (Bay 11-12)</option>
+                  <option value="TRACE Innovation Hub (Kandy)">🏔️ TRACE Innovation Hub (Kandy)</option>
+                  <option value="TRACE Coastal Hub (Galle)">🏖️ TRACE Coastal Hub (Galle)</option>
+                  <option value="TRACE Tech Park (Jaffna)">🌴 TRACE Tech Park (Jaffna)</option>
+                  <option value="TRACE Wayamba Incubator (Kurunegala)">🌾 TRACE Wayamba Incubator</option>
+                </select>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <label style={{ marginBottom: '0.5rem', display: 'block' }}>Granted Permissions & Control Scope</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                  {[
+                    { id: 'manage_events', label: '📅 Create & Edit Branch Events' },
+                    { id: 'manage_registrations', label: '👥 Manage Participant Registrations' },
+                    { id: 'manage_spaces', label: '🏢 Manage Branch Spaces & Inquiries' },
+                    { id: 'view_analytics', label: '📊 View Analytics & Reports' },
+                  ].map((perm) => (
+                    <label key={perm.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: '600', color: '#334155', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={branchAdminForm.permissions.includes(perm.id)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setBranchAdminForm((prev) => ({
+                            ...prev,
+                            permissions: checked
+                              ? [...prev.permissions, perm.id]
+                              : prev.permissions.filter((p) => p !== perm.id),
+                          }));
+                        }}
+                        style={{ accentColor: '#0052cc', width: '16px', height: '16px' }}
+                      />
+                      {perm.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="form-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                <button type="button" className="btn btn-outline" onClick={() => setShowAddBranchAdminModal(false)}>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ backgroundColor: '#0052cc', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  disabled={submittingBranchAdmin}
+                >
+                  {submittingBranchAdmin ? (
+                    <>
+                      <i className="fa-solid fa-spinner fa-spin"></i> Assigning & Sending Mail...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fa-solid fa-paper-plane"></i> Assign & Dispatch Credentials Email
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Email Credentials Dispatch Notification Preview Modal */}
+      {emailNotificationModalData && (
+        <div className="modal-overlay" onClick={() => setEmailNotificationModalData(null)}>
+          <div
+            className="modal-card"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '580px', padding: '2rem', borderRadius: '16px' }}
+          >
+            <button className="modal-close" onClick={() => setEmailNotificationModalData(null)}>
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+
+            <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#dcfce7', color: '#16a34a', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', marginBottom: '0.75rem' }}>
+                <i className="fa-solid fa-envelope-circle-check"></i>
+              </div>
+              <h2 style={{ fontSize: '1.3rem', fontWeight: '800', color: '#0f172a', margin: 0 }}>
+                Email Notification Dispatched Successfully!
+              </h2>
+              <p style={{ fontSize: '0.86rem', color: '#64748b', marginTop: '0.25rem' }}>
+                A confirmation email with login credentials and permissions has been sent to the branch admin's inbox.
+              </p>
+            </div>
+
+            {/* Email Card Graphic */}
+            <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 14px rgba(0,0,0,0.06)', marginBottom: '1.5rem' }}>
+              <div style={{ background: '#0f172a', color: '#ffffff', padding: '0.85rem 1.25rem', fontSize: '0.88rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span><i className="fa-solid fa-envelope" style={{ marginRight: '6px', color: '#38bdf8' }}></i> {emailNotificationModalData.subject}</span>
+                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Sent Just Now</span>
+              </div>
+
+              <div style={{ padding: '1.25rem', fontSize: '0.88rem', color: '#334155', lineHeight: 1.6 }}>
+                <div style={{ marginBottom: '0.75rem' }}>
+                  Hello <strong>{emailNotificationModalData.adminName}</strong>,
+                </div>
+                <p style={{ margin: '0 0 1rem 0' }}>
+                  You have been granted <strong>Branch Admin Access</strong> for <strong>{emailNotificationModalData.branchName}</strong> on the TRACE Event Hub platform.
+                </p>
+
+                <div style={{ background: '#f8fafc', border: '1px border-dashed #cbd5e1', borderRadius: '8px', padding: '0.85rem 1rem', marginBottom: '1rem' }}>
+                  <div style={{ marginBottom: '0.35rem' }}>📧 <strong>Login Email:</strong> <span style={{ color: '#0052cc', fontWeight: '600' }}>{emailNotificationModalData.email}</span></div>
+                  <div style={{ marginBottom: '0.35rem' }}>🔑 <strong>Temporary Password:</strong> <code style={{ background: '#e2e8f0', padding: '2px 6px', borderRadius: '4px', color: '#0f172a' }}>{emailNotificationModalData.temporaryPassword}</code></div>
+                  <div>🏢 <strong>Assigned Branch:</strong> {emailNotificationModalData.branchName}</div>
+                </div>
+
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <strong>Granted Permissions:</strong>
+                  <ul style={{ margin: '0.35rem 0 0 1.2rem', padding: 0, fontSize: '0.84rem' }}>
+                    {emailNotificationModalData.grantedPermissions.map((p, idx) => (
+                      <li key={idx} style={{ color: '#059669', fontWeight: '600' }}>✓ {p.replace('_', ' ').toUpperCase()}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="btn btn-primary"
+              style={{ width: '100%', backgroundColor: '#0052cc', fontWeight: '700' }}
+              onClick={() => setEmailNotificationModalData(null)}
+            >
+              Done & Close Preview
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

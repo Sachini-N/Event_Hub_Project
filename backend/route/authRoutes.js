@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { signupUser, loginUser, getMe, updateUserProfile, getAllUsers, deleteUser } = require("../controlers/authController");
+const { signupUser, loginUser, getMe, updateUserProfile, getAllUsers, deleteUser, createBranchAdmin, sendEmailCredentials } = require("../controlers/authController");
 const { protect } = require("../middleware/authMiddleware");
 
 // POST /api/auth/signup
@@ -8,6 +8,12 @@ router.post("/signup", signupUser);
 
 // POST /api/auth/login
 router.post("/login", loginUser);
+
+// POST /api/auth/create-branch-admin
+router.post("/create-branch-admin", createBranchAdmin);
+
+// POST /api/auth/send-credentials-email
+router.post("/send-credentials-email", sendEmailCredentials);
 
 // GET /api/auth/me
 router.get("/me", protect, getMe);
