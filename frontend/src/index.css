@@ -6704,3 +6704,31 @@ input:checked+.slider:before {
   color: #64748b;
   margin-bottom: 1.25rem;
 }
+
+/* Interactive Location Picker Chips & Map Styles */
+.btn-location-chip {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  border-radius: 20px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-location-chip:hover {
+  background: #e0e7ff;
+  border-color: #818cf8;
+  color: #3730a3;
+  transform: translateY(-1px);
+}
+
+.custom-map-pin {
+  background: transparent;
+  border: none;
+}
