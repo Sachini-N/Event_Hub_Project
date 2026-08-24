@@ -240,37 +240,6 @@ export default function PastEventDetailsPage({
               </div>
             </div>
 
-            {/* Event Resources & Downloads Panel */}
-            <div className="past-sidebar-card">
-              <h3 className="sidebar-card-title">
-                <i className="fa-solid fa-cloud-arrow-down"></i> Event Resources
-              </h3>
-              <p className="sidebar-subtext">
-                Access official presentation slides, hackathon winner projects, and summary reports.
-              </p>
-              <div className="resources-buttons-list">
-                <button
-                  className="btn-resource-download"
-                  onClick={() => handleDownloadResource('Presentation Deck (.pdf)')}
-                >
-                  <i className="fa-solid fa-file-pdf"></i> Presentation Deck (.pdf)
-                </button>
-
-                <button
-                  className="btn-resource-download"
-                  onClick={() => handleDownloadResource('Hackathon Winner Showcase (.pdf)')}
-                >
-                  <i className="fa-solid fa-trophy"></i> Winner Showcase (.pdf)
-                </button>
-
-                <button
-                  className="btn-resource-download"
-                  onClick={() => handleDownloadResource('Source Code Repositories (.zip)')}
-                >
-                  <i className="fa-solid fa-file-code"></i> GitHub Code Repos (.zip)
-                </button>
-              </div>
-            </div>
 
             {/* Share Panel */}
             <div className="past-sidebar-card">

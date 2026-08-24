@@ -1901,6 +1901,8 @@ textarea:focus {
   color: #475569;
   line-height: 1.6;
   margin-bottom: 2rem;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* Event Metadata Row */
@@ -5483,6 +5485,8 @@ input:checked+.slider:before {
   line-height: 1.7;
   color: #334155;
   margin-bottom: 1.5rem;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .past-highlights-box {
