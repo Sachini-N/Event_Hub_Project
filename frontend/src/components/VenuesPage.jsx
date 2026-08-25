@@ -131,12 +131,13 @@ export default function VenuesPage({ showToast }) {
       if (vProvince.toLowerCase() !== provinceFilter.toLowerCase()) return false;
     }
 
-    // 1. Status Filter
-    if (statusFilter !== 'All' && v.status !== statusFilter) {
-      return false;
+    // 1. Branch Filter
+    if (selectedBranch !== 'All') {
+      const vBranch = v.branch || 'TRACE Expert City (Colombo)';
+      if (!vBranch.toLowerCase().includes(selectedBranch.toLowerCase())) return false;
     }
 
-    // 3. Capacity Filter
+    // 2. Capacity Filter
     if (capacityFilter === 'small' && v.capacity >= 100) return false;
     if (capacityFilter === 'medium' && (v.capacity < 100 || v.capacity > 200)) return false;
     if (capacityFilter === 'large' && v.capacity <= 200) return false;
@@ -252,43 +253,102 @@ export default function VenuesPage({ showToast }) {
           </p>
         </div>
 
-        {/* 2. Province Selection Filter Section */}
-        <div className="province-filter-card" style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.25rem 1.75rem', marginBottom: '1.5rem', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#eff6ff', color: '#5d4df6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.35rem', flexShrink: 0 }}>
-                <i className="fa-solid fa-map-location-dot"></i>
-              </div>
-              <div>
-                <h2 style={{ fontSize: '1.15rem', fontWeight: '800', color: '#0f172a', margin: '0 0 0.2rem 0' }}>
-                  Select Province
-                </h2>
-                <p style={{ fontSize: '0.88rem', color: '#64748b', margin: 0 }}>
-                  Choose a Sri Lankan province below to view available spaces in that area.
-                </p>
+        {/* Single Horizontal Tab Spaces Filter Bar */}
+        <div
+          style={{
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '16px',
+            padding: '1.25rem 1.5rem',
+            marginBottom: '2rem',
+            boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-end',
+              gap: '1rem',
+              flexWrap: 'wrap',
+            }}
+          >
+            {/* 1. Search Field */}
+            <div style={{ flex: '1 1 200px', minWidth: '180px' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.8rem',
+                  fontWeight: '700',
+                  color: '#334155',
+                  marginBottom: '0.4rem',
+                }}
+              >
+                Search Spaces
+              </label>
+              <div style={{ position: 'relative', width: '100%' }}>
+                <i
+                  className="fa-solid fa-magnifying-glass"
+                  style={{
+                    position: 'absolute',
+                    left: '14px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: '#94a3b8',
+                    fontSize: '0.88rem',
+                  }}
+                ></i>
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.85rem 0.65rem 2.4rem',
+                    fontSize: '0.86rem',
+                    borderRadius: '20px',
+                    border: '1px solid #cbd5e1',
+                    outline: 'none',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontWeight: '500',
+                    boxSizing: 'border-box',
+                  }}
+                />
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            {/* 2. Province Selector */}
+            <div style={{ flex: '1 1 180px', minWidth: '160px' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.8rem',
+                  fontWeight: '700',
+                  color: '#334155',
+                  marginBottom: '0.4rem',
+                }}
+              >
+                Province
+              </label>
               <select
-                className="province-large-dropdown"
                 value={provinceFilter}
                 onChange={(e) => setProvinceFilter(e.target.value)}
                 style={{
-                  padding: '0.65rem 1.25rem 0.65rem 1rem',
-                  fontSize: '0.95rem',
-                  fontWeight: '700',
-                  borderRadius: '12px',
-                  border: '2px solid #5d4df6',
-                  backgroundColor: '#ffffff',
-                  color: '#5d4df6',
+                  width: '100%',
+                  padding: '0.65rem 0.85rem',
+                  fontSize: '0.86rem',
+                  fontWeight: '600',
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#0f172a',
                   cursor: 'pointer',
                   outline: 'none',
-                  boxShadow: '0 2px 6px rgba(0, 82, 204, 0.1)',
-                  minWidth: '270px',
+                  boxSizing: 'border-box',
                 }}
               >
-                <option value="All">📍 All Sri Lanka Provinces</option>
+                <option value="All">All Sri Lanka</option>
                 <option value="Western Province">Western Province (Colombo)</option>
                 <option value="Central Province">Central Province (Kandy)</option>
                 <option value="Northern Province">Northern Province (Jaffna)</option>
@@ -299,64 +359,127 @@ export default function VenuesPage({ showToast }) {
                 <option value="Uva Province">Uva Province</option>
                 <option value="Sabaragamuwa Province">Sabaragamuwa Province</option>
               </select>
-
-              {provinceFilter !== 'All' && (
-                <button
-                  type="button"
-                  className="btn btn-outline"
-                  style={{ borderRadius: '12px', fontSize: '0.88rem', fontWeight: '700', padding: '0.6rem 1rem' }}
-                  onClick={() => setProvinceFilter('All')}
-                >
-                  <i className="fa-solid fa-rotate-left"></i> View All
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* 4. Secondary Filter Toolbar */}
-        <div className="venues-filter-toolbar">
-          <div className="toolbar-left">
-            {/* Search Field */}
-            <div className="filter-input-box">
-              <i className="fa-solid fa-magnifying-glass"></i>
-              <input
-                type="text"
-                placeholder="Filter by space name or feature..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
             </div>
 
-            {/* Status Dropdown Filter */}
-            <select
-              className="toolbar-select"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="All">Status: All</option>
-              <option value="Available">Available</option>
-              <option value="Reserved">Reserved</option>
-              <option value="Under Maintenance">Under Maintenance</option>
-            </select>
+            {/* 3. Branch Selector */}
+            <div style={{ flex: '1 1 180px', minWidth: '160px' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.8rem',
+                  fontWeight: '700',
+                  color: '#334155',
+                  marginBottom: '0.4rem',
+                }}
+              >
+                TRACE Branch
+              </label>
+              <select
+                value={selectedBranch}
+                onChange={(e) => setSelectedBranch(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 0.85rem',
+                  fontSize: '0.86rem',
+                  fontWeight: '600',
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <option value="All">All TRACE Hubs</option>
+                <option value="TRACE Expert City">TRACE Expert City (Colombo)</option>
+                <option value="CodeGen">CodeGen Hub (Bay 1-5)</option>
+                <option value="LSEG">LSEG Branch (Bay 11-12)</option>
+                <option value="Kandy">TRACE Innovation Hub (Kandy)</option>
+                <option value="Galle">TRACE Coastal Hub (Galle)</option>
+                <option value="Jaffna">TRACE Tech Park (Jaffna)</option>
+                <option value="Wayamba">TRACE Wayamba Incubator</option>
+              </select>
+            </div>
 
-            {/* Seating Capacity Filter */}
-            <select
-              className="toolbar-select"
-              value={capacityFilter}
-              onChange={(e) => setCapacityFilter(e.target.value)}
-            >
-              <option value="All">Capacity: All Sizes</option>
-              <option value="small">Small (&lt; 100 Seats)</option>
-              <option value="medium">Medium (100 - 200 Seats)</option>
-              <option value="large">Large (&gt; 200 Seats)</option>
-            </select>
-          </div>
+            {/* 4. Capacity Selector */}
+            <div style={{ flex: '1 1 150px', minWidth: '140px' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.8rem',
+                  fontWeight: '700',
+                  color: '#334155',
+                  marginBottom: '0.4rem',
+                }}
+              >
+                Capacity
+              </label>
+              <select
+                value={capacityFilter}
+                onChange={(e) => setCapacityFilter(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 0.85rem',
+                  fontSize: '0.86rem',
+                  fontWeight: '600',
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <option value="All">Any Size</option>
+                <option value="small">Small (&lt; 100 Seats)</option>
+                <option value="medium">Medium (100-200)</option>
+                <option value="large">Large (&gt; 200 Seats)</option>
+              </select>
+            </div>
 
-          <div className="toolbar-right">
-            <span className="results-count-text">
-              Showing <strong>{filteredVenues.length}</strong> {filteredVenues.length === 1 ? 'place' : 'places'}
-            </span>
+            {/* 5. Filter Button & Clear Button */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', paddingBottom: '2px' }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{
+                  backgroundColor: '#5d4df6',
+                  color: '#ffffff',
+                  borderRadius: '10px',
+                  padding: '0.65rem 1.35rem',
+                  fontSize: '0.88rem',
+                  fontWeight: '700',
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(93, 77, 246, 0.3)',
+                }}
+              >
+                Filter
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setProvinceFilter('All');
+                  setSelectedBranch('All');
+                  setCapacityFilter('All');
+                  setSearchQuery('');
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#64748b',
+                  fontSize: '0.86rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  padding: '0.65rem 0.4rem',
+                }}
+              >
+                Clear
+              </button>
+            </div>
           </div>
         </div>
 
