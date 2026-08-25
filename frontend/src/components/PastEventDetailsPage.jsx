@@ -243,16 +243,22 @@ export default function PastEventDetailsPage({
                 </div>
                 <div className="stat-item">
                   <span className="stat-label">Location</span>
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pastEvent.location || 'TRACE Expert City')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="stat-value"
-                    title="Click to view location pin on Google Maps"
-                    style={{ color: '#5d4df6', textDecoration: 'underline', fontWeight: '600', cursor: 'pointer' }}
-                  >
-                    {pastEvent.location} <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.68rem' }}></i>
-                  </a>
+                  {(() => {
+                    const rawLoc = pastEvent.location || 'TRACE Expert City, Colombo';
+                    const cleanLoc = Array.from(new Set(rawLoc.split(',').map((s) => s.trim()).filter(Boolean))).join(', ');
+                    return (
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanLoc)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="stat-value"
+                        title="Click to view location pin on Google Maps"
+                        style={{ color: '#5d4df6', textDecoration: 'underline', fontWeight: '600', cursor: 'pointer' }}
+                      >
+                        {cleanLoc} <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.68rem', marginLeft: '3px' }}></i>
+                      </a>
+                    );
+                  })()}
                 </div>
               </div>
             </div>

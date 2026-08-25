@@ -82,13 +82,13 @@ export default function Footer({ setActiveTab }) {
               <i className="fa-brands fa-facebook-f"></i>
             </a>
             <a
-              href="https://x.com"
+              href="https://twitter.com/trace_srilanka"
               target="_blank"
               rel="noopener noreferrer"
               className="social-icon-btn"
-              title="X (Twitter)"
+              title="Official TRACE Sri Lanka Twitter Page"
             >
-              <i className="fa-brands fa-x-twitter"></i>
+              <i className="fa-brands fa-twitter"></i>
             </a>
             <a
               href="https://www.instagram.com/trace_srilanka/"

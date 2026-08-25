@@ -5687,7 +5687,8 @@ input:checked+.slider:before {
 .stat-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 1rem;
   padding-bottom: 0.65rem;
   border-bottom: 1px solid #f1f5f9;
 }
@@ -5701,12 +5702,18 @@ input:checked+.slider:before {
   font-size: 0.85rem;
   color: #64748b;
   font-weight: 500;
+  flex: 0 0 auto;
+  min-width: 80px;
 }
 
 .stat-value {
   font-size: 0.85rem;
   font-weight: 700;
   color: #0f172a;
+  text-align: right;
+  word-break: break-word;
+  max-width: 65%;
+  line-height: 1.4;
 }
 
 .stat-value.status-completed {

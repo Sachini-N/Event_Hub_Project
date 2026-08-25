@@ -276,116 +276,304 @@ export default function PastEventsSection({
           <p>Catch up on what you missed and get a feel for the TRACE experience.</p>
         </div>
 
-        <div className="past-grid-layout">
-          {/* Large Past Event Card */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: '1.5rem',
+            alignItems: 'stretch',
+          }}
+        >
+          {/* Past Event Card 1 */}
           {card1 && (
             <div
-              className="past-card past-card-large"
+              className="past-event-home-card"
               style={{
-                backgroundImage: `url('${card1.coverImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80'}')`,
+                background: '#ffffff',
+                borderRadius: '16px',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 4px 16px rgba(15, 23, 42, 0.05)',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
                 cursor: 'pointer',
+                transition: 'all 0.2s ease',
               }}
               onClick={() => handleCardClick(card1)}
             >
-              <div className="past-card-overlay"></div>
-              <div className="past-card-content">
-                <span className="past-badge">
-                  {card1.category || 'Past Event'}
-                </span>
-                <h3 className="past-card-title">{card1.title}</h3>
-                <button
-                  className="btn btn-outline-light"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCardClick(card1);
+              {/* Image Container */}
+              <div style={{ position: 'relative', height: '210px', width: '100%', background: '#0f172a', overflow: 'hidden' }}>
+                <img
+                  src={card1.coverImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80'}
+                  alt={card1.title}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    objectPosition: 'center',
+                  }}
+                />
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '12px',
+                    left: '12px',
+                    background: 'rgba(15, 23, 42, 0.85)',
+                    backdropFilter: 'blur(4px)',
+                    color: '#ffffff',
+                    padding: '3px 10px',
+                    borderRadius: '20px',
+                    fontSize: '0.72rem',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
                   }}
                 >
-                  View Event Details
-                </button>
+                  {card1.category || 'PAST EVENT'}
+                </span>
+                <span
+                  style={{
+                    position: 'absolute',
+                    bottom: '12px',
+                    right: '12px',
+                    background: '#10b981',
+                    color: '#ffffff',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    fontSize: '0.72rem',
+                    fontWeight: '700',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <i className="fa-solid fa-circle-check"></i> Completed
+                </span>
+              </div>
+
+              {/* Card Body */}
+              <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <i className="fa-regular fa-calendar" style={{ color: '#5d4df6' }}></i>
+                    {formatPastDate(card1.date)}
+                    {card1.location && (
+                      <>
+                        <span style={{ margin: '0 4px', color: '#cbd5e1' }}>•</span>
+                        <i className="fa-solid fa-location-dot" style={{ color: '#5d4df6' }}></i>
+                        {card1.location.split(',')[0]}
+                      </>
+                    )}
+                  </div>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: '#0f172a', marginBottom: '0.5rem', lineHeight: 1.35 }}>
+                    {card1.title}
+                  </h3>
+                  <p
+                    style={{
+                      fontSize: '0.86rem',
+                      color: '#64748b',
+                      lineHeight: 1.45,
+                      margin: 0,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {card1.description || card1.shortDescription || 'Completed TRACE community event and workshop session.'}
+                  </p>
+                </div>
               </div>
             </div>
           )}
 
-          {/* Medium Past Event Card 1 */}
+          {/* Past Event Card 2 */}
           {card2 && (
             <div
-              className="past-card past-card-medium"
+              className="past-event-home-card"
               style={{
-                backgroundImage: `url('${card2.coverImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80'}')`,
+                background: '#ffffff',
+                borderRadius: '16px',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 4px 16px rgba(15, 23, 42, 0.05)',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
                 cursor: 'pointer',
+                transition: 'all 0.2s ease',
               }}
               onClick={() => handleCardClick(card2)}
             >
-              <div className="past-card-overlay"></div>
-              <div className="past-card-content">
-                <span className="past-badge">
-                  {card2.category || 'Past Event'}
-                </span>
-                <h3 className="past-card-title">{card2.title}</h3>
-                <button
-                  className="btn btn-solid-white"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCardClick(card2);
+              {/* Image Container */}
+              <div style={{ position: 'relative', height: '210px', width: '100%', background: '#0f172a', overflow: 'hidden' }}>
+                <img
+                  src={card2.coverImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80'}
+                  alt={card2.title}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    objectPosition: 'center',
+                  }}
+                />
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '12px',
+                    left: '12px',
+                    background: 'rgba(15, 23, 42, 0.85)',
+                    backdropFilter: 'blur(4px)',
+                    color: '#ffffff',
+                    padding: '3px 10px',
+                    borderRadius: '20px',
+                    fontSize: '0.72rem',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
                   }}
                 >
-                  View Details
-                </button>
+                  {card2.category || 'PAST EVENT'}
+                </span>
+                <span
+                  style={{
+                    position: 'absolute',
+                    bottom: '12px',
+                    right: '12px',
+                    background: '#10b981',
+                    color: '#ffffff',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    fontSize: '0.72rem',
+                    fontWeight: '700',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <i className="fa-solid fa-circle-check"></i> Completed
+                </span>
+              </div>
+
+              {/* Card Body */}
+              <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <i className="fa-regular fa-calendar" style={{ color: '#5d4df6' }}></i>
+                    {formatPastDate(card2.date)}
+                    {card2.location && (
+                      <>
+                        <span style={{ margin: '0 4px', color: '#cbd5e1' }}>•</span>
+                        <i className="fa-solid fa-location-dot" style={{ color: '#5d4df6' }}></i>
+                        {card2.location.split(',')[0]}
+                      </>
+                    )}
+                  </div>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: '#0f172a', marginBottom: '0.5rem', lineHeight: 1.35 }}>
+                    {card2.title}
+                  </h3>
+                  <p
+                    style={{
+                      fontSize: '0.86rem',
+                      color: '#64748b',
+                      lineHeight: 1.45,
+                      margin: 0,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {card2.description || card2.shortDescription || 'Completed TRACE community event and workshop session.'}
+                  </p>
+                </div>
               </div>
             </div>
           )}
 
-          {/* Medium Past Event Card 2 */}
-          {card3 && (
-            <div
-              className="past-card past-card-medium"
-              style={{
-                backgroundImage: `url('${card3.coverImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80'}')`,
-                cursor: 'pointer',
-              }}
-              onClick={() => handleCardClick(card3)}
-            >
-              <div className="past-card-overlay"></div>
-              <div className="past-card-content">
-                <span className="past-badge">
-                  {card3.category || 'Archive'}
-                </span>
-                <h3 className="past-card-title">{card3.title}</h3>
-                <button
-                  className="btn btn-solid-white"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCardClick(card3);
-                  }}
-                >
-                  Read Summary
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Full Archive Banner Card */}
+          {/* Full Archive Callout Card */}
           <div
-            className="past-card archive-banner-card"
-            style={{ cursor: 'pointer' }}
+            style={{
+              background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
+              borderRadius: '16px',
+              padding: '1.75rem 1.5rem',
+              color: '#ffffff',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              boxShadow: '0 4px 16px rgba(30, 27, 75, 0.25)',
+              position: 'relative',
+              overflow: 'hidden',
+              cursor: 'pointer',
+            }}
             onClick={() => setActiveTab && setActiveTab('past')}
           >
-            <div className="archive-watermark">ARCHIVE</div>
-            <div className="past-card-content">
-              <h3 className="archive-title">Access the Full Archive</h3>
-              <p className="archive-desc">
-                Browse through years of workshops, summits, and meetups. Filter by topic to find the resources most relevant to your career.
-              </p>
-              <button
-                className="btn btn-white-pill"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (setActiveTab) setActiveTab('past');
+            <div
+              style={{
+                position: 'absolute',
+                right: '-20px',
+                bottom: '-20px',
+                fontSize: '6.5rem',
+                fontWeight: '900',
+                color: 'rgba(255, 255, 255, 0.05)',
+                userSelect: 'none',
+                lineHeight: 1,
+              }}
+            >
+              ARCHIVE
+            </div>
+
+            <div>
+              <span
+                style={{
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  color: '#ffffff',
+                  fontSize: '0.72rem',
+                  fontWeight: '800',
+                  padding: '3px 10px',
+                  borderRadius: '20px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  marginBottom: '1rem',
                 }}
               >
-                Browse All Past Events ({dbPastEvents.length}) <i className="fa-solid fa-arrow-right-long"></i>
-              </button>
+                <i className="fa-solid fa-clock-rotate-left"></i> TRACE ARCHIVE
+              </span>
+
+              <h3 style={{ fontSize: '1.35rem', fontWeight: '800', marginBottom: '0.75rem', lineHeight: 1.3 }}>
+                Access the Full Past Archive
+              </h3>
+              <p style={{ fontSize: '0.88rem', color: '#cbd5e1', lineHeight: 1.5, marginBottom: '1.5rem' }}>
+                Browse through years of TRACE workshops, technology summits, and meetups across all Sri Lanka hubs. Filter by category or search resources.
+              </p>
             </div>
+
+            <button
+              type="button"
+              className="btn"
+              style={{
+                background: '#ffffff',
+                color: '#1e1b4b',
+                borderRadius: '10px',
+                padding: '0.7rem 1.25rem',
+                fontSize: '0.88rem',
+                fontWeight: '800',
+                border: 'none',
+                cursor: 'pointer',
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 12px rgba(255, 255, 255, 0.2)',
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (setActiveTab) setActiveTab('past');
+              }}
+            >
+              Browse All Past Events ({dbPastEvents.length}) <i className="fa-solid fa-arrow-right-long"></i>
+            </button>
           </div>
         </div>
       </div>
