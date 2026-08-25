@@ -199,6 +199,40 @@ const deleteUser = async (req, res) => {
   }
 };
 
+// PUT /api/auth/users/:id (Update admin account details)
+const updateUserAdminDetails = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User account not found." });
+    }
+
+    if (req.body.name) user.name = req.body.name;
+    if (req.body.branch) user.branch = req.body.branch;
+    if (req.body.permissions) user.permissions = req.body.permissions;
+    if (req.body.avatar !== undefined) user.avatar = req.body.avatar;
+    if (req.body.contactNumber !== undefined) user.contactNumber = req.body.contactNumber;
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: `Admin details for ${user.name} updated successfully!`,
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        branch: user.branch,
+        permissions: user.permissions,
+        avatar: user.avatar,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to update admin details", error: error.message });
+  }
+};
+
 const nodemailer = require("nodemailer");
 
 // Nodemailer Email Transport Helper
@@ -431,6 +465,7 @@ module.exports = {
   seedAdminUser,
   getAllUsers,
   deleteUser,
+  updateUserAdminDetails,
   createBranchAdmin,
   sendEmailCredentials,
 };

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import EditEventModal from './modals/EditEventModal';
 import AddVenueModal from './modals/AddVenueModal';
 import CreateEventPage from './CreateEventPage';
+import CloudinaryUploader from './CloudinaryUploader';
 
 export default function AdminDashboardPage({
   currentUser,
@@ -42,7 +43,17 @@ export default function AdminDashboardPage({
 
   // Registered Users & Branch Admins State
   const [registeredUsers, setRegisteredUsers] = useState([]);
+  const [userRoleFilter, setUserRoleFilter] = useState('all'); // 'all', 'admins', 'users'
   const [showAddBranchAdminModal, setShowAddBranchAdminModal] = useState(false);
+  const [editingAdminUser, setEditingAdminUser] = useState(null);
+  const [editingAdminForm, setEditingAdminForm] = useState({
+    name: '',
+    branch: 'TRACE Expert City (Colombo)',
+    permissions: ['manage_events', 'manage_registrations'],
+    avatar: '',
+  });
+  const [savingAdminEdit, setSavingAdminEdit] = useState(false);
+
   const [branchAdminForm, setBranchAdminForm] = useState({
     name: '',
     email: '',
@@ -52,6 +63,33 @@ export default function AdminDashboardPage({
   });
   const [emailNotificationModalData, setEmailNotificationModalData] = useState(null);
   const [submittingBranchAdmin, setSubmittingBranchAdmin] = useState(false);
+
+  const handleSaveAdminEdit = async (e) => {
+    e.preventDefault();
+    if (!editingAdminUser) return;
+    setSavingAdminEdit(true);
+    try {
+      const res = await fetch(`/api/auth/users/${editingAdminUser._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingAdminForm),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setRegisteredUsers((prev) =>
+          prev.map((u) => (u._id === editingAdminUser._id ? { ...u, ...data.data } : u))
+        );
+        setEditingAdminUser(null);
+        if (showToast) showToast(`Admin details for "${editingAdminForm.name}" updated successfully!`, 'success');
+      } else {
+        if (showToast) showToast(data.message || 'Failed to update admin details', 'error');
+      }
+    } catch (err) {
+      if (showToast) showToast('Failed to connect to server', 'error');
+    } finally {
+      setSavingAdminEdit(false);
+    }
+  };
 
   const handleCreateBranchAdmin = async (e) => {
     e.preventDefault();
@@ -922,12 +960,12 @@ export default function AdminDashboardPage({
                 <div className="stat-card">
                   <div className="stat-info">
                     <span className="stat-label">BRANCH ADMINS</span>
-                    <div className="stat-value" style={{ color: '#0052cc' }}>
+                    <div className="stat-value" style={{ color: '#5d4df6' }}>
                       {registeredUsers.filter((u) => u.role === 'branch_admin' || u.role === 'admin').length}
                     </div>
                     <div className="stat-trend positive-pill">Hub Administrators</div>
                   </div>
-                  <div className="stat-icon-wrapper" style={{ background: '#eff6ff', color: '#0052cc' }}>
+                  <div className="stat-icon-wrapper" style={{ background: '#eff6ff', color: '#5d4df6' }}>
                     <i className="fa-solid fa-user-shield"></i>
                   </div>
                 </div>
@@ -946,6 +984,86 @@ export default function AdminDashboardPage({
 
               {/* Users & Branch Admins Data Table */}
               <div className="admin-card-panel" style={{ padding: 0, overflow: 'hidden' }}>
+                {/* Role Filter Buttons */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.85rem 1.25rem', borderBottom: '1px solid #eaecf0', background: '#f8fafc', flexWrap: 'wrap', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#e2e8f0', padding: '3px', borderRadius: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setUserRoleFilter('all')}
+                      style={{
+                        padding: '0.45rem 0.95rem',
+                        borderRadius: '8px',
+                        fontSize: '0.82rem',
+                        fontWeight: '700',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        backgroundColor: userRoleFilter === 'all' ? '#ffffff' : 'transparent',
+                        color: userRoleFilter === 'all' ? '#5d4df6' : '#64748b',
+                        boxShadow: userRoleFilter === 'all' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <i className="fa-solid fa-users"></i> All Members
+                      <span style={{ fontSize: '0.72rem', padding: '2px 7px', borderRadius: '12px', background: userRoleFilter === 'all' ? '#eef2ff' : '#cbd5e1', color: userRoleFilter === 'all' ? '#5d4df6' : '#475569' }}>
+                        {registeredUsers.length}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setUserRoleFilter('admins')}
+                      style={{
+                        padding: '0.45rem 0.95rem',
+                        borderRadius: '8px',
+                        fontSize: '0.82rem',
+                        fontWeight: '700',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        backgroundColor: userRoleFilter === 'admins' ? '#ffffff' : 'transparent',
+                        color: userRoleFilter === 'admins' ? '#5d4df6' : '#64748b',
+                        boxShadow: userRoleFilter === 'admins' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <i className="fa-solid fa-user-shield"></i> Admins Only
+                      <span style={{ fontSize: '0.72rem', padding: '2px 7px', borderRadius: '12px', background: userRoleFilter === 'admins' ? '#eef2ff' : '#cbd5e1', color: userRoleFilter === 'admins' ? '#5d4df6' : '#475569' }}>
+                        {registeredUsers.filter((u) => u.role === 'admin' || u.role === 'super_admin' || u.role === 'branch_admin').length}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setUserRoleFilter('users')}
+                      style={{
+                        padding: '0.45rem 0.95rem',
+                        borderRadius: '8px',
+                        fontSize: '0.82rem',
+                        fontWeight: '700',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        backgroundColor: userRoleFilter === 'users' ? '#ffffff' : 'transparent',
+                        color: userRoleFilter === 'users' ? '#5d4df6' : '#64748b',
+                        boxShadow: userRoleFilter === 'users' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <i className="fa-solid fa-user"></i> Regular Users
+                      <span style={{ fontSize: '0.72rem', padding: '2px 7px', borderRadius: '12px', background: userRoleFilter === 'users' ? '#eef2ff' : '#cbd5e1', color: userRoleFilter === 'users' ? '#5d4df6' : '#475569' }}>
+                        {registeredUsers.filter((u) => u.role !== 'admin' && u.role !== 'super_admin' && u.role !== 'branch_admin').length}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
                 <div className="table-responsive-wrapper">
                   <table className="admin-data-table reg-table-interactive">
                     <thead>
@@ -968,11 +1086,16 @@ export default function AdminDashboardPage({
                       ) : (
                         registeredUsers
                           .filter((u) => {
+                            const isAdmin = u.role === 'admin' || u.role === 'super_admin' || u.role === 'branch_admin';
+                            if (userRoleFilter === 'admins' && !isAdmin) return false;
+                            if (userRoleFilter === 'users' && isAdmin) return false;
+
                             if (!searchQuery) return true;
                             const q = searchQuery.toLowerCase();
                             return (
                               u.name.toLowerCase().includes(q) ||
                               u.email.toLowerCase().includes(q) ||
+                              (u.branch && u.branch.toLowerCase().includes(q)) ||
                               (u.contactNumber && u.contactNumber.includes(q))
                             );
                           })
@@ -983,7 +1106,7 @@ export default function AdminDashboardPage({
                                   <img
                                     src={
                                       u.avatar ||
-                                      `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=0052cc&color=fff&size=80`
+                                      `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=5d4df6&color=fff&size=80`
                                     }
                                     alt={u.name}
                                     style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
@@ -992,7 +1115,7 @@ export default function AdminDashboardPage({
                                 </div>
                               </td>
                               <td>
-                                <span style={{ color: '#0052cc', fontWeight: '500' }}>{u.email}</span>
+                                <span style={{ color: '#5d4df6', fontWeight: '500' }}>{u.email}</span>
                               </td>
                               <td>
                                 <span style={{ fontSize: '0.82rem', fontWeight: '600', color: '#0f172a' }}>
@@ -1010,7 +1133,7 @@ export default function AdminDashboardPage({
                                       display: 'inline-block',
                                       width: 'fit-content',
                                       backgroundColor: u.role === 'admin' || u.role === 'super_admin' ? '#eff6ff' : u.role === 'branch_admin' ? '#f0fdf4' : '#f1f5f9',
-                                      color: u.role === 'admin' || u.role === 'super_admin' ? '#0052cc' : u.role === 'branch_admin' ? '#16a34a' : '#475569',
+                                      color: u.role === 'admin' || u.role === 'super_admin' ? '#5d4df6' : u.role === 'branch_admin' ? '#16a34a' : '#475569',
                                       border: u.role === 'admin' || u.role === 'super_admin' ? '1px solid #bfdbfe' : u.role === 'branch_admin' ? '1px solid #bbf7d0' : '1px solid #cbd5e1',
                                     }}
                                   >
@@ -1037,14 +1160,33 @@ export default function AdminDashboardPage({
                               <td style={{ textAlign: 'center' }}>
                                 <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
                                   {(u.role === 'branch_admin' || u.role === 'admin' || u.role === 'super_admin') && (
-                                    <button
-                                      className="icon-btn-action"
-                                      title="Resend Credentials Email to Branch Admin"
-                                      onClick={() => handleSendEmailCredentials(u)}
-                                      style={{ color: '#0052cc', background: '#eff6ff', border: '1px solid #bfdbfe' }}
-                                    >
-                                      <i className="fa-solid fa-paper-plane"></i>
-                                    </button>
+                                    <>
+                                      <button
+                                        className="icon-btn-action"
+                                        title="Edit Admin Details & Avatar Upload"
+                                        onClick={() => {
+                                          setEditingAdminUser(u);
+                                          setEditingAdminForm({
+                                            name: u.name || '',
+                                            branch: u.branch || 'TRACE Expert City (Colombo)',
+                                            permissions: u.permissions || ['manage_events', 'manage_registrations'],
+                                            avatar: u.avatar || '',
+                                          });
+                                        }}
+                                        style={{ color: '#5d4df6', background: '#eef2ff', border: '1px solid #bfdbfe' }}
+                                      >
+                                        <i className="fa-solid fa-user-pen"></i>
+                                      </button>
+
+                                      <button
+                                        className="icon-btn-action"
+                                        title="Resend Credentials Email to Branch Admin"
+                                        onClick={() => handleSendEmailCredentials(u)}
+                                        style={{ color: '#5d4df6', background: '#eff6ff', border: '1px solid #bfdbfe' }}
+                                      >
+                                        <i className="fa-solid fa-paper-plane"></i>
+                                      </button>
+                                    </>
                                   )}
                                   <button
                                     className="icon-btn-action danger"
@@ -1114,7 +1256,7 @@ export default function AdminDashboardPage({
                             ● {v.status || 'Available'}
                           </span>
                           {v.branch && (
-                            <span style={{ fontSize: '0.78rem', fontWeight: '700', color: '#0052cc', background: '#eff6ff', padding: '2px 8px', borderRadius: '4px' }}>
+                            <span style={{ fontSize: '0.78rem', fontWeight: '700', color: '#5d4df6', background: '#eff6ff', padding: '2px 8px', borderRadius: '4px' }}>
                               {v.branch}
                             </span>
                           )}
@@ -1123,11 +1265,11 @@ export default function AdminDashboardPage({
                           {v.name}
                         </h3>
                         <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.75rem' }}>
-                          <i className="fa-solid fa-location-dot" style={{ color: '#0052cc' }}></i> {v.address}
+                          <i className="fa-solid fa-location-dot" style={{ color: '#5d4df6' }}></i> {v.address}
                         </p>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.88rem', fontWeight: '600', color: '#334155', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                          <span><i className="fa-solid fa-users" style={{ color: '#0052cc' }}></i> Seating Capacity: <strong>{v.capacity} Seats</strong></span>
+                          <span><i className="fa-solid fa-users" style={{ color: '#5d4df6' }}></i> Seating Capacity: <strong>{v.capacity} Seats</strong></span>
                           <span style={{ color: '#059669', fontWeight: '700' }}><i className="fa-solid fa-tag"></i> {v.rentalPrice || (v.pricePerHour ? `Rs. ${v.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr')}</span>
                         </div>
 
@@ -1147,7 +1289,7 @@ export default function AdminDashboardPage({
                           </button>
                           <button
                             className="btn-my-view-event"
-                            style={{ fontSize: '0.8rem', padding: '6px 14px', background: '#eff6ff', color: '#0052cc', border: '1px solid #bfdbfe' }}
+                            style={{ fontSize: '0.8rem', padding: '6px 14px', background: '#eff6ff', color: '#5d4df6', border: '1px solid #bfdbfe' }}
                             onClick={() => setEditingVenue(v)}
                             title="Edit Venue Facility"
                           >
@@ -1190,7 +1332,7 @@ export default function AdminDashboardPage({
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
                   <div>
                     <h2 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <i className="fa-solid fa-calendar-check" style={{ color: '#0052cc' }}></i>
+                      <i className="fa-solid fa-calendar-check" style={{ color: '#5d4df6' }}></i>
                       Received Space Booking Inquiries
                     </h2>
                     <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0.2rem 0 0' }}>
@@ -1198,13 +1340,13 @@ export default function AdminDashboardPage({
                     </p>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <span style={{ background: '#eff6ff', color: '#0052cc', border: '1px solid #dbeafe', fontWeight: '700', fontSize: '0.8rem', padding: '0.35rem 0.85rem', borderRadius: '20px' }}>
+                    <span style={{ background: '#eff6ff', color: '#5d4df6', border: '1px solid #dbeafe', fontWeight: '700', fontSize: '0.8rem', padding: '0.35rem 0.85rem', borderRadius: '20px' }}>
                       {venueBookings.length} Requests
                     </span>
                     <button
                       type="button"
                       className="btn btn-sm btn-outline"
-                      style={{ fontSize: '0.82rem', fontWeight: '700', padding: '0.45rem 0.95rem', borderRadius: '8px', color: '#0052cc', borderColor: '#bfdbfe', background: '#eff6ff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                      style={{ fontSize: '0.82rem', fontWeight: '700', padding: '0.45rem 0.95rem', borderRadius: '8px', color: '#5d4df6', borderColor: '#bfdbfe', background: '#eff6ff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                       onClick={() => {
                         setInquirySearchQuery('');
                         setInquiryBranchFilter('all');
@@ -1244,7 +1386,7 @@ export default function AdminDashboardPage({
                         {venueBookings.map((bk) => (
                           <tr key={bk._id || bk.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                             <td style={{ padding: '12px 14px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
-                              <span style={{ color: '#0052cc', background: '#eff6ff', padding: '3px 8px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '700', fontFamily: 'monospace' }}>
+                              <span style={{ color: '#5d4df6', background: '#eff6ff', padding: '3px 8px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '700', fontFamily: 'monospace' }}>
                                 {bk.bookingRef}
                               </span>
                             </td>
@@ -1268,7 +1410,7 @@ export default function AdminDashboardPage({
                               )}
                             </td>
                             <td style={{ padding: '12px 14px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
-                              <span style={{ fontWeight: '700', color: '#0052cc', background: '#eff6ff', border: '1px solid #dbeafe', padding: '3px 8px', borderRadius: '6px', fontSize: '0.8rem' }}>
+                              <span style={{ fontWeight: '700', color: '#5d4df6', background: '#eff6ff', border: '1px solid #dbeafe', padding: '3px 8px', borderRadius: '6px', fontSize: '0.8rem' }}>
                                 <i className="fa-regular fa-clock" style={{ marginRight: '4px' }}></i>
                                 {bk.durationHours || 4} Hours
                               </span>
@@ -1357,7 +1499,7 @@ export default function AdminDashboardPage({
               <div className="admin-dashboard-title-row" style={{ marginBottom: '1.5rem' }}>
                 <div>
                   <h1 className="admin-page-title" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <i className="fa-solid fa-clipboard-list" style={{ color: '#0052cc' }}></i>
+                    <i className="fa-solid fa-clipboard-list" style={{ color: '#5d4df6' }}></i>
                     Venue Space Inquiries & Reservations
                   </h1>
                   <p style={{ fontSize: '0.95rem', color: '#64748b', marginTop: '0.2rem' }}>
@@ -1391,7 +1533,7 @@ export default function AdminDashboardPage({
                     <span className="stat-label">TOTAL INQUIRIES</span>
                     <div className="stat-value">{venueBookings.length}</div>
                   </div>
-                  <div className="stat-icon-wrapper" style={{ background: '#eff6ff', color: '#0052cc' }}>
+                  <div className="stat-icon-wrapper" style={{ background: '#eff6ff', color: '#5d4df6' }}>
                     <i className="fa-solid fa-inbox"></i>
                   </div>
                 </div>
@@ -1504,7 +1646,7 @@ export default function AdminDashboardPage({
                           border: 'none',
                           cursor: 'pointer',
                           backgroundColor: inquiryStatusFilter === tab.id ? '#ffffff' : 'transparent',
-                          color: inquiryStatusFilter === tab.id ? '#0052cc' : '#64748b',
+                          color: inquiryStatusFilter === tab.id ? '#5d4df6' : '#64748b',
                           boxShadow: inquiryStatusFilter === tab.id ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                           transition: 'all 0.2s ease',
                         }}
@@ -1555,7 +1697,7 @@ export default function AdminDashboardPage({
                         {displayedVenueBookings.map((bk) => (
                           <tr key={bk._id || bk.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                             <td style={{ padding: '14px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
-                              <span style={{ color: '#0052cc', background: '#eff6ff', border: '1px solid #dbeafe', padding: '4px 10px', borderRadius: '6px', fontSize: '0.82rem', fontWeight: '700', fontFamily: 'monospace' }}>
+                              <span style={{ color: '#5d4df6', background: '#eff6ff', border: '1px solid #dbeafe', padding: '4px 10px', borderRadius: '6px', fontSize: '0.82rem', fontWeight: '700', fontFamily: 'monospace' }}>
                                 {bk.bookingRef}
                               </span>
                             </td>
@@ -1583,7 +1725,7 @@ export default function AdminDashboardPage({
                               )}
                             </td>
                             <td style={{ padding: '14px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
-                              <span style={{ fontWeight: '700', color: '#0052cc', background: '#eff6ff', border: '1px solid #dbeafe', padding: '4px 10px', borderRadius: '6px', fontSize: '0.82rem' }}>
+                              <span style={{ fontWeight: '700', color: '#5d4df6', background: '#eff6ff', border: '1px solid #dbeafe', padding: '4px 10px', borderRadius: '6px', fontSize: '0.82rem' }}>
                                 <i className="fa-regular fa-clock" style={{ marginRight: '4px' }}></i>
                                 {bk.durationHours || 4} Hours
                               </span>
@@ -1738,7 +1880,7 @@ export default function AdminDashboardPage({
                       type="checkbox"
                       checked={settingsForm.emailConfirmations}
                       onChange={(e) => setSettingsForm({ ...settingsForm, emailConfirmations: e.target.checked })}
-                      style={{ width: '18px', height: '18px', accentColor: '#0052cc' }}
+                      style={{ width: '18px', height: '18px', accentColor: '#5d4df6' }}
                     />
                     Send automatic email confirmation with QR pass upon user registration.
                   </label>
@@ -1747,7 +1889,7 @@ export default function AdminDashboardPage({
                       type="checkbox"
                       checked={settingsForm.smsReminders}
                       onChange={(e) => setSettingsForm({ ...settingsForm, smsReminders: e.target.checked })}
-                      style={{ width: '18px', height: '18px', accentColor: '#0052cc' }}
+                      style={{ width: '18px', height: '18px', accentColor: '#5d4df6' }}
                     />
                     Send automated event reminder 24 hours prior to event start.
                   </label>
@@ -1756,7 +1898,7 @@ export default function AdminDashboardPage({
                       type="checkbox"
                       checked={settingsForm.adminDigest}
                       onChange={(e) => setSettingsForm({ ...settingsForm, adminDigest: e.target.checked })}
-                      style={{ width: '18px', height: '18px', accentColor: '#0052cc' }}
+                      style={{ width: '18px', height: '18px', accentColor: '#5d4df6' }}
                     />
                     Daily registration digest summary sent to administrator inbox.
                   </label>
@@ -1773,7 +1915,7 @@ export default function AdminDashboardPage({
                     type="checkbox"
                     checked={settingsForm.requireDeleteConfirm}
                     onChange={(e) => setSettingsForm({ ...settingsForm, requireDeleteConfirm: e.target.checked })}
-                    style={{ width: '18px', height: '18px', accentColor: '#0052cc' }}
+                    style={{ width: '18px', height: '18px', accentColor: '#5d4df6' }}
                   />
                   Require explicit admin confirmation dialog for deleting events or user registrations.
                 </label>
@@ -2504,7 +2646,7 @@ export default function AdminDashboardPage({
 
             <div className="modal-header" style={{ marginBottom: '1.5rem' }}>
               <h2 style={{ fontSize: '1.35rem', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <i className="fa-solid fa-user-shield" style={{ color: '#0052cc' }}></i>
+                <i className="fa-solid fa-user-shield" style={{ color: '#5d4df6' }}></i>
                 Assign Branch Admin & Grant Access
               </h2>
               <p className="modal-sub">
@@ -2586,7 +2728,7 @@ export default function AdminDashboardPage({
                               : prev.permissions.filter((p) => p !== perm.id),
                           }));
                         }}
-                        style={{ accentColor: '#0052cc', width: '16px', height: '16px' }}
+                        style={{ accentColor: '#5d4df6', width: '16px', height: '16px' }}
                       />
                       {perm.label}
                     </label>
@@ -2601,7 +2743,7 @@ export default function AdminDashboardPage({
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  style={{ backgroundColor: '#0052cc', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  style={{ backgroundColor: '#5d4df6', display: 'flex', alignItems: 'center', gap: '6px' }}
                   disabled={submittingBranchAdmin}
                 >
                   {submittingBranchAdmin ? (
@@ -2611,6 +2753,177 @@ export default function AdminDashboardPage({
                   ) : (
                     <>
                       <i className="fa-solid fa-paper-plane"></i> Assign & Dispatch Credentials Email
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Administrator Account Details Modal (Admins Only) */}
+      {editingAdminUser && (
+        <div className="modal-overlay" onClick={() => setEditingAdminUser(null)}>
+          <div
+            className="modal-card"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '620px', padding: '2rem', borderRadius: '16px' }}
+          >
+            <button className="modal-close" onClick={() => setEditingAdminUser(null)}>
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+
+            <div className="modal-header" style={{ marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.35rem', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <i className="fa-solid fa-user-pen" style={{ color: '#5d4df6' }}></i>
+                Edit Administrator Details & Avatar
+              </h2>
+              <p className="modal-sub">
+                Update account name, assigned TRACE branch, Granted Permissions, and profile avatar photo for <strong style={{ color: '#5d4df6' }}>{editingAdminUser.email}</strong>.
+              </p>
+            </div>
+
+            <form onSubmit={handleSaveAdminEdit}>
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label style={{ marginBottom: '0.35rem', display: 'block', fontWeight: '700', fontSize: '0.85rem' }}>
+                  Administrator Email (Account Identifier)
+                </label>
+                <input
+                  type="email"
+                  value={editingAdminUser.email}
+                  disabled
+                  style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#f1f5f9', color: '#64748b', fontWeight: '600' }}
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label style={{ marginBottom: '0.35rem', display: 'block', fontWeight: '700', fontSize: '0.85rem' }}>
+                  Administrator Full Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editingAdminForm.name}
+                  onChange={(e) => setEditingAdminForm({ ...editingAdminForm, name: e.target.value })}
+                  placeholder="e.g. Kasun Kalhara"
+                  style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label style={{ marginBottom: '0.35rem', display: 'block', fontWeight: '700', fontSize: '0.85rem' }}>
+                  Assigned TRACE Branch Location
+                </label>
+                <select
+                  value={editingAdminForm.branch}
+                  onChange={(e) => setEditingAdminForm({ ...editingAdminForm, branch: e.target.value })}
+                  style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#ffffff' }}
+                >
+                  <option value="TRACE Expert City (Colombo)">🏢 TRACE Expert City (Colombo)</option>
+                  <option value="TRACE Main Branch (Colombo)">🏛️ TRACE Main Branch (Colombo)</option>
+                  <option value="CodeGen Hub (Bay 1-5)">⚡ CodeGen Hub (Bay 1-5)</option>
+                  <option value="LSEG Sri Lanka Branch (Bay 11-12)">📈 LSEG Branch (Bay 11-12)</option>
+                  <option value="TRACE Innovation Hub (Kandy)">🏔️ TRACE Innovation Hub (Kandy)</option>
+                  <option value="TRACE Coastal Hub (Galle)">🏖️ TRACE Coastal Hub (Galle)</option>
+                  <option value="TRACE Tech Park (Jaffna)">🌴 TRACE Tech Park (Jaffna)</option>
+                  <option value="TRACE Wayamba Incubator (Kurunegala)">🌾 TRACE Wayamba Incubator</option>
+                </select>
+              </div>
+
+              {/* Avatar Photo Upload & URL */}
+              <div className="form-group" style={{ marginBottom: '1.25rem', background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                <label style={{ marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700', fontSize: '0.85rem', color: '#0f172a' }}>
+                  <i className="fa-solid fa-camera" style={{ color: '#5d4df6' }}></i>
+                  Admin Avatar Photo (Upload or Image URL)
+                </label>
+
+                {editingAdminForm.avatar && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
+                    <img
+                      src={editingAdminForm.avatar}
+                      alt="Admin Avatar Preview"
+                      style={{ width: '54px', height: '54px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #5d4df6' }}
+                    />
+                    <div>
+                      <span style={{ fontSize: '0.78rem', color: '#059669', fontWeight: '700', display: 'block' }}>✓ Current Avatar Loaded</span>
+                      <button
+                        type="button"
+                        onClick={() => setEditingAdminForm({ ...editingAdminForm, avatar: '' })}
+                        style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.78rem', cursor: 'pointer', padding: 0 }}
+                      >
+                        Remove Photo
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <CloudinaryUploader
+                  accept="image/*"
+                  label="Upload New Admin Photo to Cloudinary"
+                  onUploadSuccess={(url) => setEditingAdminForm({ ...editingAdminForm, avatar: url })}
+                />
+
+                <div style={{ marginTop: '0.5rem' }}>
+                  <label style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: '0.25rem', display: 'block' }}>Or Paste Image URL directly:</label>
+                  <input
+                    type="text"
+                    value={editingAdminForm.avatar}
+                    onChange={(e) => setEditingAdminForm({ ...editingAdminForm, avatar: e.target.value })}
+                    placeholder="https://images.unsplash.com/... or Cloudinary URL"
+                    style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.82rem' }}
+                  />
+                </div>
+              </div>
+
+              {/* Granted Permissions */}
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <label style={{ marginBottom: '0.5rem', display: 'block', fontWeight: '700', fontSize: '0.85rem' }}>Granted Permissions & Scope</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                  {[
+                    { id: 'manage_events', label: '📅 Create & Edit Branch Events' },
+                    { id: 'manage_registrations', label: '👥 Manage Participant Registrations' },
+                    { id: 'manage_spaces', label: '🏢 Manage Branch Spaces & Inquiries' },
+                    { id: 'view_analytics', label: '📊 View Analytics & Reports' },
+                  ].map((perm) => (
+                    <label key={perm.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: '600', color: '#334155', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={editingAdminForm.permissions.includes(perm.id)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setEditingAdminForm((prev) => ({
+                            ...prev,
+                            permissions: checked
+                              ? [...prev.permissions, perm.id]
+                              : prev.permissions.filter((p) => p !== perm.id),
+                          }));
+                        }}
+                        style={{ accentColor: '#5d4df6', width: '16px', height: '16px' }}
+                      />
+                      {perm.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="form-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                <button type="button" className="btn btn-outline" onClick={() => setEditingAdminUser(null)}>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ backgroundColor: '#5d4df6', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  disabled={savingAdminEdit}
+                >
+                  {savingAdminEdit ? (
+                    <>
+                      <i className="fa-solid fa-spinner fa-spin"></i> Saving Changes...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fa-solid fa-floppy-disk"></i> Save Admin Details & Photo
                     </>
                   )}
                 </button>
@@ -2660,7 +2973,7 @@ export default function AdminDashboardPage({
                 </p>
 
                 <div style={{ background: '#f8fafc', border: '1px border-dashed #cbd5e1', borderRadius: '8px', padding: '0.85rem 1rem', marginBottom: '1rem' }}>
-                  <div style={{ marginBottom: '0.35rem' }}>📧 <strong>Login Email:</strong> <span style={{ color: '#0052cc', fontWeight: '600' }}>{emailNotificationModalData.email}</span></div>
+                  <div style={{ marginBottom: '0.35rem' }}>📧 <strong>Login Email:</strong> <span style={{ color: '#5d4df6', fontWeight: '600' }}>{emailNotificationModalData.email}</span></div>
                   <div style={{ marginBottom: '0.35rem' }}>🔑 <strong>Temporary Password:</strong> <code style={{ background: '#e2e8f0', padding: '2px 6px', borderRadius: '4px', color: '#0f172a' }}>{emailNotificationModalData.temporaryPassword}</code></div>
                   <div>🏢 <strong>Assigned Branch:</strong> {emailNotificationModalData.branchName}</div>
                 </div>
@@ -2679,7 +2992,7 @@ export default function AdminDashboardPage({
             <button
               type="button"
               className="btn btn-primary"
-              style={{ width: '100%', backgroundColor: '#0052cc', fontWeight: '700' }}
+              style={{ width: '100%', backgroundColor: '#5d4df6', fontWeight: '700' }}
               onClick={() => setEmailNotificationModalData(null)}
             >
               Done & Close Preview

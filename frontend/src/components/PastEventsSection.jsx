@@ -84,7 +84,7 @@ export default function PastEventsSection({
         <div className="section-container">
           <div className="page-header">
             <h1 className="page-title">
-              <i className="fa-solid fa-clock-rotate-left" style={{ color: '#0052cc', marginRight: '10px' }}></i>
+              <i className="fa-solid fa-clock-rotate-left" style={{ color: '#5d4df6', marginRight: '10px' }}></i>
               Past Events & Community Archive
             </h1>
             <p className="page-subtitle">

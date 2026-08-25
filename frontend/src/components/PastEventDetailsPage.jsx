@@ -99,9 +99,9 @@ export default function PastEventDetailsPage({
                 title="Click to view location pin on Google Maps"
                 style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
               >
-                <i className="fa-solid fa-location-dot" style={{ color: '#0052cc' }}></i>
-                <span style={{ textDecoration: 'underline', color: '#0052cc', fontWeight: '600' }}>{pastEvent.location || 'TRACE Expert City'}</span>
-                <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.68rem', color: '#0052cc', marginLeft: '2px' }}></i>
+                <i className="fa-solid fa-location-dot" style={{ color: '#5d4df6' }}></i>
+                <span style={{ textDecoration: 'underline', color: '#5d4df6', fontWeight: '600' }}>{pastEvent.location || 'TRACE Expert City'}</span>
+                <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.68rem', color: '#5d4df6', marginLeft: '2px' }}></i>
               </a>
 
               <div className="past-meta-pill">
@@ -249,7 +249,7 @@ export default function PastEventDetailsPage({
                     rel="noopener noreferrer"
                     className="stat-value"
                     title="Click to view location pin on Google Maps"
-                    style={{ color: '#0052cc', textDecoration: 'underline', fontWeight: '600', cursor: 'pointer' }}
+                    style={{ color: '#5d4df6', textDecoration: 'underline', fontWeight: '600', cursor: 'pointer' }}
                   >
                     {pastEvent.location} <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.68rem' }}></i>
                   </a>

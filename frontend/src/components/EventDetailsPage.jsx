@@ -200,9 +200,9 @@ export default function EventDetailsPage({
                       title="Click to open location on Google Maps"
                       style={{ color: 'inherit', textDecoration: 'none', cursor: 'pointer' }}
                     >
-                      <i className="fa-solid fa-location-dot" style={{ color: '#0052cc' }}></i>
-                      <span style={{ textDecoration: 'underline', color: '#0052cc', fontWeight: '600' }}>{event.location || 'TRACE Expert City'}</span>
-                      <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.68rem', color: '#0052cc', marginLeft: '2px' }}></i>
+                      <i className="fa-solid fa-location-dot" style={{ color: '#5d4df6' }}></i>
+                      <span style={{ textDecoration: 'underline', color: '#5d4df6', fontWeight: '600' }}>{event.location || 'TRACE Expert City'}</span>
+                      <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.68rem', color: '#5d4df6', marginLeft: '2px' }}></i>
                     </a>
                   </div>
                 </div>

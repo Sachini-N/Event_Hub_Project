@@ -16,7 +16,7 @@ export default function ProfilePage({
   const [saving, setSaving] = useState(false);
 
   const getInitialsAvatar = (cleanName) => {
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName || 'User')}&background=0052cc&color=fff&size=200`;
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName || 'User')}&background=5d4df6&color=fff&size=200`;
   };
 
   const getAvatarUrl = (userObj, currentName) => {

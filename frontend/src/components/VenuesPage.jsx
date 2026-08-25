@@ -10,7 +10,7 @@ const TRACE_BRANCHES_META = [
     location: 'Colombo 10, Western Province',
     shortName: 'Colombo Hub',
     icon: 'fa-building-user',
-    color: '#0052cc',
+    color: '#5d4df6',
     badgeBg: '#e60023',
     bannerGradient: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e1b4b 100%)',
     description: 'Our flagship 14-acre technology hub in Maradana, featuring enterprise auditoriums, tech labs, and collaborative ecosystem spaces.',
@@ -254,7 +254,7 @@ export default function VenuesPage({ showToast }) {
         <div className="province-filter-card" style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.25rem 1.75rem', marginBottom: '1.5rem', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#eff6ff', color: '#0052cc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.35rem', flexShrink: 0 }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#eff6ff', color: '#5d4df6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.35rem', flexShrink: 0 }}>
                 <i className="fa-solid fa-map-location-dot"></i>
               </div>
               <div>
@@ -277,9 +277,9 @@ export default function VenuesPage({ showToast }) {
                   fontSize: '0.95rem',
                   fontWeight: '700',
                   borderRadius: '12px',
-                  border: '2px solid #0052cc',
+                  border: '2px solid #5d4df6',
                   backgroundColor: '#ffffff',
-                  color: '#0052cc',
+                  color: '#5d4df6',
                   cursor: 'pointer',
                   outline: 'none',
                   boxShadow: '0 2px 6px rgba(0, 82, 204, 0.1)',
@@ -442,7 +442,7 @@ export default function VenuesPage({ showToast }) {
                           <i className={`fa-solid ${branchMeta?.icon || 'fa-building'}`}></i>
                           <span>{branchMeta?.shortName || venueBranchName}</span>
                         </div>
-                        <span style={{ fontSize: '0.74rem', fontWeight: '700', color: '#0052cc', background: '#eff6ff', border: '1px solid #dbeafe', padding: '2px 7px', borderRadius: '6px' }}>
+                        <span style={{ fontSize: '0.74rem', fontWeight: '700', color: '#5d4df6', background: '#eff6ff', border: '1px solid #dbeafe', padding: '2px 7px', borderRadius: '6px' }}>
                           📍 {getSpaceProvince(v)}
                         </span>
                       </div>
@@ -603,7 +603,7 @@ export default function VenuesPage({ showToast }) {
               {/* Space Booking Inquiry Form */}
               <div className="venue-inquiry-form-section">
                 <h3>
-                  <i className="fa-solid fa-calendar-check" style={{ color: '#0052cc' }}></i>{' '}
+                  <i className="fa-solid fa-calendar-check" style={{ color: '#5d4df6' }}></i>{' '}
                   Request Space Booking / Inquiry
                 </h3>
                 <p className="form-sub-text">
@@ -792,7 +792,7 @@ export default function VenuesPage({ showToast }) {
             <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.85rem', borderBottom: '1px dashed #cbd5e1', marginBottom: '0.85rem' }}>
                 <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: '700' }}>BOOKING REFERENCE</span>
-                <span style={{ fontSize: '1rem', fontWeight: '800', color: '#0052cc', background: '#eff6ff', padding: '0.2rem 0.6rem', borderRadius: '6px' }}>
+                <span style={{ fontSize: '1rem', fontWeight: '800', color: '#5d4df6', background: '#eff6ff', padding: '0.2rem 0.6rem', borderRadius: '6px' }}>
                   {bookingConfirmation.bookingRef}
                 </span>
               </div>

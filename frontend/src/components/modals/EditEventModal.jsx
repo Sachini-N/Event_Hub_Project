@@ -144,7 +144,7 @@ export default function EditEventModal({
 
         <div className="modal-header">
           <h2>
-            <i className="fa-regular fa-pen-to-square" style={{ color: '#0052cc' }}></i> Edit Event
+            <i className="fa-regular fa-pen-to-square" style={{ color: '#5d4df6' }}></i> Edit Event
           </h2>
           <p className="modal-sub">Update event details, status, and photo gallery in database.</p>
         </div>
@@ -316,7 +316,7 @@ export default function EditEventModal({
           {/* Past Event Photo Gallery Section */}
           <div className="gallery-manager-section" style={{ marginTop: '1.5rem' }}>
             <h4 style={{ fontSize: '1rem', fontWeight: '700', color: '#0f172a', marginBottom: '0.5rem' }}>
-              <i className="fa-regular fa-images" style={{ color: '#0052cc' }}></i> Event Photo Gallery ({gallery.length} photos)
+              <i className="fa-regular fa-images" style={{ color: '#5d4df6' }}></i> Event Photo Gallery ({gallery.length} photos)
             </h4>
             <p style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: '1rem' }}>
               Upload or manage showcase photos for past events displayed in the gallery.
@@ -334,7 +334,7 @@ export default function EditEventModal({
               <label
                 htmlFor="gallery-photo-upload"
                 className="btn btn-primary"
-                style={{ cursor: 'pointer', whiteSpace: 'nowrap', backgroundColor: '#0052cc' }}
+                style={{ cursor: 'pointer', whiteSpace: 'nowrap', backgroundColor: '#5d4df6' }}
               >
                 <i className="fa-solid fa-plus"></i> Upload Photo
               </label>
@@ -375,7 +375,7 @@ export default function EditEventModal({
             <button
               type="submit"
               className="btn btn-primary"
-              style={{ backgroundColor: '#0052cc' }}
+              style={{ backgroundColor: '#5d4df6' }}
               disabled={submitting}
             >
               {submitting ? (

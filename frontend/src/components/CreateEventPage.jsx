@@ -45,7 +45,7 @@ function InteractiveLocationPicker({ onSelectAddress, onSelectVenue }) {
           attribution: '&copy; OpenStreetMap contributors',
         }).addTo(map);
 
-        const customPinHtml = `<div style="background:#0052cc;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#ffffff;box-shadow:0 4px 14px rgba(0,82,204,0.5);border:2px solid #ffffff;"><i class="fa-solid fa-location-dot" style="font-size:17px;"></i></div>`;
+        const customPinHtml = `<div style="background:#5d4df6;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#ffffff;box-shadow:0 4px 14px rgba(0,82,204,0.5);border:2px solid #ffffff;"><i class="fa-solid fa-location-dot" style="font-size:17px;"></i></div>`;
 
         const pinIcon = L.divIcon({
           className: 'custom-map-pin',
@@ -115,11 +115,11 @@ function InteractiveLocationPicker({ onSelectAddress, onSelectVenue }) {
     <div className="interactive-map-picker-wrapper" style={{ marginTop: '0.75rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
         <label style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <i className="fa-solid fa-map-location-dot" style={{ color: '#0052cc' }}></i>
+          <i className="fa-solid fa-map-location-dot" style={{ color: '#5d4df6' }}></i>
           Click Map or Drag Pin to Auto-Fill Address
         </label>
         {loadingGeo && (
-          <span style={{ fontSize: '0.78rem', color: '#0052cc', fontWeight: '700' }}>
+          <span style={{ fontSize: '0.78rem', color: '#5d4df6', fontWeight: '700' }}>
             <i className="fa-solid fa-spinner fa-spin"></i> Auto-filling address...
           </span>
         )}
@@ -140,7 +140,7 @@ function InteractiveLocationPicker({ onSelectAddress, onSelectVenue }) {
       {/* TRACE Expert City Companies & Bays Quick Selector */}
       <div style={{ marginTop: '0.85rem', padding: '0.75rem', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
         <label style={{ fontSize: '0.78rem', fontWeight: '800', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.4rem' }}>
-          <i className="fa-solid fa-building" style={{ color: '#0052cc' }}></i>
+          <i className="fa-solid fa-building" style={{ color: '#5d4df6' }}></i>
           TRACE Expert City Company / Bay Location
         </label>
         <select

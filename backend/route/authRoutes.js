@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { signupUser, loginUser, getMe, updateUserProfile, getAllUsers, deleteUser, createBranchAdmin, sendEmailCredentials } = require("../controlers/authController");
+const { signupUser, loginUser, getMe, updateUserProfile, getAllUsers, deleteUser, updateUserAdminDetails, createBranchAdmin, sendEmailCredentials } = require("../controlers/authController");
 const { protect } = require("../middleware/authMiddleware");
 
 // POST /api/auth/signup
@@ -23,6 +23,9 @@ router.put("/profile", protect, updateUserProfile);
 
 // GET /api/auth/users (All registered users)
 router.get("/users", getAllUsers);
+
+// PUT /api/auth/users/:id (Update admin user details)
+router.put("/users/:id", updateUserAdminDetails);
 
 // DELETE /api/auth/users/:id
 router.delete("/users/:id", deleteUser);

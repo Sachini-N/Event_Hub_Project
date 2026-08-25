@@ -211,7 +211,7 @@ export default function MyRegistrationsModal({ isOpen, onClose, showToast }) {
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                             <strong style={{ fontSize: '1.05rem', color: '#0f172a' }}>{bk.venueName}</strong>
-                            <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#0052cc', background: '#eff6ff', padding: '1px 6px', borderRadius: '4px' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#5d4df6', background: '#eff6ff', padding: '1px 6px', borderRadius: '4px' }}>
                               {bk.branch}
                             </span>
                           </div>

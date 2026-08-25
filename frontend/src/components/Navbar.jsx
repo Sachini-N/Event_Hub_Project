@@ -92,7 +92,7 @@ export default function Navbar({
                   src={
                     (currentUser.avatar && currentUser.avatar.trim() !== '')
                       ? currentUser.avatar
-                      : `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'User')}&background=0052cc&color=fff&size=100`
+                      : `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'User')}&background=5d4df6&color=fff&size=100`
                   }
                   alt={currentUser.name}
                   style={{ width: '26px', height: '26px', borderRadius: '50%', objectFit: 'cover' }}
