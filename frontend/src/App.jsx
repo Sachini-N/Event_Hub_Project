@@ -23,9 +23,41 @@ import LoginModal from './components/modals/LoginModal';
 import SignupModal from './components/modals/SignupModal';
 import ToastNotification from './components/modals/ToastNotification';
 
+const TAB_TO_HASH_MAP = {
+  home: '#home',
+  upcoming: '#upcoming',
+  past: '#past',
+  'venues-page': '#spaces',
+  'my-events': '#my-events',
+  calendar: '#calendar',
+  profile: '#profile',
+  admin: '#admin',
+  'event-details': '#event-details',
+  'past-details': '#past-details',
+};
+
+const HASH_TO_TAB_MAP = {
+  '': 'home',
+  '#': 'home',
+  '#home': 'home',
+  '#upcoming': 'upcoming',
+  '#past': 'past',
+  '#spaces': 'venues-page',
+  '#venues': 'venues-page',
+  '#my-events': 'my-events',
+  '#calendar': 'calendar',
+  '#profile': 'profile',
+  '#admin': 'admin',
+  '#event-details': 'event-details',
+  '#past-details': 'past-details',
+};
+
 export default function App() {
   const [events, setEvents] = useState([]);
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTabState] = useState(() => {
+    const initialHash = window.location.hash || '#home';
+    return HASH_TO_TAB_MAP[initialHash] || 'home';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -48,6 +80,31 @@ export default function App() {
 
   // Toast State
   const [toast, setToast] = useState({ visible: false, message: '', type: 'info' });
+
+  // Custom function to update activeTab AND synchronize URL Hash
+  const setActiveTab = (newTab) => {
+    setActiveTabState(newTab);
+    const targetHash = TAB_TO_HASH_MAP[newTab] || '#home';
+    if (window.location.hash !== targetHash) {
+      window.history.pushState({ tab: newTab }, '', targetHash);
+    }
+  };
+
+  // Synchronize browser URL hash & back/forward history navigation
+  useEffect(() => {
+    const handleHashChange = () => {
+      const currentHash = window.location.hash || '#home';
+      const targetTab = HASH_TO_TAB_MAP[currentHash] || 'home';
+      setActiveTabState(targetTab);
+    };
+
+    window.addEventListener('popstate', handleHashChange);
+    window.addEventListener('hashchange', handleHashChange);
+    return () => {
+      window.removeEventListener('popstate', handleHashChange);
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
 
   const showToast = (message, type = 'info') => {
     setToast({ visible: true, message, type });

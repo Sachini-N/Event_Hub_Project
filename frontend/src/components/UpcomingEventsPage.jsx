@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { isEventPast } from '../utils/eventUtils';
 
 export default function UpcomingEventsPage({
   events,
