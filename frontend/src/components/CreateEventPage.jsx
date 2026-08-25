@@ -1,251 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
+import { isEventPast } from '../utils/eventUtils';
 import RichTextEditor from './RichTextEditor';
 
-// Interactive Location Picker Map Component (OpenStreetMap + Leaflet + Nominatim Reverse Geocoding)
-function InteractiveLocationPicker({ onSelectAddress, onSelectVenue }) {
-  const mapContainerRef = useRef(null);
-  const mapInstanceRef = useRef(null);
-  const markerRef = useRef(null);
-
-  const [loadingGeo, setLoadingGeo] = useState(false);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadAndInitMap = async () => {
-      // Inject Leaflet CSS
-      if (!document.getElementById('leaflet-css-cdn')) {
-        const link = document.createElement('link');
-        link.id = 'leaflet-css-cdn';
-        link.rel = 'stylesheet';
-        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-        document.head.appendChild(link);
-      }
-
-      // Inject Leaflet JS if not ready
-      if (!window.L) {
-        await new Promise((resolve) => {
-          const script = document.createElement('script');
-          script.id = 'leaflet-js-cdn';
-          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-          script.onload = () => resolve();
-          document.body.appendChild(script);
-        });
-      }
-
-      if (isMounted && window.L && mapContainerRef.current && !mapInstanceRef.current) {
-        const L = window.L;
-        const defaultLat = 6.9344;
-        const defaultLng = 79.8553;
-
-        const map = L.map(mapContainerRef.current).setView([defaultLat, defaultLng], 14);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-          attribution: '&copy; OpenStreetMap contributors',
-        }).addTo(map);
-
-        const customPinHtml = `<div style="background:#5d4df6;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#ffffff;box-shadow:0 4px 14px rgba(0,82,204,0.5);border:2px solid #ffffff;"><i class="fa-solid fa-location-dot" style="font-size:17px;"></i></div>`;
-
-        const pinIcon = L.divIcon({
-          className: 'custom-map-pin',
-          html: customPinHtml,
-          iconSize: [34, 34],
-          iconAnchor: [17, 34],
-        });
-
-        const marker = L.marker([defaultLat, defaultLng], { icon: pinIcon, draggable: true }).addTo(map);
-        markerRef.current = marker;
-        mapInstanceRef.current = map;
-
-        const handleCoordsChange = async (lat, lng) => {
-          setLoadingGeo(true);
-          try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`);
-            const data = await res.json();
-            if (data && data.display_name) {
-              const fullAddr = data.display_name;
-              if (onSelectAddress) onSelectAddress(fullAddr);
-              if (onSelectVenue && data.address) {
-                const venueNameStr = data.address.amenity || data.address.building || data.address.suburb || data.address.road || '';
-                if (venueNameStr) onSelectVenue(venueNameStr);
-              }
-            }
-          } catch (err) {
-            console.error('Reverse geocoding error:', err);
-          } finally {
-            setLoadingGeo(false);
-          }
-        };
-
-        map.on('click', (e) => {
-          const { lat, lng } = e.latlng;
-          marker.setLatLng([lat, lng]);
-          handleCoordsChange(lat, lng);
-        });
-
-        marker.on('dragend', () => {
-          const pos = marker.getLatLng();
-          handleCoordsChange(pos.lat, pos.lng);
-        });
-      }
-    };
-
-    loadAndInitMap();
-
-    return () => {
-      isMounted = false;
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
-  }, []);
-
-  const handlePresetLocation = (lat, lng, venueNameStr, addressStr) => {
-    if (mapInstanceRef.current && markerRef.current && window.L) {
-      mapInstanceRef.current.setView([lat, lng], 15);
-      markerRef.current.setLatLng([lat, lng]);
-      if (onSelectAddress) onSelectAddress(addressStr);
-      if (onSelectVenue && venueNameStr) onSelectVenue(venueNameStr);
-    }
-  };
-
-  return (
-    <div className="interactive-map-picker-wrapper" style={{ marginTop: '0.75rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-        <label style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <i className="fa-solid fa-map-location-dot" style={{ color: '#5d4df6' }}></i>
-          Click Map or Drag Pin to Auto-Fill Address
-        </label>
-        {loadingGeo && (
-          <span style={{ fontSize: '0.78rem', color: '#5d4df6', fontWeight: '700' }}>
-            <i className="fa-solid fa-spinner fa-spin"></i> Auto-filling address...
-          </span>
-        )}
-      </div>
-
-      <div
-        ref={mapContainerRef}
-        style={{
-          width: '100%',
-          height: '240px',
-          borderRadius: '12px',
-          overflow: 'hidden',
-          border: '1px solid #cbd5e1',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-        }}
-      ></div>
-
-      {/* TRACE Expert City Companies & Bays Quick Selector */}
-      <div style={{ marginTop: '0.85rem', padding: '0.75rem', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-        <label style={{ fontSize: '0.78rem', fontWeight: '800', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.4rem' }}>
-          <i className="fa-solid fa-building" style={{ color: '#5d4df6' }}></i>
-          TRACE Expert City Company / Bay Location
-        </label>
-        <select
-          style={{
-            width: '100%',
-            padding: '0.45rem 0.75rem',
-            fontSize: '0.85rem',
-            borderRadius: '6px',
-            border: '1px solid #cbd5e1',
-            background: '#ffffff',
-            color: '#1e293b',
-            fontWeight: '600',
-            cursor: 'pointer',
-          }}
-          defaultValue=""
-          onChange={(e) => {
-            if (!e.target.value) return;
-            const item = JSON.parse(e.target.value);
-            handlePresetLocation(item.lat, item.lng, item.venue, item.address);
-          }}
-        >
-          <option value="" disabled>-- Select a TRACE Expert City Company / Bay --</option>
-          <option value={JSON.stringify({ lat: 6.9344, lng: 79.8553, venue: 'Bay 07 - TRACE Main Auditorium', address: 'Bay 07, TRACE Expert City, Maradana Road, Colombo 01000, Sri Lanka' })}>
-            📍 Bay 07 - TRACE Main Auditorium & Event Center
-          </option>
-          <option value={JSON.stringify({ lat: 6.9346, lng: 79.8555, venue: 'CodeGen International (Bay 01-04)', address: 'CodeGen International, Bay 01-04, TRACE Expert City, Colombo 01000, Sri Lanka' })}>
-            💻 CodeGen International (Bay 01-04)
-          </option>
-          <option value={JSON.stringify({ lat: 6.9342, lng: 79.8551, venue: 'LSEG Sri Lanka (Bay 11-12)', address: 'London Stock Exchange Group (LSEG), Bay 11-12, TRACE Expert City, Colombo 01000' })}>
-            📈 LSEG Sri Lanka (London Stock Exchange Group)
-          </option>
-          <option value={JSON.stringify({ lat: 6.9345, lng: 79.8554, venue: 'Sysco LABS (Bay 05)', address: 'Sysco LABS Sri Lanka, Bay 05, TRACE Expert City, Colombo 01000, Sri Lanka' })}>
-            🍔 Sysco LABS Sri Lanka (Bay 05)
-          </option>
-          <option value={JSON.stringify({ lat: 6.9343, lng: 79.8552, venue: 'WSO2 Innovation Hub (Bay 08)', address: 'WSO2 Sri Lanka, Bay 08, TRACE Expert City, Colombo 01000, Sri Lanka' })}>
-            🚀 WSO2 Innovation Hub (Bay 08)
-          </option>
-          <option value={JSON.stringify({ lat: 6.9341, lng: 79.8550, venue: 'Calcey Technologies (Bay 09)', address: 'Calcey Technologies, Bay 09, TRACE Expert City, Colombo 01000, Sri Lanka' })}>
-            ⚙️ Calcey Technologies (Bay 09)
-          </option>
-          <option value={JSON.stringify({ lat: 6.9340, lng: 79.8549, venue: 'Pearson Sri Lanka (Bay 10)', address: 'Pearson Sri Lanka, Bay 10, TRACE Expert City, Colombo 01000, Sri Lanka' })}>
-            📚 Pearson Sri Lanka (Bay 10)
-          </option>
-          <option value={JSON.stringify({ lat: 6.9344, lng: 79.8553, venue: 'Zone24x7 / Venture Engine (Bay 06)', address: 'Zone24x7, Bay 06, TRACE Expert City, Colombo 01000, Sri Lanka' })}>
-            ⚡ Zone24x7 / Venture Engine (Bay 06)
-          </option>
-          <option value={JSON.stringify({ lat: 6.9344, lng: 79.8552, venue: 'TRACE Open Amphitheatre', address: 'TRACE Central Lawn & Open Amphitheatre, TRACE Expert City, Colombo 01000' })}>
-            🎭 TRACE Open Amphitheatre & Central Lawn
-          </option>
-        </select>
-      </div>
-
-      {/* Preset Location Chips */}
-      <div style={{ marginTop: '0.75rem' }}>
-        <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-          Quick TRACE Company Chips:
-        </span>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.35rem' }}>
-          <button
-            type="button"
-            className="btn-location-chip"
-            onClick={() => handlePresetLocation(6.9344, 79.8553, 'Bay 07 - TRACE Auditorium', 'Bay 07, TRACE Expert City, Maradana Rd, Colombo 01000, Sri Lanka')}
-          >
-            🏛️ TRACE Bay 07
-          </button>
-          <button
-            type="button"
-            className="btn-location-chip"
-            onClick={() => handlePresetLocation(6.9346, 79.8555, 'CodeGen (Bay 01-04)', 'CodeGen International, Bay 01-04, TRACE Expert City, Colombo 01000')}
-          >
-            💻 CodeGen
-          </button>
-          <button
-            type="button"
-            className="btn-location-chip"
-            onClick={() => handlePresetLocation(6.9342, 79.8551, 'LSEG Sri Lanka', 'LSEG Sri Lanka, Bay 11-12, TRACE Expert City, Colombo 01000')}
-          >
-            📈 LSEG
-          </button>
-          <button
-            type="button"
-            className="btn-location-chip"
-            onClick={() => handlePresetLocation(6.9345, 79.8554, 'Sysco LABS', 'Sysco LABS, Bay 05, TRACE Expert City, Colombo 01000')}
-          >
-            🍔 Sysco LABS
-          </button>
-          <button
-            type="button"
-            className="btn-location-chip"
-            onClick={() => handlePresetLocation(6.9343, 79.8552, 'WSO2', 'WSO2 Sri Lanka, Bay 08, TRACE Expert City, Colombo 01000')}
-          >
-            🚀 WSO2
-          </button>
-          <button
-            type="button"
-            className="btn-location-chip"
-            onClick={() => handlePresetLocation(6.9341, 79.8550, 'Calcey', 'Calcey Technologies, Bay 09, TRACE Expert City, Colombo 01000')}
-          >
-            ⚙️ Calcey
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+const TRACE_VENUE_PRESETS = [
+  { label: '🏛️ Bay 07 - TRACE Main Auditorium & Event Center', venue: 'Bay 07 - TRACE Main Auditorium', address: 'Bay 07, TRACE Expert City, Maradana Road, Colombo 01000, Sri Lanka' },
+  { label: '💻 CodeGen International (Bay 01-04)', venue: 'CodeGen International (Bay 01-04)', address: 'CodeGen International, Bay 01-04, TRACE Expert City, Colombo 01000, Sri Lanka' },
+  { label: '📈 LSEG Sri Lanka (Bay 11-12)', venue: 'LSEG Sri Lanka (Bay 11-12)', address: 'London Stock Exchange Group (LSEG), Bay 11-12, TRACE Expert City, Colombo 01000' },
+  { label: '🍔 Sysco LABS Sri Lanka (Bay 05)', venue: 'Sysco LABS Sri Lanka (Bay 05)', address: 'Sysco LABS Sri Lanka, Bay 05, TRACE Expert City, Colombo 01000, Sri Lanka' },
+  { label: '🚀 WSO2 Innovation Hub (Bay 08)', venue: 'WSO2 Innovation Hub (Bay 08)', address: 'WSO2 Sri Lanka, Bay 08, TRACE Expert City, Colombo 01000, Sri Lanka' },
+  { label: '⚙️ Calcey Technologies (Bay 09)', venue: 'Calcey Technologies (Bay 09)', address: 'Calcey Technologies, Bay 09, TRACE Expert City, Colombo 01000, Sri Lanka' },
+  { label: '📚 Pearson Sri Lanka (Bay 10)', venue: 'Pearson Sri Lanka (Bay 10)', address: 'Pearson Sri Lanka, Bay 10, TRACE Expert City, Colombo 01000, Sri Lanka' },
+  { label: '⚡ Zone24x7 / Venture Engine (Bay 06)', venue: 'Zone24x7 / Venture Engine (Bay 06)', address: 'Zone24x7, Bay 06, TRACE Expert City, Colombo 01000, Sri Lanka' },
+  { label: '🎭 TRACE Open Amphitheatre & Central Lawn', venue: 'TRACE Open Amphitheatre', address: 'TRACE Central Lawn & Open Amphitheatre, TRACE Expert City, Colombo 01000' },
+];
 
 export default function CreateEventPage({ onCancel, onEventCreated, showToast, currentUser }) {
   // Form State
@@ -367,7 +134,7 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
     const payload = {
       title: title.trim(),
       category: category !== 'Select a category' ? category : 'Workshop',
-      status: isDraft ? 'draft' : (new Date(isoDate) < new Date() ? 'past' : 'upcoming'),
+      status: isDraft ? 'draft' : (isEventPast({ date: isoDate, time: formattedTime }) ? 'past' : 'upcoming'),
       date: isoDate,
       time: formattedTime,
       location: eventLocation,
@@ -424,15 +191,29 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
   };
 
   return (
-    <div className="create-event-page">
-      {/* Top Header & Actions Bar */}
-      <div className="create-event-header">
-        <div>
-          <h1 className="create-event-title">Create New Event</h1>
-          <p className="create-event-sub">
-            Fill in the details below to publish a new event on the TRACE platform.
-          </p>
-        </div>
+    <div className="create-event-modal-backdrop" onClick={onCancel}>
+      <div className="create-event-modal-card" onClick={(e) => e.stopPropagation()}>
+        {/* Modal Close Button */}
+        <button
+          type="button"
+          className="create-event-modal-close"
+          onClick={onCancel}
+          title="Close modal"
+        >
+          <i className="fa-solid fa-xmark"></i>
+        </button>
+
+        {/* Top Header & Actions Bar */}
+        <div className="create-event-header" style={{ paddingRight: '2.5rem' }}>
+          <div>
+            <h1 className="create-event-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <i className="fa-solid fa-calendar-plus" style={{ color: '#5d4df6' }}></i>
+              Create New Event
+            </h1>
+            <p className="create-event-sub">
+              Fill in the details below to publish a new event on the TRACE platform.
+            </p>
+          </div>
 
         <div className="create-event-top-actions">
           <button
@@ -477,12 +258,17 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
           {/* Block 1: Basic Information */}
           <div className="create-card-block">
             <div className="block-title-row">
-              <i className="fa-regular fa-circle-info block-icon"></i>
+              <div className="section-icon-badge badge-indigo">
+                <i className="fa-solid fa-pen-to-square"></i>
+              </div>
               <h3>Basic Information</h3>
             </div>
 
             <div className="profile-form-group" style={{ marginBottom: '1.25rem' }}>
-              <label htmlFor="evt-title">Event Title *</label>
+              <label htmlFor="evt-title">
+                <i className="fa-solid fa-heading" style={{ color: '#6366f1' }}></i>
+                Event Title *
+              </label>
               <input
                 type="text"
                 id="evt-title"
@@ -494,7 +280,10 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
             </div>
 
             <div className="profile-form-group" style={{ marginBottom: '1.25rem' }}>
-              <label htmlFor="evt-category">Category *</label>
+              <label htmlFor="evt-category">
+                <i className="fa-solid fa-layer-group" style={{ color: '#6366f1' }}></i>
+                Category *
+              </label>
               <select
                 id="evt-category"
                 value={category}
@@ -514,7 +303,10 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
 
             <div className="profile-form-group" style={{ marginBottom: '1.25rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <label htmlFor="evt-excerpt">Short Description (Excerpt)</label>
+                <label htmlFor="evt-excerpt">
+                  <i className="fa-solid fa-align-left" style={{ color: '#6366f1' }}></i>
+                  Short Description (Excerpt)
+                </label>
                 <span className="char-count">{shortDescription.length}/150 chars</span>
               </div>
               <textarea
@@ -528,7 +320,10 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
             </div>
 
             <div className="profile-form-group">
-              <label htmlFor="evt-full-desc">Full Description</label>
+              <label htmlFor="evt-full-desc">
+                <i className="fa-solid fa-paragraph" style={{ color: '#6366f1' }}></i>
+                Full Description
+              </label>
               <RichTextEditor
                 id="evt-full-desc"
                 rows={5}
@@ -542,8 +337,10 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
           {/* Block 3: Speaker Information */}
           <div className="create-card-block" style={{ marginTop: '1.75rem' }}>
             <div className="block-title-row" style={{ justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <i className="fa-regular fa-user block-icon"></i>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div className="section-icon-badge badge-purple">
+                  <i className="fa-solid fa-user-tie"></i>
+                </div>
                 <h3>Speaker Information</h3>
               </div>
               <button
@@ -579,7 +376,10 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
 
                 <div className="speaker-fields-grid">
                   <div className="profile-form-group">
-                    <label>Name</label>
+                    <label>
+                      <i className="fa-solid fa-user" style={{ color: '#7c3aed' }}></i>
+                      Name
+                    </label>
                     <input
                       type="text"
                       placeholder="Dr. Jane Doe"
@@ -589,7 +389,10 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
                   </div>
 
                   <div className="profile-form-group">
-                    <label>Role/Title</label>
+                    <label>
+                      <i className="fa-solid fa-briefcase" style={{ color: '#7c3aed' }}></i>
+                      Role/Title
+                    </label>
                     <input
                       type="text"
                       placeholder="Lead Researcher"
@@ -601,7 +404,10 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
               </div>
 
               <div className="profile-form-group" style={{ marginTop: '1rem' }}>
-                <label>Bio</label>
+                <label>
+                  <i className="fa-solid fa-id-card" style={{ color: '#7c3aed' }}></i>
+                  Bio
+                </label>
                 <textarea
                   rows="2"
                   placeholder="Brief speaker biography..."
@@ -618,12 +424,17 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
           {/* Block 2: Schedule & Location */}
           <div className="create-card-block">
             <div className="block-title-row">
-              <i className="fa-regular fa-calendar-days block-icon"></i>
+              <div className="section-icon-badge badge-emerald">
+                <i className="fa-solid fa-calendar-days"></i>
+              </div>
               <h3>Schedule & Location</h3>
             </div>
 
             <div className="profile-form-group" style={{ marginBottom: '1.25rem' }}>
-              <label htmlFor="evt-date">Date *</label>
+              <label htmlFor="evt-date">
+                <i className="fa-regular fa-calendar" style={{ color: '#059669' }}></i>
+                Date *
+              </label>
               <input
                 type="date"
                 id="evt-date"
@@ -635,7 +446,10 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
 
             <div className="time-row-grid" style={{ marginBottom: '1.25rem' }}>
               <div className="profile-form-group">
-                <label>Start Time *</label>
+                <label>
+                  <i className="fa-regular fa-clock" style={{ color: '#059669' }}></i>
+                  Start Time *
+                </label>
                 <input
                   type="time"
                   value={startTime}
@@ -644,7 +458,10 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
               </div>
 
               <div className="profile-form-group">
-                <label>End Time *</label>
+                <label>
+                  <i className="fa-solid fa-clock-rotate-left" style={{ color: '#059669' }}></i>
+                  End Time *
+                </label>
                 <input
                   type="time"
                   value={endTime}
@@ -653,8 +470,46 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
               </div>
             </div>
 
+            {/* TRACE Venue Preset Selector */}
             <div className="profile-form-group" style={{ marginBottom: '1.25rem' }}>
-              <label>Venue Name</label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700', color: '#0f172a' }}>
+                <i className="fa-solid fa-building" style={{ color: '#059669' }}></i>
+                Select TRACE Expert City Venue (Auto-Fill)
+              </label>
+              <select
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 0.85rem',
+                  fontSize: '0.9rem',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+                defaultValue=""
+                onChange={(e) => {
+                  if (!e.target.value) return;
+                  const item = JSON.parse(e.target.value);
+                  setVenueName(item.venue);
+                  setFullAddress(item.address);
+                }}
+              >
+                <option value="" disabled>-- Select TRACE Expert City Venue Preset --</option>
+                {TRACE_VENUE_PRESETS.map((preset, idx) => (
+                  <option key={idx} value={JSON.stringify(preset)}>
+                    {preset.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="profile-form-group" style={{ marginBottom: '1.25rem' }}>
+              <label>
+                <i className="fa-solid fa-map-pin" style={{ color: '#059669' }}></i>
+                Venue Name *
+              </label>
               <input
                 type="text"
                 placeholder="e.g., TRACE Expert City Main Hall"
@@ -664,7 +519,10 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
             </div>
 
             <div className="profile-form-group" style={{ marginBottom: '1.25rem' }}>
-              <label>Full Address</label>
+              <label>
+                <i className="fa-solid fa-location-dot" style={{ color: '#059669' }}></i>
+                Full Address
+              </label>
               <input
                 type="text"
                 placeholder="Enter physical address..."
@@ -673,22 +531,43 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
               />
             </div>
 
-            {/* Interactive Map Location Picker */}
-            <InteractiveLocationPicker
-              onSelectAddress={(addr) => setFullAddress(addr)}
-              onSelectVenue={(v) => setVenueName((prev) => prev || v)}
-            />
+            {/* Quick Venue Chips */}
+            <div>
+              <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Quick Location Presets:
+              </span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.4rem' }}>
+                {TRACE_VENUE_PRESETS.slice(0, 6).map((preset, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className="btn-location-chip"
+                    onClick={() => {
+                      setVenueName(preset.venue);
+                      setFullAddress(preset.address);
+                    }}
+                  >
+                    📍 {preset.venue.replace(' - TRACE', '').replace(' (Bay 01-04)', '')}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Block 4: Media & Registration */}
           <div className="create-card-block" style={{ marginTop: '1.75rem' }}>
             <div className="block-title-row">
-              <i className="fa-regular fa-image block-icon"></i>
+              <div className="section-icon-badge badge-amber">
+                <i className="fa-solid fa-photo-film"></i>
+              </div>
               <h3>Media & Registration</h3>
             </div>
 
             <div className="profile-form-group" style={{ marginBottom: '1.5rem' }}>
-              <label>Event Cover Image</label>
+              <label>
+                <i className="fa-solid fa-image" style={{ color: '#d97706' }}></i>
+                Event Cover Image
+              </label>
               <label htmlFor="cover-file-upload-input" className="cover-dropzone-box">
                 {coverImage ? (
                   <div className="cover-preview-wrapper">
@@ -757,7 +636,10 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
             {/* Capacity & Deadline Grid */}
             <div className="time-row-grid">
               <div className="profile-form-group">
-                <label>Max Capacity</label>
+                <label>
+                  <i className="fa-solid fa-users" style={{ color: '#d97706' }}></i>
+                  Max Capacity
+                </label>
                 <input
                   type="number"
                   min="1"
@@ -768,7 +650,10 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
               </div>
 
               <div className="profile-form-group">
-                <label>Deadline</label>
+                <label>
+                  <i className="fa-regular fa-calendar-xmark" style={{ color: '#d97706' }}></i>
+                  Deadline
+                </label>
                 <input
                   type="date"
                   value={deadline}
@@ -780,5 +665,6 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 }

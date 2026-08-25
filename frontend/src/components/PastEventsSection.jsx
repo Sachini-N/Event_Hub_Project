@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { isEventPast } from '../utils/eventUtils';
 
 export default function PastEventsSection({
   events = [],
@@ -9,11 +10,9 @@ export default function PastEventsSection({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
 
-  // Filter real past events from database (events with status === 'past' or dates < now)
+  // Filter real past events from database (events where date and set time have finished)
   const dbPastEvents = useMemo(() => {
-    return events.filter(
-      (e) => e.status === 'past' || (e.date && new Date(e.date) < new Date() && e.status !== 'draft')
-    );
+    return events.filter((e) => isEventPast(e));
   }, [events]);
 
   // Only use published DB past events (no hardcoded samples)

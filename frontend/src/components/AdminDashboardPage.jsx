@@ -602,7 +602,7 @@ export default function AdminDashboardPage({
   const contactedInquiriesCount = venueBookings.filter((b) => b.status === 'Contacted').length;
   const confirmedInquiriesCount = venueBookings.filter((b) => b.status === 'Confirmed').length;
   const cancelledInquiriesCount = venueBookings.filter((b) => b.status === 'Cancelled').length;
-  const isEventsView = activeMenu === 'events' || activeMenu === 'upcoming' || activeMenu === 'past';
+  const isEventsView = activeMenu === 'events' || activeMenu === 'upcoming' || activeMenu === 'past' || activeMenu === 'create-event';
 
   // Get live registration count for an event dynamically
   const getEventRegCount = (evt) => {
@@ -744,18 +744,7 @@ export default function AdminDashboardPage({
 
         {/* Body Content */}
         <main className="admin-body-content">
-          {/* VIEW 1: CREATE NEW EVENT VIEW */}
-          {activeMenu === 'create-event' ? (
-            <CreateEventPage
-              onCancel={() => setActiveMenu('events')}
-              onEventCreated={() => {
-                fetchDashboardData();
-                setActiveMenu('events');
-              }}
-              showToast={showToast}
-              currentUser={currentUser}
-            />
-          ) : activeMenu === 'registrations' ? (
+          {activeMenu === 'registrations' ? (
             /* VIEW 2: EVENT REGISTRATIONS VIEW (Matching exact reference screenshot) */
             <div className="manage-registrations-container">
               <div className="admin-dashboard-title-row">
@@ -1616,7 +1605,7 @@ export default function AdminDashboardPage({
                         outline: 'none',
                       }}
                     >
-                      <option value="all">🏢 All TRACE Branches</option>
+                      <option value="all">All TRACE Branches</option>
                       <option value="TRACE Expert City (Colombo)">Colombo Hub</option>
                       <option value="TRACE Innovation Hub (Kandy)">Kandy Hub</option>
                       <option value="TRACE Tech Park (Jaffna)">Jaffna Tech Park</option>
@@ -2601,6 +2590,19 @@ export default function AdminDashboardPage({
         </div>
       )}
 
+      {/* Create Event Professional Modal Overlay */}
+      {activeMenu === 'create-event' && (
+        <CreateEventPage
+          onCancel={() => setActiveMenu('events')}
+          onEventCreated={() => {
+            fetchDashboardData();
+            setActiveMenu('events');
+          }}
+          showToast={showToast}
+          currentUser={currentUser}
+        />
+      )}
+
       {/* Edit Event Modal */}
       <EditEventModal
         isOpen={Boolean(editingEvent)}
@@ -2696,13 +2698,13 @@ export default function AdminDashboardPage({
                   onChange={(e) => setBranchAdminForm({ ...branchAdminForm, branch: e.target.value })}
                   style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontWeight: '600' }}
                 >
-                  <option value="TRACE Expert City (Colombo)">🏢 TRACE Expert City (Colombo Hub)</option>
-                  <option value="CodeGen Branch (Bay 01-04)">💻 CodeGen Branch (Bay 01-04)</option>
-                  <option value="LSEG Sri Lanka Branch (Bay 11-12)">📈 LSEG Branch (Bay 11-12)</option>
-                  <option value="TRACE Innovation Hub (Kandy)">🏔️ TRACE Innovation Hub (Kandy)</option>
-                  <option value="TRACE Coastal Hub (Galle)">🏖️ TRACE Coastal Hub (Galle)</option>
-                  <option value="TRACE Tech Park (Jaffna)">🌴 TRACE Tech Park (Jaffna)</option>
-                  <option value="TRACE Wayamba Incubator (Kurunegala)">🌾 TRACE Wayamba Incubator</option>
+                  <option value="TRACE Expert City (Colombo)">TRACE Expert City (Colombo Hub)</option>
+                  <option value="CodeGen Branch (Bay 01-04)">CodeGen Branch (Bay 01-04)</option>
+                  <option value="LSEG Sri Lanka Branch (Bay 11-12)">LSEG Branch (Bay 11-12)</option>
+                  <option value="TRACE Innovation Hub (Kandy)">TRACE Innovation Hub (Kandy)</option>
+                  <option value="TRACE Coastal Hub (Galle)">TRACE Coastal Hub (Galle)</option>
+                  <option value="TRACE Tech Park (Jaffna)">TRACE Tech Park (Jaffna)</option>
+                  <option value="TRACE Wayamba Incubator (Kurunegala)">TRACE Wayamba Incubator</option>
                 </select>
               </div>
 
@@ -2820,14 +2822,14 @@ export default function AdminDashboardPage({
                   onChange={(e) => setEditingAdminForm({ ...editingAdminForm, branch: e.target.value })}
                   style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#ffffff' }}
                 >
-                  <option value="TRACE Expert City (Colombo)">🏢 TRACE Expert City (Colombo)</option>
-                  <option value="TRACE Main Branch (Colombo)">🏛️ TRACE Main Branch (Colombo)</option>
-                  <option value="CodeGen Hub (Bay 1-5)">⚡ CodeGen Hub (Bay 1-5)</option>
-                  <option value="LSEG Sri Lanka Branch (Bay 11-12)">📈 LSEG Branch (Bay 11-12)</option>
-                  <option value="TRACE Innovation Hub (Kandy)">🏔️ TRACE Innovation Hub (Kandy)</option>
-                  <option value="TRACE Coastal Hub (Galle)">🏖️ TRACE Coastal Hub (Galle)</option>
-                  <option value="TRACE Tech Park (Jaffna)">🌴 TRACE Tech Park (Jaffna)</option>
-                  <option value="TRACE Wayamba Incubator (Kurunegala)">🌾 TRACE Wayamba Incubator</option>
+                  <option value="TRACE Expert City (Colombo)">TRACE Expert City (Colombo)</option>
+                  <option value="TRACE Main Branch (Colombo)">TRACE Main Branch (Colombo)</option>
+                  <option value="CodeGen Hub (Bay 1-5)">CodeGen Hub (Bay 1-5)</option>
+                  <option value="LSEG Sri Lanka Branch (Bay 11-12)">LSEG Branch (Bay 11-12)</option>
+                  <option value="TRACE Innovation Hub (Kandy)">TRACE Innovation Hub (Kandy)</option>
+                  <option value="TRACE Coastal Hub (Galle)">TRACE Coastal Hub (Galle)</option>
+                  <option value="TRACE Tech Park (Jaffna)">TRACE Tech Park (Jaffna)</option>
+                  <option value="TRACE Wayamba Incubator (Kurunegala)">TRACE Wayamba Incubator</option>
                 </select>
               </div>
 

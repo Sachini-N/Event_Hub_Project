@@ -1,4 +1,5 @@
 import React from 'react';
+import { isEventPast } from '../utils/eventUtils';
 
 export default function UpcomingEventsSection({
   events,
@@ -10,14 +11,14 @@ export default function UpcomingEventsSection({
   openRegistrationModal,
   openGalleryLightbox,
 }) {
-  const upcomingCount = events.filter((e) => e.status === 'upcoming' && (!e.date || new Date(e.date) >= new Date())).length;
-  const pastCount = events.filter((e) => e.status === 'past' || (e.date && new Date(e.date) < new Date() && e.status !== 'draft')).length;
+  const upcomingCount = events.filter((e) => e.status !== 'draft' && !isEventPast(e)).length;
+  const pastCount = events.filter((e) => e.status !== 'draft' && isEventPast(e)).length;
 
   const currentTab = activeTab === 'past' ? 'past' : 'upcoming';
 
   const filteredEvents = events.filter((event) => {
-    const isPast = event.status === 'past' || (event.date && new Date(event.date) < new Date() && event.status !== 'draft');
-    const matchesTab = currentTab === 'past' ? isPast : (!isPast && event.status === 'upcoming');
+    const isPast = isEventPast(event);
+    const matchesTab = currentTab === 'past' ? isPast : (!isPast && event.status !== 'draft');
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
       !q ||

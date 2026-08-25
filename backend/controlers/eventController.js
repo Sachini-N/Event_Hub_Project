@@ -1,5 +1,66 @@
 const Event = require("../model/Event");
 
+// Helper function to calculate exact end date and time of an event
+const getEventEndDateTime = (dateVal, timeStr) => {
+  if (!dateVal) return new Date();
+
+  let year, month, day;
+
+  if (typeof dateVal === "string") {
+    const cleanDateStr = dateVal.includes("T") ? dateVal.split("T")[0] : dateVal;
+    const parts = cleanDateStr.split("-");
+    if (parts.length === 3) {
+      year = parseInt(parts[0], 10);
+      month = parseInt(parts[1], 10) - 1;
+      day = parseInt(parts[2], 10);
+    }
+  }
+
+  if (year === undefined || isNaN(year)) {
+    const d = new Date(dateVal);
+    year = d.getFullYear();
+    month = d.getMonth();
+    day = d.getDate();
+  }
+
+  let hours = 23;
+  let minutes = 59;
+  let seconds = 59;
+
+  if (timeStr && typeof timeStr === "string" && timeStr.trim().length > 0) {
+    let targetTime = timeStr.trim();
+    const hasRange = targetTime.includes("-") || targetTime.toLowerCase().includes(" to ");
+
+    if (targetTime.includes("-")) {
+      const splitTime = targetTime.split("-");
+      targetTime = splitTime[1].trim();
+    } else if (targetTime.toLowerCase().includes(" to ")) {
+      const splitTime = targetTime.toLowerCase().split(" to ");
+      targetTime = splitTime[1].trim();
+    }
+
+    const timeMatch = targetTime.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+    if (timeMatch) {
+      let h = parseInt(timeMatch[1], 10);
+      let m = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
+      const ampm = timeMatch[3] ? timeMatch[3].toLowerCase() : null;
+
+      if (ampm === "pm" && h < 12) h += 12;
+      if (ampm === "am" && h === 12) h = 0;
+
+      if (!hasRange) {
+        h += 2;
+      }
+
+      hours = h;
+      minutes = m;
+      seconds = 0;
+    }
+  }
+
+  return new Date(year, month, day, hours, minutes, seconds);
+};
+
 // Seed initial data if database is empty - Sample events removed per request
 const seedInitialEvents = async () => {
   // No sample events seeded
@@ -11,11 +72,18 @@ const getEvents = async (req, res) => {
     const now = new Date();
     const Registration = require("../model/Registration");
 
-    // Auto-update any non-draft events whose date has passed to 'past' in MongoDB
-    await Event.updateMany(
-      { status: { $ne: "draft" }, date: { $lt: now } },
-      { $set: { status: "past" } }
-    );
+    // Auto-update any non-draft events whose set date & time have passed to 'past' in MongoDB
+    const nonDraftEvents = await Event.find({ status: { $ne: "draft" } });
+    for (const evt of nonDraftEvents) {
+      const endDateTime = getEventEndDateTime(evt.date, evt.time);
+      if (now > endDateTime && evt.status !== "past") {
+        evt.status = "past";
+        await evt.save();
+      } else if (now <= endDateTime && evt.status === "past") {
+        evt.status = "upcoming";
+        await evt.save();
+      }
+    }
 
     const { status, category } = req.query;
     const filter = {};
@@ -62,9 +130,9 @@ const createEvent = async (req, res) => {
   try {
     const eventData = { ...req.body };
     if (eventData.status !== "draft" && eventData.date) {
-      const eventDate = new Date(eventData.date);
+      const endDateTime = getEventEndDateTime(eventData.date, eventData.time);
       const now = new Date();
-      if (eventDate < now) {
+      if (now > endDateTime) {
         eventData.status = "past";
       } else {
         eventData.status = "upcoming";
@@ -84,9 +152,9 @@ const updateEvent = async (req, res) => {
   try {
     const eventData = { ...req.body };
     if (eventData.status !== "draft" && eventData.date) {
-      const eventDate = new Date(eventData.date);
+      const endDateTime = getEventEndDateTime(eventData.date, eventData.time);
       const now = new Date();
-      if (eventDate < now) {
+      if (now > endDateTime) {
         eventData.status = "past";
       } else {
         eventData.status = "upcoming";

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { isEventPast } from '../../utils/eventUtils';
 import RichTextEditor from '../RichTextEditor';
 
 export default function AdminModal({ isOpen, onClose, onEventCreated, showToast }) {
@@ -45,7 +46,7 @@ export default function AdminModal({ isOpen, onClose, onEventCreated, showToast 
         body: JSON.stringify({
           title,
           category,
-          status: new Date(date) < new Date() ? 'past' : status,
+          status: isEventPast({ date, time }) ? 'past' : status,
           capacity: parseInt(capacity, 10),
           date: new Date(date).toISOString(),
           time,
