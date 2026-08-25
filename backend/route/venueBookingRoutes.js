@@ -8,8 +8,10 @@ const {
   deleteVenueBooking,
 } = require("../controlers/venueBookingController");
 
+const { protect, authorize } = require("../middleware/authMiddleware");
+
 // GET all venue booking inquiries (Admin)
-router.get("/", getAllVenueBookings);
+router.get("/", protect, authorize("admin", "super_admin", "branch_admin"), getAllVenueBookings);
 
 // GET venue bookings for user by email
 router.get("/user/:email", getUserVenueBookings);
@@ -18,9 +20,9 @@ router.get("/user/:email", getUserVenueBookings);
 router.post("/", createVenueBooking);
 
 // PUT update venue booking status (Admin)
-router.put("/:id", updateVenueBookingStatus);
+router.put("/:id", protect, authorize("admin", "super_admin", "branch_admin"), updateVenueBookingStatus);
 
 // DELETE venue booking inquiry (Admin)
-router.delete("/:id", deleteVenueBooking);
+router.delete("/:id", protect, authorize("admin", "super_admin", "branch_admin"), deleteVenueBooking);
 
 module.exports = router;

@@ -8,10 +8,12 @@ const {
   updateRegistration,
 } = require("../controlers/registrationController");
 
+const { protect, authorize } = require("../middleware/authMiddleware");
+
 router.post("/", registerForEvent);
-router.get("/", getAllRegistrations);
+router.get("/", protect, authorize("admin", "super_admin", "branch_admin"), getAllRegistrations);
 router.get("/user/:email", getUserRegistrations);
 router.get("/event/:eventId", getEventRegistrations);
-router.put("/:id", updateRegistration);
+router.put("/:id", protect, authorize("admin", "super_admin", "branch_admin"), updateRegistration);
 
 module.exports = router;

@@ -60,9 +60,10 @@ const registerForEvent = async (req, res) => {
 
     await registration.save();
 
-    // Increment event registeredCount
-    event.registeredCount += 1;
-    await event.save();
+    await registration.save();
+
+    // Atomic increment of event registeredCount for high concurrency safety
+    await Event.findByIdAndUpdate(eventId, { $inc: { registeredCount: 1 } });
 
     res.status(201).json({
       success: true,

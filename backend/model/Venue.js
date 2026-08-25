@@ -65,4 +65,8 @@ const venueSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// High Performance Query Indexes
+venueSchema.index({ branch: 1, province: 1 });
+venueSchema.index({ status: 1 });
+
 module.exports = mongoose.model("Venue", venueSchema);

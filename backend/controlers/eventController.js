@@ -70,43 +70,27 @@ const seedInitialEvents = async () => {
 const getEvents = async (req, res) => {
   try {
     const now = new Date();
-    const Registration = require("../model/Registration");
-
-    // Auto-update any non-draft events whose set date & time have passed to 'past' in MongoDB
-    const nonDraftEvents = await Event.find({ status: { $ne: "draft" } });
-    for (const evt of nonDraftEvents) {
-      const endDateTime = getEventEndDateTime(evt.date, evt.time);
-      if (now > endDateTime && evt.status !== "past") {
-        evt.status = "past";
-        await evt.save();
-      } else if (now <= endDateTime && evt.status === "past") {
-        evt.status = "upcoming";
-        await evt.save();
-      }
-    }
-
     const { status, category } = req.query;
     const filter = {};
     if (status) filter.status = status;
     if (category) filter.category = category;
 
-    const events = await Event.find(filter).sort({ date: status === "past" ? -1 : 1 });
+    // High performance read query using .lean()
+    const events = await Event.find(filter)
+      .sort({ date: status === "past" ? -1 : 1 })
+      .lean();
 
-    // Sync real registration counts from Registration collection
-    const eventsWithRealCounts = await Promise.all(
-      events.map(async (evt) => {
-        const actualRegCount = await Registration.countDocuments({
-          $or: [{ eventId: evt._id }, { eventTitle: evt.title }],
-        });
-        if (evt.registeredCount !== actualRegCount) {
-          evt.registeredCount = actualRegCount;
-          await evt.save();
-        }
-        return evt;
-      })
-    );
+    // Map dynamic status check in memory without executing expensive DB write loops
+    const processedEvents = events.map((evt) => {
+      const endDateTime = getEventEndDateTime(evt.date, evt.time);
+      const computedStatus = evt.status === "draft" ? "draft" : (now > endDateTime ? "past" : "upcoming");
+      return {
+        ...evt,
+        status: computedStatus,
+      };
+    });
 
-    res.json({ success: true, count: eventsWithRealCounts.length, data: eventsWithRealCounts });
+    res.json({ success: true, count: processedEvents.length, data: processedEvents });
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to fetch events", error: error.message });
   }

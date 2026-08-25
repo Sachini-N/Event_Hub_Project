@@ -8,7 +8,7 @@ import EventDetailsPage from './components/EventDetailsPage';
 import MyEventsPage from './components/MyEventsPage';
 import ProfilePage from './components/ProfilePage';
 import CalendarPage from './components/CalendarPage';
-import AdminDashboardPage from './components/AdminDashboardPage';
+const AdminDashboardPage = React.lazy(() => import('./components/AdminDashboardPage'));
 import PastEventsSection from './components/PastEventsSection';
 import PastEventDetailsPage from './components/PastEventDetailsPage';
 import VenuesPage from './components/VenuesPage';
@@ -341,19 +341,28 @@ export default function App() {
         )}
 
         {activeTab === 'admin' && (
-          <AdminDashboardPage
-            currentUser={currentUser}
-            setCurrentUser={setCurrentUser}
-            token={token}
-            setToken={setToken}
-            logout={() => {
-              handleLogout();
-              setActiveTab('home');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            openCreateEventModal={() => setShowAdmin(true)}
-            showToast={showToast}
-          />
+          <React.Suspense
+            fallback={
+              <div style={{ padding: '4rem 0', textAlign: 'center', color: '#5d4df6', fontWeight: '700' }}>
+                <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2rem', marginBottom: '1rem', display: 'block' }}></i>
+                Loading Admin Portal...
+              </div>
+            }
+          >
+            <AdminDashboardPage
+              currentUser={currentUser}
+              setCurrentUser={setCurrentUser}
+              token={token}
+              setToken={setToken}
+              logout={() => {
+                handleLogout();
+                setActiveTab('home');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              openCreateEventModal={() => setShowAdmin(true)}
+              showToast={showToast}
+            />
+          </React.Suspense>
         )}
       </main>
 

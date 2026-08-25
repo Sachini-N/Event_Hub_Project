@@ -18,14 +18,13 @@ const signupUser = async (req, res) => {
       return res.status(400).json({ success: false, message: "An account with this email address already exists. Please log in." });
     }
 
-    const isAdminEmail = emailClean.includes('admin') || req.body.role === 'admin';
-
+    // Enforce role: "user" for all public registrations to prevent privilege escalation
     const user = new User({
       name,
       email: emailClean,
       password,
       contactNumber: contactNumber || "",
-      role: isAdminEmail ? "admin" : "user",
+      role: "user",
     });
 
     await user.save();
