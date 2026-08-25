@@ -91,6 +91,7 @@ export default function VenuesPage({ showToast }) {
 
   // Modal State for Venue Details & Booking Inquiry
   const [activeVenueModal, setActiveVenueModal] = useState(null);
+  const [showInquiryFormModal, setShowInquiryFormModal] = useState(false);
   const [inquiryForm, setInquiryForm] = useState({
     name: '',
     email: '',
@@ -185,6 +186,7 @@ export default function VenuesPage({ showToast }) {
 
   const handleOpenInquiryModal = (venue) => {
     setActiveVenueModal(venue);
+    setShowInquiryFormModal(false);
     setInquiryForm({
       name: '',
       email: '',
@@ -494,277 +496,342 @@ export default function VenuesPage({ showToast }) {
         )}
       </div>
 
-      {/* 6. Venue Detail & Inquiry Modal */}
+      {/* 6. Venue Detail & Side-by-Side Showcase Modal */}
       {activeVenueModal && (
-        <div className="modal-overlay" onClick={() => setActiveVenueModal(null)}>
+        <div className="modal-overlay" onClick={() => { setActiveVenueModal(null); setShowInquiryFormModal(false); }}>
           <div
-            className="modal-card venue-inquiry-modal"
+            className="modal-card venue-split-modal-card"
             onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '1120px', width: '95%', maxHeight: '85vh', borderRadius: '20px', overflow: 'hidden', padding: 0, background: '#ffffff', display: 'flex', flexDirection: 'column' }}
           >
             <button
               className="modal-close"
-              onClick={() => setActiveVenueModal(null)}
+              onClick={() => { setActiveVenueModal(null); setShowInquiryFormModal(false); }}
+              style={{ zIndex: 10, background: '#ffffff', color: '#0f172a', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', top: '16px', right: '16px' }}
             >
               <i className="fa-solid fa-xmark"></i>
             </button>
 
-            <ImageCarouselSlider
-              images={
-                activeVenueModal.images && activeVenueModal.images.length > 0
-                  ? activeVenueModal.images
-                  : [activeVenueModal.coverImage]
-              }
-              fallbackImage="https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80"
-              alt={activeVenueModal.name}
-              className="venue-modal-banner"
-            >
-              <div className="venue-modal-banner-overlay">
-                <span className="modal-branch-pill">
-                  <i className="fa-solid fa-building"></i>{' '}
-                  {activeVenueModal.branch || 'TRACE Expert City (Colombo)'}
-                </span>
-                <h2>{activeVenueModal.name}</h2>
+            {/* Side-by-Side Split Container */}
+            <div className="venue-split-grid" style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', maxHeight: '85vh', overflow: 'hidden' }}>
+              
+              {/* LEFT SIDE: Space Details & Book Inquiry Trigger */}
+              <div className="venue-split-left-details" style={{ padding: '1.75rem 2rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: '#ffffff', overflowY: 'auto', maxHeight: '85vh' }}>
+                <div>
+                  {/* Header Badges */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                    <span style={{ background: '#eef2ff', color: '#5d4df6', fontWeight: '700', padding: '0.3rem 0.8rem', borderRadius: '20px', fontSize: '0.78rem', border: '1px solid #c7d2fe', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <i className="fa-solid fa-building"></i> {activeVenueModal.branch || 'TRACE Expert City (Colombo)'}
+                    </span>
+                    <span style={{ fontSize: '0.76rem', fontWeight: '700', color: activeVenueModal.status === 'Available' ? '#059669' : '#d97706', background: activeVenueModal.status === 'Available' ? '#dcfce7' : '#fef3c7', padding: '0.3rem 0.8rem', borderRadius: '20px' }}>
+                      ● {activeVenueModal.status || 'Available'}
+                    </span>
+                    <span style={{ fontSize: '0.76rem', fontWeight: '700', color: '#5d4df6', background: '#eff6ff', border: '1px solid #dbeafe', padding: '0.3rem 0.75rem', borderRadius: '20px' }}>
+                      📍 {getSpaceProvince(activeVenueModal)}
+                    </span>
+                  </div>
+
+                  {/* Space Title & Rental Price Tag */}
+                  <h2 style={{ fontSize: '1.65rem', fontWeight: '800', color: '#0f172a', marginBottom: '0.4rem', lineHeight: 1.2 }}>
+                    {activeVenueModal.name}
+                  </h2>
+
+                  <div style={{ fontSize: '1.1rem', fontWeight: '800', color: '#5d4df6', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <i className="fa-solid fa-tag"></i> {activeVenueModal.rentalPrice || (activeVenueModal.pricePerHour ? `Rs. ${activeVenueModal.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr')}
+                  </div>
+
+                  {/* Specs Chips Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem', background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <i className="fa-solid fa-users" style={{ color: '#5d4df6', fontSize: '1rem' }}></i>
+                      <div>
+                        <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', fontWeight: '700', textTransform: 'uppercase' }}>Capacity</span>
+                        <strong style={{ fontSize: '0.85rem', color: '#0f172a' }}>{activeVenueModal.capacity} Guests</strong>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <i className="fa-solid fa-location-dot" style={{ color: '#5d4df6', fontSize: '1rem' }}></i>
+                      <div>
+                        <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', fontWeight: '700', textTransform: 'uppercase' }}>Location</span>
+                        <strong style={{ fontSize: '0.85rem', color: '#0f172a' }}>{activeVenueModal.city || 'Colombo'}</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Formatted Description (Renders clean text/formatting without showing raw HTML tags) */}
+                  <div style={{ marginBottom: '1.1rem' }}>
+                    <h4 style={{ fontSize: '0.8rem', fontWeight: '800', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <i className="fa-solid fa-circle-info" style={{ color: '#5d4df6' }}></i> Space Overview
+                    </h4>
+                    {activeVenueModal.description ? (
+                      <div style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.55 }}>
+                        <FormattedText content={activeVenueModal.description} className="space-modal-description-text" />
+                      </div>
+                    ) : (
+                      <p style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.55 }}>
+                        Enterprise auditorium & event venue equipped with modern AV, air conditioning, stage lighting, and high-speed fiber internet.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Amenities */}
+                  {activeVenueModal.amenities && activeVenueModal.amenities.length > 0 && (
+                    <div style={{ marginBottom: '0.85rem' }}>
+                      <h4 style={{ fontSize: '0.8rem', fontWeight: '800', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <i className="fa-solid fa-sliders" style={{ color: '#5d4df6' }}></i> Included Facilities
+                      </h4>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                        {activeVenueModal.amenities.map((am, i) => (
+                          <span key={i} style={{ fontSize: '0.74rem', fontWeight: '700', color: '#334155', background: '#f1f5f9', padding: '3px 8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
+                            ✓ {am}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Book Space Inquiry Action Button */}
+                <div style={{ marginTop: '1.25rem', paddingTop: '0.85rem', borderTop: '1px solid #eaecf0' }}>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => setShowInquiryFormModal(true)}
+                    style={{
+                      width: '100%',
+                      padding: '0.85rem 1.25rem',
+                      fontSize: '0.98rem',
+                      fontWeight: '800',
+                      borderRadius: '12px',
+                      backgroundColor: '#5d4df6',
+                      color: '#ffffff',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.6rem',
+                      boxShadow: '0 4px 14px rgba(93, 77, 246, 0.35)',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <i className="fa-regular fa-paper-plane"></i> Book Space Inquiry Now
+                  </button>
+                </div>
               </div>
-            </ImageCarouselSlider>
 
-            <div className="venue-modal-body">
-              {/* Venue Quick Specs */}
-              <div className="venue-specs-grid">
-                <div className="spec-box spec-capacity">
-                  <div className="spec-icon-wrapper">
-                    <i className="fa-solid fa-users"></i>
+              {/* RIGHT SIDE: Display 1 or 2 Showcase Images */}
+              <div className="venue-split-right-gallery" style={{ background: '#0f172a', position: 'relative', display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '85vh', overflow: 'hidden' }}>
+                {activeVenueModal.images && activeVenueModal.images.length >= 2 ? (
+                  <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', height: '100%', gap: '2px', background: '#020617' }}>
+                    <img
+                      src={activeVenueModal.images[0]}
+                      alt={activeVenueModal.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <img
+                      src={activeVenueModal.images[1]}
+                      alt={`${activeVenueModal.name} view 2`}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
                   </div>
-                  <div className="spec-info">
-                    <span className="spec-label">Capacity</span>
-                    <strong className="spec-val">{activeVenueModal.capacity} Guests</strong>
+                ) : (
+                  <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                    <img
+                      src={
+                        activeVenueModal.coverImage ||
+                        (activeVenueModal.images && activeVenueModal.images[0]) ||
+                        'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80'
+                      }
+                      alt={activeVenueModal.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, transparent 100%)', padding: '2rem 1.5rem 1.5rem', color: '#ffffff' }}>
+                      <span style={{ background: 'rgba(255, 255, 255, 0.2)', backdropFilter: 'blur(8px)', padding: '0.35rem 0.85rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '700' }}>
+                        📸 TRACE Facility Showcase View
+                      </span>
+                    </div>
                   </div>
-                </div>
-
-                <div className="spec-box spec-status">
-                  <div className="spec-icon-wrapper">
-                    <i className="fa-solid fa-circle-check"></i>
-                  </div>
-                  <div className="spec-info">
-                    <span className="spec-label">Status</span>
-                    <strong className="spec-val">{activeVenueModal.status || 'Available'}</strong>
-                  </div>
-                </div>
-
-                <div className="spec-box spec-city">
-                  <div className="spec-icon-wrapper">
-                    <i className="fa-solid fa-location-dot"></i>
-                  </div>
-                  <div className="spec-info">
-                    <span className="spec-label">City</span>
-                    <strong className="spec-val">{activeVenueModal.city || 'Colombo, Sri Lanka'}</strong>
-                  </div>
-                </div>
-
-                <div className="spec-box spec-price">
-                  <div className="spec-icon-wrapper">
-                    <i className="fa-solid fa-tag"></i>
-                  </div>
-                  <div className="spec-info">
-                    <span className="spec-label">Rental Price</span>
-                    <strong className="spec-val">
-                      {activeVenueModal.rentalPrice || (activeVenueModal.pricePerHour ? `Rs. ${activeVenueModal.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr')}
-                    </strong>
-                  </div>
-                </div>
-              </div>
-
-              {/* Full Address & Description */}
-              <div className="venue-details-section">
-                <h4><i className="fa-solid fa-circle-info"></i> Space Overview</h4>
-                <p className="venue-address-full">
-                  <strong>Location:</strong> {activeVenueModal.address}
-                </p>
-                {activeVenueModal.description && (
-                  <FormattedText content={activeVenueModal.description} className="venue-desc-full" />
                 )}
               </div>
 
-              {/* Amenities */}
-              {activeVenueModal.amenities && activeVenueModal.amenities.length > 0 && (
-                <div className="venue-details-section">
-                  <h4><i className="fa-solid fa-sliders"></i> Included Facilities & Amenities</h4>
-                  <div className="modal-amenities-tags">
-                    {activeVenueModal.amenities.map((am, i) => (
-                      <span key={i} className="modal-amenity-pill">
-                        <i className="fa-solid fa-check"></i> {am}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <hr className="modal-divider" />
-
-              {/* Space Booking Inquiry Form */}
-              <div className="venue-inquiry-form-section">
-                <h3>
-                  <i className="fa-solid fa-calendar-check" style={{ color: '#5d4df6' }}></i>{' '}
-                  Request Space Booking / Inquiry
-                </h3>
-                <p className="form-sub-text">
-                  Fill in your details below to check availability or request a reservation quote for this venue space.
-                </p>
-
-                <form onSubmit={handleInquirySubmit}>
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label htmlFor="inquiry-name">Your Full Name *</label>
-                      <input
-                        type="text"
-                        id="inquiry-name"
-                        required
-                        placeholder="e.g. Kasun Perera"
-                        value={inquiryForm.name}
-                        onChange={(e) =>
-                          setInquiryForm({ ...inquiryForm, name: e.target.value })
-                        }
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label htmlFor="inquiry-email">Email Address *</label>
-                      <input
-                        type="email"
-                        id="inquiry-email"
-                        required
-                        placeholder="kasun@techstartup.lk"
-                        value={inquiryForm.email}
-                        onChange={(e) =>
-                          setInquiryForm({ ...inquiryForm, email: e.target.value })
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label htmlFor="inquiry-phone">Phone Number *</label>
-                      <input
-                        type="tel"
-                        id="inquiry-phone"
-                        required
-                        placeholder="+94 77 123 4567"
-                        value={inquiryForm.phone}
-                        onChange={(e) =>
-                          setInquiryForm({ ...inquiryForm, phone: e.target.value })
-                        }
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label htmlFor="inquiry-date">Target Event Date *</label>
-                      <input
-                        type="date"
-                        id="inquiry-date"
-                        required
-                        value={inquiryForm.eventDate}
-                        onChange={(e) =>
-                          setInquiryForm({ ...inquiryForm, eventDate: e.target.value })
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="inquiry-title">Event Title / Purpose *</label>
-                    <input
-                      type="text"
-                      id="inquiry-title"
-                      required
-                      placeholder="e.g. Annual Developer Summit 2026"
-                      value={inquiryForm.eventTitle}
-                      onChange={(e) =>
-                        setInquiryForm({ ...inquiryForm, eventTitle: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label htmlFor="inquiry-hours">Estimated Duration (Hours) *</label>
-                      <input
-                        type="number"
-                        id="inquiry-hours"
-                        required
-                        min="1"
-                        max="24"
-                        placeholder="4"
-                        value={inquiryForm.durationHours}
-                        onChange={(e) =>
-                          setInquiryForm({ ...inquiryForm, durationHours: e.target.value })
-                        }
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label htmlFor="inquiry-guests">Expected Attendees</label>
-                      <input
-                        type="number"
-                        id="inquiry-guests"
-                        placeholder="50"
-                        value={inquiryForm.guests}
-                        onChange={(e) =>
-                          setInquiryForm({ ...inquiryForm, guests: e.target.value })
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  {/* Estimated Cost Preview Box */}
-                  <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '0.85rem 1rem', borderRadius: '10px', marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.86rem', color: '#166534', fontWeight: '600' }}>
-                      <i className="fa-solid fa-calculator" style={{ marginRight: '6px' }}></i> Estimated Rental Cost:
-                    </span>
-                    <strong style={{ fontSize: '0.98rem', color: '#15803d' }}>
-                      Rs. {((activeVenueModal?.pricePerHour || 25000) * (Number(inquiryForm.durationHours) || 4)).toLocaleString()} ({inquiryForm.durationHours || 4} hrs @ Rs. {(activeVenueModal?.pricePerHour || 25000).toLocaleString()}/hr)
-                    </strong>
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="inquiry-notes">Special Requirements / Notes (Optional)</label>
-                    <textarea
-                      id="inquiry-notes"
-                      rows="3"
-                      placeholder="e.g. Need live streaming setup, stage lighting, and tech support..."
-                      value={inquiryForm.notes}
-                      onChange={(e) =>
-                        setInquiryForm({ ...inquiryForm, notes: e.target.value })
-                      }
-                    ></textarea>
-                  </div>
-
-                  <div className="form-actions" style={{ marginTop: '1.25rem' }}>
-                    <button
-                      type="button"
-                      className="btn btn-outline"
-                      onClick={() => setActiveVenueModal(null)}
-                    >
-                      Close
-                    </button>
-                    <button
-                      type="submit"
-                      className="btn btn-primary"
-                      disabled={isSubmittingInquiry}
-                    >
-                      {isSubmittingInquiry ? (
-                        <>
-                          <i className="fa-solid fa-spinner fa-spin"></i> Submitting...
-                        </>
-                      ) : (
-                        <>
-                          <i className="fa-solid fa-paper-plane"></i> Send Booking Inquiry
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </form>
-              </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 7. Short Booking Inquiry Popup Modal */}
+      {showInquiryFormModal && activeVenueModal && (
+        <div className="modal-overlay" onClick={() => setShowInquiryFormModal(false)} style={{ zIndex: 1100 }}>
+          <div
+            className="modal-card"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '580px', padding: '2rem', borderRadius: '16px' }}
+          >
+            <button
+              className="modal-close"
+              onClick={() => setShowInquiryFormModal(false)}
+            >
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+
+            <div className="modal-header" style={{ marginBottom: '1.25rem' }}>
+              <h2 style={{ fontSize: '1.3rem', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <i className="fa-solid fa-calendar-check" style={{ color: '#5d4df6' }}></i>
+                Quick Space Reservation Inquiry
+              </h2>
+              <p className="modal-sub">
+                Submit inquiry for <strong style={{ color: '#5d4df6' }}>{activeVenueModal.name}</strong> ({activeVenueModal.branch || 'TRACE Expert City'})
+              </p>
+            </div>
+
+            <form onSubmit={handleInquirySubmit}>
+              <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '0.85rem' }}>
+                <div className="form-group">
+                  <label htmlFor="inquiry-name" style={{ fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.3rem', display: 'block' }}>Your Full Name *</label>
+                  <input
+                    type="text"
+                    id="inquiry-name"
+                    required
+                    placeholder="e.g. Kasun Perera"
+                    value={inquiryForm.name}
+                    onChange={(e) => setInquiryForm({ ...inquiryForm, name: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="inquiry-email" style={{ fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.3rem', display: 'block' }}>Email Address *</label>
+                  <input
+                    type="email"
+                    id="inquiry-email"
+                    required
+                    placeholder="kasun@techstartup.lk"
+                    value={inquiryForm.email}
+                    onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                  />
+                </div>
+              </div>
+
+              <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '0.85rem' }}>
+                <div className="form-group">
+                  <label htmlFor="inquiry-phone" style={{ fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.3rem', display: 'block' }}>Phone Number *</label>
+                  <input
+                    type="tel"
+                    id="inquiry-phone"
+                    required
+                    placeholder="+94 77 123 4567"
+                    value={inquiryForm.phone}
+                    onChange={(e) => setInquiryForm({ ...inquiryForm, phone: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="inquiry-date" style={{ fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.3rem', display: 'block' }}>Target Event Date *</label>
+                  <input
+                    type="date"
+                    id="inquiry-date"
+                    required
+                    value={inquiryForm.eventDate}
+                    onChange={(e) => setInquiryForm({ ...inquiryForm, eventDate: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '0.85rem' }}>
+                <label htmlFor="inquiry-title" style={{ fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.3rem', display: 'block' }}>Event Title / Purpose *</label>
+                <input
+                  type="text"
+                  id="inquiry-title"
+                  required
+                  placeholder="e.g. Annual Developer Summit 2026"
+                  value={inquiryForm.eventTitle}
+                  onChange={(e) => setInquiryForm({ ...inquiryForm, eventTitle: e.target.value })}
+                  style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                />
+              </div>
+
+              <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '0.85rem' }}>
+                <div className="form-group">
+                  <label htmlFor="inquiry-hours" style={{ fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.3rem', display: 'block' }}>Duration (Hours) *</label>
+                  <input
+                    type="number"
+                    id="inquiry-hours"
+                    required
+                    min="1"
+                    max="24"
+                    placeholder="4"
+                    value={inquiryForm.durationHours}
+                    onChange={(e) => setInquiryForm({ ...inquiryForm, durationHours: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="inquiry-guests" style={{ fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.3rem', display: 'block' }}>Expected Attendees</label>
+                  <input
+                    type="number"
+                    id="inquiry-guests"
+                    placeholder="50"
+                    value={inquiryForm.guests}
+                    onChange={(e) => setInquiryForm({ ...inquiryForm, guests: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                  />
+                </div>
+              </div>
+
+              {/* Estimated Cost Preview */}
+              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '0.75rem 1rem', borderRadius: '10px', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem' }}>
+                <span style={{ fontSize: '0.82rem', color: '#166534', fontWeight: '600' }}>
+                  <i className="fa-solid fa-calculator" style={{ marginRight: '6px' }}></i> Estimated Rental Cost:
+                </span>
+                <strong style={{ fontSize: '0.92rem', color: '#15803d' }}>
+                  Rs. {((activeVenueModal?.pricePerHour || 25000) * (Number(inquiryForm.durationHours) || 4)).toLocaleString()} ({inquiryForm.durationHours || 4} hrs @ Rs. {(activeVenueModal?.pricePerHour || 25000).toLocaleString()}/hr)
+                </strong>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label htmlFor="inquiry-notes" style={{ fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.3rem', display: 'block' }}>Special Notes (Optional)</label>
+                <textarea
+                  id="inquiry-notes"
+                  rows="2"
+                  placeholder="e.g. Need live streaming setup, stage lighting..."
+                  value={inquiryForm.notes}
+                  onChange={(e) => setInquiryForm({ ...inquiryForm, notes: e.target.value })}
+                  style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                ></textarea>
+              </div>
+
+              <div className="form-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setShowInquiryFormModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ backgroundColor: '#5d4df6' }}
+                  disabled={isSubmittingInquiry}
+                >
+                  {isSubmittingInquiry ? (
+                    <>
+                      <i className="fa-solid fa-spinner fa-spin"></i> Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fa-solid fa-paper-plane"></i> Send Booking Inquiry
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
