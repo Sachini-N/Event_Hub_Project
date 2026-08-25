@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function Navbar({
   activeTab,
@@ -13,32 +13,47 @@ export default function Navbar({
   openAdminModal,
   openMyRegistrationsModal,
 }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const closeMobile = () => setMobileMenuOpen(false);
+
   return (
     <header className="navbar">
       <div className="nav-container">
-        <div className="brand" onClick={scrollToHero} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+        <div className="brand" onClick={() => { scrollToHero(); closeMobile(); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
           <span className="logo-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
             <img src="/trace-logo.png" alt="TRACE" className="trace-logo-img" />
             <span className="logo-tracker-sub">Spaces Tracker</span>
           </span>
         </div>
 
-        <nav className="nav-links">
+        {/* Mobile Hamburger Button */}
+        <button
+          type="button"
+          className="mobile-hamburger-btn"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle Navigation Menu"
+        >
+          <i className={`fa-solid ${mobileMenuOpen ? 'fa-xmark' : 'fa-bars'}`}></i>
+        </button>
+
+        {/* Desktop Navigation Links */}
+        <nav className={`nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`}>
           <button
             className={`nav-link ${activeTab === 'home' ? 'active' : ''}`}
-            onClick={scrollToHero}
+            onClick={() => { scrollToHero(); closeMobile(); }}
           >
             Home
           </button>
           <button
             className={`nav-link ${activeTab === 'upcoming' ? 'active' : ''}`}
-            onClick={() => scrollToEvents('upcoming')}
+            onClick={() => { scrollToEvents('upcoming'); closeMobile(); }}
           >
             Upcoming Events
           </button>
           <button
             className={`nav-link ${activeTab === 'past' ? 'active' : ''}`}
-            onClick={() => scrollToEvents('past')}
+            onClick={() => { scrollToEvents('past'); closeMobile(); }}
           >
             Past Events
           </button>
@@ -47,6 +62,7 @@ export default function Navbar({
             onClick={() => {
               setActiveTab('venues-page');
               window.scrollTo({ top: 0, behavior: 'smooth' });
+              closeMobile();
             }}
           >
             Spaces
@@ -55,7 +71,7 @@ export default function Navbar({
             <>
               <button
                 className={`nav-link ${activeTab === 'my-events' ? 'active' : ''}`}
-                onClick={openMyRegistrationsModal}
+                onClick={() => { openMyRegistrationsModal(); closeMobile(); }}
               >
                 My Events
               </button>
@@ -64,6 +80,7 @@ export default function Navbar({
                 onClick={() => {
                   setActiveTab('calendar');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
+                  closeMobile();
                 }}
               >
                 Calendar
@@ -71,12 +88,10 @@ export default function Navbar({
             </>
           )}
 
-
-
           {!currentUser ? (
             <div className="nav-auth-group">
-              <button className="btn btn-sm btn-outline" onClick={openLoginModal}>Log In</button>
-              <button className="btn btn-sm btn-primary" onClick={openSignupModal}>Sign Up</button>
+              <button className="btn btn-sm btn-outline" onClick={() => { openLoginModal(); closeMobile(); }}>Log In</button>
+              <button className="btn btn-sm btn-primary" onClick={() => { openSignupModal(); closeMobile(); }}>Sign Up</button>
             </div>
           ) : (
             <div className="nav-auth-group">
@@ -86,6 +101,7 @@ export default function Navbar({
                 onClick={() => {
                   setActiveTab('profile');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
+                  closeMobile();
                 }}
               >
                 <img
@@ -99,12 +115,12 @@ export default function Navbar({
                 />
                 <span>{currentUser.name}</span>
               </div>
-              <button className="btn btn-sm btn-outline" onClick={logout}>Logout</button>
+              <button className="btn btn-sm btn-outline" onClick={() => { logout(); closeMobile(); }}>Logout</button>
             </div>
           )}
 
           {(currentUser?.isAdmin || currentUser?.role === 'admin' || currentUser?.email === 'admin@trace.lk') && (
-            <button className="btn btn-sm btn-admin" onClick={openAdminModal} title="Admin Panel">
+            <button className="btn btn-sm btn-admin" onClick={() => { openAdminModal(); closeMobile(); }} title="Admin Panel">
               <i className="fa-solid fa-sliders"></i> Admin
             </button>
           )}
