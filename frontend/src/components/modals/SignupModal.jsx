@@ -11,12 +11,18 @@ export default function SignupModal({
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!agreeTerms) {
+      showToast('Please accept the Terms of Service to continue.', 'error');
+      return;
+    }
     setSubmitting(true);
 
     try {
@@ -44,76 +50,306 @@ export default function SignupModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1200 }}>
+      <div
+        className="modal-card"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          maxWidth: '480px',
+          width: '92%',
+          borderRadius: '20px',
+          padding: '2.25rem 2rem',
+          boxShadow: '0 20px 40px rgba(15, 23, 42, 0.25)',
+          background: '#ffffff',
+          position: 'relative',
+          border: '1px solid #e2e8f0',
+        }}
+      >
+        {/* Close Button */}
+        <button
+          className="modal-close"
+          onClick={onClose}
+          style={{
+            top: '20px',
+            right: '20px',
+            background: '#f1f5f9',
+            color: '#475569',
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: 'none',
+            cursor: 'pointer',
+          }}
+        >
           <i className="fa-solid fa-xmark"></i>
         </button>
-        
-        <div className="modal-header">
-          <h2>Create Account</h2>
-          <p className="modal-sub">Sign up for TRACE Event Hub to easily manage your event passes.</p>
+
+        {/* Brand Header */}
+        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.85rem' }}>
+            <img
+              src="/trace-logo.png"
+              alt="TRACE Logo"
+              style={{
+                height: '48px',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 4px 10px rgba(93, 77, 246, 0.25))',
+              }}
+            />
+          </div>
+
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0f172a', margin: '0 0 0.35rem 0' }}>
+            Create Your Account
+          </h2>
+          <p style={{ fontSize: '0.86rem', color: '#64748b', margin: 0, lineHeight: 1.4 }}>
+            Join TRACE Event Hub to register for events & reserve spaces across Sri Lanka.
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="signup-name">Full Name *</label>
-            <input
-              type="text"
-              id="signup-name"
-              required
-              placeholder="John Doe"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+        <form onSubmit={handleSubmit} autoComplete="off">
+          {/* Full Name */}
+          <div className="form-group" style={{ marginBottom: '1.1rem' }}>
+            <label htmlFor="signup-name" style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+              Full Name *
+            </label>
+            <div style={{ position: 'relative' }}>
+              <i
+                className="fa-regular fa-user"
+                style={{
+                  position: 'absolute',
+                  left: '14px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#94a3b8',
+                  fontSize: '0.9rem',
+                }}
+              ></i>
+              <input
+                type="text"
+                id="signup-name"
+                name="name"
+                autoComplete="name"
+                required
+                placeholder="Kasun Kalhara"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.7rem 0.85rem 0.7rem 2.5rem',
+                  fontSize: '0.88rem',
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1',
+                  outline: 'none',
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="signup-email">Email Address *</label>
-            <input
-              type="email"
-              id="signup-email"
-              required
-              placeholder="john.doe@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+          {/* Email Address */}
+          <div className="form-group" style={{ marginBottom: '1.1rem' }}>
+            <label htmlFor="signup-email" style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+              Email Address *
+            </label>
+            <div style={{ position: 'relative' }}>
+              <i
+                className="fa-regular fa-envelope"
+                style={{
+                  position: 'absolute',
+                  left: '14px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#94a3b8',
+                  fontSize: '0.9rem',
+                }}
+              ></i>
+              <input
+                type="email"
+                id="signup-email"
+                name="email"
+                autoComplete="email"
+                required
+                placeholder="kasun@techstartup.lk"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.7rem 0.85rem 0.7rem 2.5rem',
+                  fontSize: '0.88rem',
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1',
+                  outline: 'none',
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="signup-phone">Contact Phone Number</label>
-            <input
-              type="tel"
-              id="signup-phone"
-              placeholder="+94 77 123 4567"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
+          {/* Contact Phone */}
+          <div className="form-group" style={{ marginBottom: '1.1rem' }}>
+            <label htmlFor="signup-phone" style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+              Contact Phone Number
+            </label>
+            <div style={{ position: 'relative' }}>
+              <i
+                className="fa-solid fa-phone"
+                style={{
+                  position: 'absolute',
+                  left: '14px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#94a3b8',
+                  fontSize: '0.88rem',
+                }}
+              ></i>
+              <input
+                type="tel"
+                id="signup-phone"
+                name="phone"
+                autoComplete="tel"
+                placeholder="+94 77 123 4567"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.7rem 0.85rem 0.7rem 2.5rem',
+                  fontSize: '0.88rem',
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1',
+                  outline: 'none',
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="signup-password">Password *</label>
-            <input
-              type="password"
-              id="signup-password"
-              required
-              minLength="6"
-              placeholder="Min 6 characters"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+          {/* Password with Show/Hide Toggle */}
+          <div className="form-group" style={{ marginBottom: '1.1rem' }}>
+            <label htmlFor="signup-password" style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+              Create Password (Min 6 chars) *
+            </label>
+            <div style={{ position: 'relative' }}>
+              <i
+                className="fa-solid fa-lock"
+                style={{
+                  position: 'absolute',
+                  left: '14px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#94a3b8',
+                  fontSize: '0.9rem',
+                }}
+              ></i>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="signup-password"
+                name="password"
+                autoComplete="new-password"
+                required
+                minLength="6"
+                placeholder="Min 6 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.7rem 2.6rem 0.7rem 2.5rem',
+                  fontSize: '0.88rem',
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1',
+                  outline: 'none',
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  boxSizing: 'border-box',
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  padding: 0,
+                }}
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                <i className={`fa-regular ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+              </button>
+            </div>
           </div>
 
-          <div className="form-actions">
-            <button type="button" className="btn btn-outline" onClick={onClose}>
-              Cancel
-            </button>
-            <button type="submit" className="btn btn-blue-pill" disabled={submitting}>
-              {submitting ? 'Registering...' : 'Sign Up'}
-            </button>
+          {/* Terms & Conditions Agreement */}
+          <div style={{ marginBottom: '1.25rem', fontSize: '0.82rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#475569', cursor: 'pointer', fontWeight: '600' }}>
+              <input
+                type="checkbox"
+                checked={agreeTerms}
+                onChange={(e) => setAgreeTerms(e.target.checked)}
+                style={{ accentColor: '#5d4df6', width: '16px', height: '16px' }}
+              />
+              I agree to TRACE Terms of Service & Privacy Policy
+            </label>
           </div>
 
-          <p className="auth-switch-text" style={{ marginTop: '15px', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+          {/* Full-Width Gradient Action Button */}
+          <button
+            type="submit"
+            disabled={submitting}
+            style={{
+              width: '100%',
+              padding: '0.85rem 1rem',
+              fontSize: '0.95rem',
+              fontWeight: '800',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #5d4df6 0%, #4338ca 100%)',
+              color: '#ffffff',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 14px rgba(93, 77, 246, 0.35)',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            {submitting ? (
+              <>
+                <i className="fa-solid fa-spinner fa-spin"></i> Creating Account...
+              </>
+            ) : (
+              <>
+                <i className="fa-solid fa-user-plus"></i> Create TRACE Account
+              </>
+            )}
+          </button>
+
+          {/* Footer Login Link */}
+          <div
+            style={{
+              marginTop: '1.5rem',
+              paddingTop: '1rem',
+              borderTop: '1px solid #f1f5f9',
+              textAlign: 'center',
+              fontSize: '0.86rem',
+              color: '#64748b',
+            }}
+          >
             Already have an account?{' '}
             <a
               href="#"
@@ -121,11 +357,11 @@ export default function SignupModal({
                 e.preventDefault();
                 switchToLogin();
               }}
-              style={{ color: 'var(--primary-blue)', fontWeight: 600, textDecoration: 'none' }}
+              style={{ color: '#5d4df6', fontWeight: '800', textDecoration: 'none' }}
             >
-              Log In
+              Log In Here
             </a>
-          </p>
+          </div>
         </form>
       </div>
     </div>
