@@ -54,15 +54,7 @@ export default function Footer({ setActiveTab }) {
             <li>
               <a href="#venues" onClick={(e) => handleNavClick('venues', e)}>Explore Spaces</a>
             </li>
-            <li>
-              <a href="#admin" onClick={(e) => handleNavClick('admin', e)}>Admin Portal</a>
-            </li>
-            <li>
-              <a href="#privacy">Privacy Policy</a>
-            </li>
-            <li>
-              <a href="#terms">Terms of Service</a>
-            </li>
+
           </ul>
         </div>
       </div>
