@@ -11,6 +11,10 @@ export default function LightboxModal({ isOpen, onClose, event, initialIndex = 0
 
   const gallery = event.gallery;
   const currentImg = gallery[currentIndex] || gallery[0];
+  const imgUrl = typeof currentImg === 'string' ? currentImg : (currentImg?.url || currentImg);
+  const imgCaption = typeof currentImg === 'string'
+    ? `Event Photograph (${currentIndex + 1} of ${gallery.length})`
+    : (currentImg?.caption || 'Event Photograph');
 
   const prevImage = () => {
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : gallery.length - 1));
@@ -28,8 +32,8 @@ export default function LightboxModal({ isOpen, onClose, event, initialIndex = 0
         </button>
 
         <div className="lightbox-container">
-          <img src={currentImg.url} alt={currentImg.caption || 'Event Highlight'} />
-          <div className="lightbox-caption">{currentImg.caption || 'Event Photograph'}</div>
+          <img src={imgUrl} alt={imgCaption} />
+          <div className="lightbox-caption">{imgCaption}</div>
         </div>
 
         <div className="lightbox-nav">

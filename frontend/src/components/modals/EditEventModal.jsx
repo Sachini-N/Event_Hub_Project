@@ -96,9 +96,13 @@ export default function EditEventModal({
     setSubmitting(true);
 
     try {
+      const authToken = localStorage.getItem('eventhub_token');
       const response = await fetch(`/api/events/${event._id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
         body: JSON.stringify({
           title,
           category,

@@ -169,11 +169,14 @@ class EventHubApp {
             ${event.gallery
               .slice(0, 4)
               .map(
-                (img, idx) => `
+                (img, idx) => {
+                  const url = typeof img === 'string' ? img : (img.url || img);
+                  return `
               <div class="gallery-thumb" onclick="app.openGalleryLightbox('${event._id}', ${idx})" style="height:50px; border-radius:6px; overflow:hidden; cursor:pointer;">
-                <img src="${img.url}" alt="Gallery photo" style="width:100%; height:100%; object-fit:cover;">
+                <img src="${url}" alt="Gallery photo" style="width:100%; height:100%; object-fit:cover;">
               </div>
-            `
+            `;
+                }
               )
               .join("")}
           </div>
@@ -412,8 +415,10 @@ class EventHubApp {
 
   updateLightboxImage() {
     const imgObj = this.currentLightboxGallery[this.currentLightboxIndex];
-    document.getElementById("lightbox-img").src = imgObj.url;
-    document.getElementById("lightbox-caption").textContent = imgObj.caption || "Event Photograph";
+    const url = typeof imgObj === "string" ? imgObj : (imgObj?.url || imgObj);
+    const caption = typeof imgObj === "string" ? "Event Photograph" : (imgObj?.caption || "Event Photograph");
+    document.getElementById("lightbox-img").src = url;
+    document.getElementById("lightbox-caption").textContent = caption;
     document.getElementById("gallery-counter").textContent = `${this.currentLightboxIndex + 1} of ${
       this.currentLightboxGallery.length
     }`;

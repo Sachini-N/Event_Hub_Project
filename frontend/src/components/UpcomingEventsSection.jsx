@@ -168,25 +168,28 @@ export default function UpcomingEventsSection({
                             gap: '0.4rem',
                           }}
                         >
-                          {event.gallery.slice(0, 4).map((img, idx) => (
-                            <div
-                              key={idx}
-                              className="gallery-thumb"
-                              onClick={() => openGalleryLightbox(event, idx)}
-                              style={{
-                                height: '50px',
-                                borderRadius: '6px',
-                                overflow: 'hidden',
-                                cursor: 'pointer',
-                              }}
-                            >
-                              <img
-                                src={img.url}
-                                alt="Gallery photo"
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                              />
-                            </div>
-                          ))}
+                          {event.gallery.slice(0, 4).map((img, idx) => {
+                            const imgUrl = typeof img === 'string' ? img : (img?.url || img);
+                            return (
+                              <div
+                                key={idx}
+                                className="gallery-thumb"
+                                onClick={() => openGalleryLightbox(event, idx)}
+                                style={{
+                                  height: '50px',
+                                  borderRadius: '6px',
+                                  overflow: 'hidden',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                <img
+                                  src={imgUrl}
+                                  alt="Gallery photo"
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}

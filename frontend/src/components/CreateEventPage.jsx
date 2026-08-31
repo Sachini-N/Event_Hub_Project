@@ -160,9 +160,13 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
     };
 
     try {
+      const authToken = localStorage.getItem('eventhub_token');
       const response = await fetch('/api/events', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
         body: JSON.stringify(payload),
       });
 

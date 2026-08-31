@@ -69,9 +69,13 @@ export default function AdminDashboardPage({
     if (!editingAdminUser) return;
     setSavingAdminEdit(true);
     try {
+      const authToken = localStorage.getItem('eventhub_token') || token;
       const res = await fetch(`/api/auth/users/${editingAdminUser._id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
         body: JSON.stringify(editingAdminForm),
       });
       const data = await res.json();
@@ -100,9 +104,13 @@ export default function AdminDashboardPage({
 
     setSubmittingBranchAdmin(true);
     try {
+      const authToken = localStorage.getItem('eventhub_token') || token;
       const res = await fetch('/api/auth/create-branch-admin', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
         body: JSON.stringify(branchAdminForm),
       });
 
@@ -139,9 +147,13 @@ export default function AdminDashboardPage({
   const handleSendEmailCredentials = async (user) => {
     if (showToast) showToast(`Dispatching credentials email to ${user.email}...`, 'info');
     try {
+      const authToken = localStorage.getItem('eventhub_token') || token;
       const res = await fetch('/api/auth/send-credentials-email', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
         body: JSON.stringify({ userId: user._id, email: user.email }),
       });
 
@@ -214,40 +226,42 @@ export default function AdminDashboardPage({
 
   const isAdmin = currentUser && currentUser.role === 'admin';
 
-  // Fetch Dashboard Data from Backend APIs
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
+      const authToken = localStorage.getItem('eventhub_token') || token;
+      const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+
       // 1. Fetch Events
-      const eventsRes = await fetch('/api/events');
+      const eventsRes = await fetch('/api/events', { headers });
       const eventsData = await eventsRes.json();
       if (eventsData.success) {
         setEvents(eventsData.data || []);
       }
 
       // 2. Fetch Registrations
-      const regsRes = await fetch('/api/registrations');
+      const regsRes = await fetch('/api/registrations', { headers });
       const regsData = await regsRes.json();
       if (regsData.success) {
         setRegistrations(regsData.data || []);
       }
 
       // 3. Fetch Venues
-      const venuesRes = await fetch('/api/venues');
+      const venuesRes = await fetch('/api/venues', { headers });
       const venuesData = await venuesRes.json();
       if (venuesData.success && venuesData.data && venuesData.data.length > 0) {
         setVenues(venuesData.data);
       }
 
       // 4. Fetch Venue Booking Inquiries
-      const bookingsRes = await fetch('/api/venue-bookings');
+      const bookingsRes = await fetch('/api/venue-bookings', { headers });
       const bookingsData = await bookingsRes.json();
       if (bookingsData.success) {
         setVenueBookings(bookingsData.data || []);
       }
 
       // 5. Fetch Registered Users
-      const usersRes = await fetch('/api/auth/users');
+      const usersRes = await fetch('/api/auth/users', { headers });
       const usersData = await usersRes.json();
       if (usersData.success) {
         setRegisteredUsers(usersData.data || []);

@@ -40,9 +40,13 @@ export default function AdminModal({ isOpen, onClose, onEventCreated, showToast 
     setSubmitting(true);
 
     try {
+      const authToken = localStorage.getItem('eventhub_token');
       const response = await fetch('/api/events', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
         body: JSON.stringify({
           title,
           category,

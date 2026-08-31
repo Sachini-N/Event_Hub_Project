@@ -194,33 +194,41 @@ export default function PastEventDetailsPage({
             </div>
 
             {/* Photo Gallery Showcase Grid */}
-            {pastEvent.gallery && pastEvent.gallery.length > 0 && (
-              <div className="past-content-card">
-                <h2 className="past-card-heading">
-                  <i className="fa-solid fa-images"></i> Event Photo Gallery & Moments
-                </h2>
-                <div className="past-gallery-grid-4col">
-                  {pastEvent.gallery.map((item, gIdx) => {
-                    const imgUrl = typeof item === 'string' ? item : (item.url || item);
-                    return (
-                      <div
-                        key={gIdx}
-                        className="past-gallery-thumb"
-                        onClick={() =>
-                          onOpenGalleryLightbox &&
-                          onOpenGalleryLightbox({ coverImage: imgUrl, title: `${pastEvent.title} Gallery #${gIdx + 1}` }, gIdx)
-                        }
-                      >
-                        <img src={imgUrl} alt={`Gallery moment ${gIdx + 1}`} />
-                        <div className="thumb-hover-overlay">
-                          <i className="fa-solid fa-magnifying-glass-plus"></i>
+            {(() => {
+              const galleryList = (pastEvent.gallery && pastEvent.gallery.length > 0)
+                ? pastEvent.gallery
+                : (pastEvent.coverImage ? [pastEvent.coverImage] : []);
+
+              if (galleryList.length === 0) return null;
+
+              return (
+                <div className="past-content-card">
+                  <h2 className="past-card-heading">
+                    <i className="fa-solid fa-images"></i> Event Photo Gallery & Moments
+                  </h2>
+                  <div className="past-gallery-grid-4col">
+                    {galleryList.map((item, gIdx) => {
+                      const imgUrl = typeof item === 'string' ? item : (item.url || item);
+                      return (
+                        <div
+                          key={gIdx}
+                          className="past-gallery-thumb"
+                          onClick={() =>
+                            onOpenGalleryLightbox &&
+                            onOpenGalleryLightbox({ title: pastEvent.title, gallery: galleryList }, gIdx)
+                          }
+                        >
+                          <img src={imgUrl} alt={`Gallery moment ${gIdx + 1}`} />
+                          <div className="thumb-hover-overlay">
+                            <i className="fa-solid fa-magnifying-glass-plus"></i>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
 
           {/* RIGHT SIDEBAR COLUMN */}
@@ -270,13 +278,6 @@ export default function PastEventDetailsPage({
               <div className="share-buttons-row">
                 <button className="btn-share-icon" onClick={handleCopyShareLink} title="Copy Link">
                   <i className="fa-solid fa-link"></i> Copy Link
-                </button>
-                <button
-                  className="btn-share-icon btn-linkedin"
-                  onClick={() => window.open('https://linkedin.com', '_blank')}
-                  title="Share on LinkedIn"
-                >
-                  <i className="fa-brands fa-linkedin"></i> LinkedIn
                 </button>
               </div>
             </div>
