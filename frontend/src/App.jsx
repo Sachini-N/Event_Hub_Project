@@ -161,16 +161,26 @@ export default function App() {
     checkAuthStatus(token);
   }, []);
 
-  const handleAuthSuccess = (data) => {
+  const handleAuthSuccess = (data, isAdminMode = false) => {
     setToken(data.token);
     setCurrentUser(data.user);
     localStorage.setItem('eventhub_token', data.token);
+
+    if (isAdminMode) {
+      setActiveTab('admin');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      setActiveTab('home');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const handleLogout = () => {
     setToken(null);
     setCurrentUser(null);
     localStorage.removeItem('eventhub_token');
+    setActiveTab('home');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     showToast('Logged out successfully.');
   };
 

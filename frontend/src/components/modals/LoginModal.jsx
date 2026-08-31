@@ -6,13 +6,20 @@ export default function LoginModal({
   onLoginSuccess,
   switchToSignup,
   showToast,
+  initialAdminMode = false,
 }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [isAdminMode, setIsAdminMode] = useState(initialAdminMode);
   const [rememberMe, setRememberMe] = useState(true);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setIsAdminMode(initialAdminMode);
+    }
+  }, [isOpen, initialAdminMode]);
 
   if (!isOpen) return null;
 
@@ -30,9 +37,30 @@ export default function LoginModal({
       const result = await response.json();
 
       if (result.success && result.data) {
-        onLoginSuccess(result.data);
+        const user = result.data.user;
+        const isAdmin = user.role === 'admin' || user.email === 'admin@trace.lk';
+
+        // Strict Role-Tab Enforcement Rules
+        if (isAdminMode && !isAdmin) {
+          showToast('Access denied. Regular members cannot log in through the Admin Portal tab.', 'error');
+          setSubmitting(false);
+          return;
+        }
+
+        if (!isAdminMode && isAdmin) {
+          showToast('Access denied. Administrators must log in through the Admin Portal tab.', 'error');
+          setSubmitting(false);
+          return;
+        }
+
+        onLoginSuccess(result.data, isAdminMode);
         onClose();
-        showToast(`Welcome back, ${result.data.user.name}! (${result.data.user.role || 'User'})`, 'success');
+        showToast(
+          isAdminMode
+            ? `Welcome to Admin Portal, ${user.name}!`
+            : `Welcome back, ${user.name}!`,
+          'success'
+        );
       } else {
         showToast(result.message || 'Login failed', 'error');
       }
