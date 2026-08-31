@@ -627,7 +627,6 @@ export default function VenuesPage({ showToast }) {
           <div
             className="modal-card venue-split-modal-card"
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: '1120px', width: '95%', maxHeight: '85vh', borderRadius: '20px', overflow: 'hidden', padding: 0, background: '#ffffff', display: 'flex', flexDirection: 'column' }}
           >
             <button
               className="modal-close"
@@ -638,10 +637,10 @@ export default function VenuesPage({ showToast }) {
             </button>
 
             {/* Side-by-Side Split Container */}
-            <div className="venue-split-grid" style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', maxHeight: '85vh', overflow: 'hidden' }}>
+            <div className="venue-split-grid">
               
               {/* LEFT SIDE: Space Details & Book Inquiry Trigger */}
-              <div className="venue-split-left-details" style={{ padding: '1.75rem 2rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: '#ffffff', overflowY: 'auto', maxHeight: '85vh' }}>
+              <div className="venue-split-left-details">
                 <div>
                   {/* Header Badges */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
@@ -657,7 +656,7 @@ export default function VenuesPage({ showToast }) {
                   </div>
 
                   {/* Space Title & Rental Price Tag */}
-                  <h2 style={{ fontSize: '1.65rem', fontWeight: '800', color: '#0f172a', marginBottom: '0.4rem', lineHeight: 1.2 }}>
+                  <h2 style={{ fontSize: 'clamp(1.3rem, 4vw, 1.65rem)', fontWeight: '800', color: '#0f172a', marginBottom: '0.4rem', lineHeight: 1.2 }}>
                     {activeVenueModal.name}
                   </h2>
 
@@ -747,18 +746,7 @@ export default function VenuesPage({ showToast }) {
               </div>
 
               {/* RIGHT SIDE: Interactive Multi-Photo Gallery Showcase (Displays ALL Uploaded Photos) */}
-              <div
-                className="venue-split-right-gallery"
-                style={{
-                  background: '#020617',
-                  position: 'relative',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  height: '100%',
-                  maxHeight: '85vh',
-                  overflow: 'hidden',
-                }}
-              >
+              <div className="venue-split-right-gallery">
                 {/* Main Active Photo View */}
                 <div style={{ flex: 1, position: 'relative', overflow: 'hidden', width: '100%', background: '#000000' }}>
                   <img
