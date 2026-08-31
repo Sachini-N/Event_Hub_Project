@@ -91,6 +91,7 @@ export default function VenuesPage({ showToast }) {
 
   // Modal State for Venue Details & Booking Inquiry
   const [activeVenueModal, setActiveVenueModal] = useState(null);
+  const [modalActivePhotoIndex, setModalActivePhotoIndex] = useState(0);
   const [showInquiryFormModal, setShowInquiryFormModal] = useState(false);
   const [inquiryForm, setInquiryForm] = useState({
     name: '',
@@ -187,6 +188,7 @@ export default function VenuesPage({ showToast }) {
 
   const handleOpenInquiryModal = (venue) => {
     setActiveVenueModal(venue);
+    setModalActivePhotoIndex(0);
     setShowInquiryFormModal(false);
     setInquiryForm({
       name: '',
@@ -744,37 +746,155 @@ export default function VenuesPage({ showToast }) {
                 </div>
               </div>
 
-              {/* RIGHT SIDE: Display 1 or 2 Showcase Images */}
-              <div className="venue-split-right-gallery" style={{ background: '#0f172a', position: 'relative', display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '85vh', overflow: 'hidden' }}>
-                {activeVenueModal.images && activeVenueModal.images.length >= 2 ? (
-                  <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', height: '100%', gap: '2px', background: '#020617' }}>
-                    <img
-                      src={activeVenueModal.images[0]}
-                      alt={activeVenueModal.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                    <img
-                      src={activeVenueModal.images[1]}
-                      alt={`${activeVenueModal.name} view 2`}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  </div>
-                ) : (
-                  <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                    <img
-                      src={
-                        activeVenueModal.coverImage ||
-                        (activeVenueModal.images && activeVenueModal.images[0]) ||
-                        'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80'
-                      }
-                      alt={activeVenueModal.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, transparent 100%)', padding: '2rem 1.5rem 1.5rem', color: '#ffffff' }}>
-                      <span style={{ background: 'rgba(255, 255, 255, 0.2)', backdropFilter: 'blur(8px)', padding: '0.35rem 0.85rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '700' }}>
-                        📸 TRACE Facility Showcase View
-                      </span>
-                    </div>
+              {/* RIGHT SIDE: Interactive Multi-Photo Gallery Showcase (Displays ALL Uploaded Photos) */}
+              <div
+                className="venue-split-right-gallery"
+                style={{
+                  background: '#020617',
+                  position: 'relative',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                  maxHeight: '85vh',
+                  overflow: 'hidden',
+                }}
+              >
+                {/* Main Active Photo View */}
+                <div style={{ flex: 1, position: 'relative', overflow: 'hidden', width: '100%', background: '#000000' }}>
+                  <img
+                    src={
+                      (activeVenueModal.images && activeVenueModal.images[modalActivePhotoIndex]) ||
+                      activeVenueModal.coverImage ||
+                      'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80'
+                    }
+                    alt={activeVenueModal.name}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      transition: 'all 0.3s ease',
+                    }}
+                  />
+
+                  {/* Left & Right Navigation Arrows if > 1 Photo */}
+                  {activeVenueModal.images && activeVenueModal.images.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setModalActivePhotoIndex((prev) =>
+                            prev === 0 ? activeVenueModal.images.length - 1 : prev - 1
+                          )
+                        }
+                        style={{
+                          position: 'absolute',
+                          left: '12px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'rgba(15, 23, 42, 0.75)',
+                          backdropFilter: 'blur(4px)',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '36px',
+                          height: '36px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.9rem',
+                          zIndex: 5,
+                        }}
+                        title="Previous Photo"
+                      >
+                        <i className="fa-solid fa-chevron-left"></i>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setModalActivePhotoIndex((prev) =>
+                            prev === activeVenueModal.images.length - 1 ? 0 : prev + 1
+                          )
+                        }
+                        style={{
+                          position: 'absolute',
+                          right: '12px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'rgba(15, 23, 42, 0.75)',
+                          backdropFilter: 'blur(4px)',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '36px',
+                          height: '36px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.9rem',
+                          zIndex: 5,
+                        }}
+                        title="Next Photo"
+                      >
+                        <i className="fa-solid fa-chevron-right"></i>
+                      </button>
+
+                      {/* Photo Counter Badge */}
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '14px',
+                          right: '14px',
+                          background: 'rgba(15, 23, 42, 0.85)',
+                          backdropFilter: 'blur(4px)',
+                          color: '#ffffff',
+                          padding: '4px 12px',
+                          borderRadius: '20px',
+                          fontSize: '0.76rem',
+                          fontWeight: '700',
+                          zIndex: 5,
+                        }}
+                      >
+                        📸 {modalActivePhotoIndex + 1} / {activeVenueModal.images.length} Photos
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Bottom Interactive Thumbnail Bar if > 1 Photo */}
+                {activeVenueModal.images && activeVenueModal.images.length > 1 && (
+                  <div
+                    style={{
+                      background: 'rgba(15, 23, 42, 0.95)',
+                      padding: '0.65rem 1rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.6rem',
+                      overflowX: 'auto',
+                      borderTop: '1px solid #1e293b',
+                    }}
+                  >
+                    {activeVenueModal.images.map((imgUrl, idx) => (
+                      <img
+                        key={idx}
+                        src={imgUrl}
+                        alt={`Thumbnail ${idx + 1}`}
+                        onClick={() => setModalActivePhotoIndex(idx)}
+                        style={{
+                          width: '68px',
+                          height: '48px',
+                          objectFit: 'cover',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          border: modalActivePhotoIndex === idx ? '2px solid #5d4df6' : '2px solid transparent',
+                          opacity: modalActivePhotoIndex === idx ? 1 : 0.55,
+                          transition: 'all 0.2s ease',
+                          flexShrink: 0,
+                        }}
+                      />
+                    ))}
                   </div>
                 )}
               </div>

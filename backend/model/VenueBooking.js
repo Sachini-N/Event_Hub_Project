@@ -67,6 +67,5 @@ const venueBookingSchema = new mongoose.Schema(
 // High Performance Query Indexes
 venueBookingSchema.index({ email: 1 });
 venueBookingSchema.index({ status: 1 });
-venueBookingSchema.index({ bookingRef: 1 }, { unique: true });
 
 module.exports = mongoose.model("VenueBooking", venueBookingSchema);
