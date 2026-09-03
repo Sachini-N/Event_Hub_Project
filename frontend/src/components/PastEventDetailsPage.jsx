@@ -151,12 +151,11 @@ export default function PastEventDetailsPage({
               <h2 className="past-card-heading">
                 <i className="fa-solid fa-circle-play"></i> Keynote Recording & Media Session
               </h2>
-              <div className="video-player-container" style={{ position: 'relative', overflow: 'hidden', borderRadius: '12px', minHeight: '320px' }}>
+              <div className="video-player-container">
                 {isPlayingVideo && getYouTubeEmbedUrl(pastEvent.videoUrl) ? (
                   <iframe
                     src={getYouTubeEmbedUrl(pastEvent.videoUrl)}
                     title={`${pastEvent.title} Keynote Recording`}
-                    style={{ width: '100%', height: '320px', border: 0, borderRadius: '12px' }}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                   ></iframe>
