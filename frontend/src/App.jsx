@@ -21,6 +21,7 @@ import MyRegistrationsModal from './components/modals/MyRegistrationsModal';
 import AdminModal from './components/modals/AdminModal';
 import LoginModal from './components/modals/LoginModal';
 import SignupModal from './components/modals/SignupModal';
+import LogoutConfirmModal from './components/modals/LogoutConfirmModal';
 import ToastNotification from './components/modals/ToastNotification';
 
 const TAB_TO_HASH_MAP = {
@@ -77,6 +78,7 @@ export default function App() {
   const [showAdmin, setShowAdmin] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Toast State
   const [toast, setToast] = useState({ visible: false, message: '', type: 'info' });
@@ -175,13 +177,18 @@ export default function App() {
     }
   };
 
-  const handleLogout = () => {
+  const promptLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutConfirm(false);
     setToken(null);
     setCurrentUser(null);
     localStorage.removeItem('eventhub_token');
     setActiveTab('home');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    showToast('Logged out successfully.');
+    showToast('Logged out successfully.', 'info');
   };
 
   const openEventDetails = (evt) => {
@@ -220,7 +227,7 @@ export default function App() {
           scrollToEvents={scrollToEvents}
           focusSearch={focusSearch}
           currentUser={currentUser}
-          logout={handleLogout}
+          logout={promptLogout}
           openLoginModal={() => setShowLogin(true)}
           openSignupModal={() => setShowSignup(true)}
           openAdminModal={() => {
@@ -328,11 +335,7 @@ export default function App() {
             token={token}
             currentUser={currentUser}
             setCurrentUser={setCurrentUser}
-            logout={() => {
-              handleLogout();
-              setActiveTab('home');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
+            logout={promptLogout}
             showToast={showToast}
           />
         )}
@@ -365,11 +368,7 @@ export default function App() {
               setCurrentUser={setCurrentUser}
               token={token}
               setToken={setToken}
-              logout={() => {
-                handleLogout();
-                setActiveTab('home');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
+              logout={promptLogout}
               openCreateEventModal={() => setShowAdmin(true)}
               showToast={showToast}
             />
@@ -439,6 +438,13 @@ export default function App() {
           setShowLogin(true);
         }}
         showToast={showToast}
+      />
+
+      <LogoutConfirmModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={confirmLogout}
+        userName={currentUser?.name}
       />
 
       <ToastNotification toast={toast} />
