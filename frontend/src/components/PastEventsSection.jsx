@@ -133,12 +133,20 @@ export default function PastEventsSection({
     }
   };
 
+  const getCategoryClass = (category) => {
+    const lower = (category || '').toLowerCase();
+    if (lower === 'talk') return 'cat-badge-talk';
+    if (lower === 'meetup') return 'cat-badge-meetup';
+    if (lower === 'workshop') return 'cat-badge-workshop';
+    return 'cat-badge-default';
+  };
+
   // ----------------------------------------------------
   // FULL PAGE VIEW (When activeTab === 'past' or isFullView === true)
   // ----------------------------------------------------
   if (isFullView) {
     return (
-      <div className="past-events-page">
+      <div className="upcoming-events-page past-events-page">
         <div className="section-container">
           {/* Page Title & Subtitle Header matching Upcoming Events */}
           <div className="page-header">
@@ -245,6 +253,7 @@ export default function PastEventsSection({
               {filteredPastEvents.map((item) => {
                 const isUserUploaded = Boolean(item.createdBy || (item._id && !item._id.startsWith('past-evt-')));
                 const formattedDate = formatPastDate(item.date, item.time);
+                const catClass = getCategoryClass(item.category);
                 return (
                   <div
                     className="event-card-modern past-archive-card"
@@ -260,7 +269,7 @@ export default function PastEventsSection({
                         }
                         alt={item.title}
                       />
-                      <span className="cat-pill cat-default" style={{ background: 'rgba(15, 23, 42, 0.85)', color: '#fff' }}>
+                      <span className={`cat-pill ${catClass}`}>
                         {(item.category || 'PAST EVENT').toUpperCase()}
                       </span>
 
@@ -288,18 +297,18 @@ export default function PastEventsSection({
                         )}
                       </div>
 
-                      <h3 className="event-card-title" style={{ marginTop: '0.5rem' }}>{item.title}</h3>
+                      <h3 className="event-card-title">{item.title}</h3>
                       <p className="event-card-description">{item.description || item.shortDescription}</p>
 
-                      <div className="event-location-row" style={{ marginTop: '0.75rem' }}>
+                      <div className="event-location-row">
                         <i className="fa-solid fa-location-dot location-icon"></i>
                         <span>{item.location || 'TRACE Expert City, Colombo'}</span>
                       </div>
 
-                      <div className="card-button-group" style={{ marginTop: '1.25rem' }}>
+                      <div className="card-button-group">
                         <button
                           className="btn-details-outline"
-                          style={{ width: '100%', textTransform: 'none', fontWeight: '600' }}
+                          style={{ width: '100%', textTransform: 'none', fontWeight: '700' }}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleCardClick(item);

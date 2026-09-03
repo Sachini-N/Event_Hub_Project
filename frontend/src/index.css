@@ -1359,17 +1359,21 @@ textarea:focus {
   }
 }
 
-/* Upcoming Events Dedicated Page Styles matching exact reference screenshot */
-.upcoming-events-page {
+/* Upcoming & Past Events Dedicated Page Styles matching exact reference layout */
+.upcoming-events-page,
+.past-events-page {
   padding: 3rem 0 5rem 0;
   background-color: var(--bg-main);
+  min-height: calc(100vh - 160px);
 }
 
-.upcoming-events-page .page-header {
+.upcoming-events-page .page-header,
+.past-events-page .page-header {
   margin-bottom: 2rem;
 }
 
-.upcoming-events-page .page-title {
+.upcoming-events-page .page-title,
+.past-events-page .page-title {
   font-size: 2.25rem;
   font-weight: 800;
   color: #0f172a;
@@ -1377,10 +1381,15 @@ textarea:focus {
   margin-bottom: 0.5rem;
 }
 
-.upcoming-events-page .page-subtitle {
+.upcoming-events-page .page-subtitle,
+.past-events-page .page-subtitle {
   font-size: 1.05rem;
   color: #64748b;
   font-weight: 500;
+}
+
+.past-archive-card {
+  height: 100%;
 }
 
 /* Filter Bar Container */
