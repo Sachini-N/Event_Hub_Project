@@ -234,7 +234,7 @@ export default function App() {
         />
       )}
 
-      <main className="main-content">
+      <main className={`main-content ${activeTab === 'home' ? 'is-home' : 'has-nav-offset'}`}>
         {activeTab === 'home' && (
           <>
             <HeroSection scrollToEvents={scrollToEvents} />

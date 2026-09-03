@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function Navbar({
   activeTab,
@@ -14,11 +14,30 @@ export default function Navbar({
   openMyRegistrationsModal,
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 40) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const closeMobile = () => setMobileMenuOpen(false);
 
+  // Transparent only on Home page when not scrolled down
+  const isTransparent = activeTab === 'home' && !isScrolled;
+
   return (
-    <header className="navbar">
+    <header className={`navbar ${isTransparent ? 'navbar-transparent' : 'navbar-solid'} ${isScrolled ? 'navbar-scrolled' : ''}`}>
       <div className="nav-container">
         <div className="brand" onClick={() => { scrollToHero(); closeMobile(); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
           <span className="logo-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
