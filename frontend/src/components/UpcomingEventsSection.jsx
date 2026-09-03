@@ -58,16 +58,6 @@ export default function UpcomingEventsSection({
             {currentTab === 'upcoming' ? 'Upcoming Events' : 'Past Events & Showcase'}
           </h2>
           <div className="header-right-controls">
-            <div className="search-box-inline">
-              <i className="fa-solid fa-magnifying-glass search-icon"></i>
-              <input
-                type="text"
-                id="search-input"
-                placeholder="Search events..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
             <button
               className="view-all-link"
               style={{ background: 'none', border: 'none', cursor: 'pointer' }}
