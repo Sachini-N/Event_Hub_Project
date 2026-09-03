@@ -1392,6 +1392,68 @@ textarea:focus {
   height: 100%;
 }
 
+/* Past Events Card Image Enhancements: Increased Size & Reduced Color / Muted Archive Effect */
+.past-archive-card .card-media {
+  height: 260px; /* Increased image height from standard 200px */
+  position: relative;
+  overflow: hidden;
+  background-color: #0f172a;
+}
+
+.past-archive-card .card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Reduced color effect: subdued saturation and subtle monochrome blend for past events */
+  filter: grayscale(45%) saturate(0.65) brightness(0.92) contrast(0.96);
+  transition: filter 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Soft archive vignette overlay to tone down color glare */
+.past-archive-card .card-media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.08) 0%, rgba(15, 23, 42, 0.32) 100%);
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Hover effect: bring back full vibrant colors and smooth gentle zoom */
+.past-archive-card:hover .card-media img {
+  filter: grayscale(0%) saturate(1) brightness(1) contrast(1);
+  transform: scale(1.05);
+}
+
+.past-archive-card:hover .card-media::after {
+  opacity: 0.15;
+}
+
+.past-archive-card .cat-pill {
+  z-index: 2;
+}
+
+.past-archive-card .completed-badge-overlay {
+  z-index: 2;
+}
+
+.past-event-home-card img {
+  filter: grayscale(45%) saturate(0.65) brightness(0.92) contrast(0.96);
+  transition: filter 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.past-event-home-card:hover img {
+  filter: grayscale(0%) saturate(1) brightness(1) contrast(1);
+  transform: scale(1.05);
+}
+
+@media (max-width: 640px) {
+  .past-archive-card .card-media {
+    height: 230px;
+  }
+}
+
 /* Filter Bar Container */
 .filter-bar-container {
   background: #ffffff;
