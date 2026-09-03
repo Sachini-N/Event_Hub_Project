@@ -92,17 +92,45 @@ export default function VenuesPage({ showToast }) {
   // Modal State for Venue Details & Booking Inquiry
   const [activeVenueModal, setActiveVenueModal] = useState(null);
   const [modalActivePhotoIndex, setModalActivePhotoIndex] = useState(0);
-  const [showInquiryFormModal, setShowInquiryFormModal] = useState(false);
+  const [modalActiveTab, setModalActiveTab] = useState('details'); // 'details' | 'booking'
   const [inquiryForm, setInquiryForm] = useState({
     name: '',
     email: '',
     phone: '',
     eventTitle: '',
     eventDate: '',
+    durationHours: '4',
     guests: '50',
     notes: '',
   });
   const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
+
+  // Helper to ensure every space has high-resolution multiple photos that show and change
+  const getModalImages = (venue) => {
+    if (!venue) return [];
+    if (Array.isArray(venue.images) && venue.images.length > 0) {
+      return venue.images;
+    }
+    return [
+      venue.coverImage || 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=1200&q=80',
+      'https://tracesrilanka.lk/api/media/file/trace-home-1200x630.webp',
+      'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80',
+    ];
+  };
+
+  // Automatic photo rotation every 4.5 seconds for spaces modal
+  useEffect(() => {
+    if (!activeVenueModal) return;
+    const imgs = getModalImages(activeVenueModal);
+    if (imgs.length <= 1) return;
+
+    const timer = setInterval(() => {
+      setModalActivePhotoIndex((prev) => (prev + 1) % imgs.length);
+    }, 4500);
+
+    return () => clearInterval(timer);
+  }, [activeVenueModal]);
 
   const fetchVenues = async () => {
     setLoading(true);
@@ -128,39 +156,41 @@ export default function VenuesPage({ showToast }) {
   const filteredVenues = venues.filter((v) => {
     // 0. Province Filter
     if (provinceFilter !== 'All') {
-      const vProvince = getSpaceProvince(v);
-      if (vProvince.toLowerCase() !== provinceFilter.toLowerCase()) return false;
+      const p = getSpaceProvince(v);
+      if (p.toLowerCase() !== provinceFilter.toLowerCase()) return false;
     }
 
     // 1. Branch Filter
     if (selectedBranch !== 'All') {
-      const vBranch = v.branch || 'TRACE Expert City (Colombo)';
-      if (!vBranch.toLowerCase().includes(selectedBranch.toLowerCase())) return false;
+      const vBranch = (v.branch || '').toLowerCase();
+      const target = selectedBranch.toLowerCase();
+      if (!vBranch.includes(target) && !target.includes(vBranch)) return false;
     }
 
-    // 2. Capacity Filter
-    if (capacityFilter === 'small' && v.capacity >= 100) return false;
-    if (capacityFilter === 'medium' && (v.capacity < 100 || v.capacity > 200)) return false;
-    if (capacityFilter === 'large' && v.capacity <= 200) return false;
-
-    // 4. Search Query
+    // 2. Search Query
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const matchesName = v.name?.toLowerCase().includes(q);
-      const matchesBranch = v.branch?.toLowerCase().includes(q);
-      const matchesAddr = v.address?.toLowerCase().includes(q);
-      const matchesCity = v.city?.toLowerCase().includes(q);
-      const matchesDesc = v.description?.toLowerCase().includes(q);
-      const matchesAmenities = v.amenities?.some((a) => a.toLowerCase().includes(q));
+      const q = searchQuery.toLowerCase().trim();
+      const name = (v.name || '').toLowerCase();
+      const address = (v.address || '').toLowerCase();
+      const desc = (v.description || '').toLowerCase();
+      const branch = (v.branch || '').toLowerCase();
+      const province = getSpaceProvince(v).toLowerCase();
+      if (!name.includes(q) && !address.includes(q) && !desc.includes(q) && !branch.includes(q) && !province.includes(q)) {
+        return false;
+      }
+    }
 
-      return (
-        matchesName ||
-        matchesBranch ||
-        matchesAddr ||
-        matchesCity ||
-        matchesDesc ||
-        matchesAmenities
-      );
+    // 3. Capacity Filter
+    if (capacityFilter !== 'All') {
+      const cap = Number(v.capacity) || 0;
+      if (capacityFilter === 'small' && cap >= 100) return false;
+      if (capacityFilter === 'medium' && (cap < 100 || cap > 200)) return false;
+      if (capacityFilter === 'large' && cap <= 200) return false;
+    }
+
+    // 4. Status Filter
+    if (statusFilter !== 'All') {
+      if ((v.status || 'Available').toLowerCase() !== statusFilter.toLowerCase()) return false;
     }
 
     return true;
@@ -189,7 +219,7 @@ export default function VenuesPage({ showToast }) {
   const handleOpenInquiryModal = (venue) => {
     setActiveVenueModal(venue);
     setModalActivePhotoIndex(0);
-    setShowInquiryFormModal(false);
+    setModalActiveTab('details');
     setInquiryForm({
       name: '',
       email: '',
@@ -243,12 +273,20 @@ export default function VenuesPage({ showToast }) {
     }
   };
 
+  const handleClearFilters = () => {
+    setProvinceFilter('All');
+    setSelectedBranch('All');
+    setCapacityFilter('All');
+    setStatusFilter('All');
+    setSearchQuery('');
+  };
+
   return (
-    <div className="venues-redesign-page">
+    <div className="upcoming-events-page spaces-page">
       {/* Main Content Area */}
-      <div className="section-container" style={{ paddingTop: '2.5rem', paddingBottom: '4rem' }}>
+      <div className="section-container">
         {/* Page Title & Subtitle Header */}
-        <div className="page-header" style={{ marginBottom: '2rem' }}>
+        <div className="page-header">
           <h1 className="page-title">Spaces & Facilities</h1>
           <p className="page-subtitle">
             Explore world-class auditoriums, technology labs, and facilities stationed across TRACE branches.
@@ -256,99 +294,30 @@ export default function VenuesPage({ showToast }) {
         </div>
 
         {/* Single Horizontal Tab Spaces Filter Bar */}
-        <div
-          style={{
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '16px',
-            padding: '1.25rem 1.5rem',
-            marginBottom: '2rem',
-            boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-end',
-              gap: '1rem',
-              flexWrap: 'wrap',
-            }}
-          >
-            {/* 1. Search Field */}
-            <div style={{ flex: '1 1 200px', minWidth: '180px' }}>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.8rem',
-                  fontWeight: '700',
-                  color: '#334155',
-                  marginBottom: '0.4rem',
-                }}
-              >
-                Search Spaces
-              </label>
-              <div style={{ position: 'relative', width: '100%' }}>
-                <i
-                  className="fa-solid fa-magnifying-glass"
-                  style={{
-                    position: 'absolute',
-                    left: '14px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: '#94a3b8',
-                    fontSize: '0.88rem',
-                  }}
-                ></i>
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem 0.65rem 2.4rem',
-                    fontSize: '0.86rem',
-                    borderRadius: '20px',
-                    border: '1px solid #cbd5e1',
-                    outline: 'none',
-                    background: '#ffffff',
-                    color: '#0f172a',
-                    fontWeight: '500',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
+        <div className="filter-bar-container">
+          {/* 1. Search Field */}
+          <div className="filter-item">
+            <label htmlFor="spaces-filter-search">Search Spaces</label>
+            <div className="search-input-wrapper">
+              <i className="fa-solid fa-magnifying-glass search-icon"></i>
+              <input
+                type="text"
+                id="spaces-filter-search"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
+          </div>
 
-            {/* 2. Province Selector */}
-            <div style={{ flex: '1 1 180px', minWidth: '160px' }}>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.8rem',
-                  fontWeight: '700',
-                  color: '#334155',
-                  marginBottom: '0.4rem',
-                }}
-              >
-                Province
-              </label>
+          {/* 2. Province Selector */}
+          <div className="filter-item">
+            <label htmlFor="spaces-filter-province">Province</label>
+            <div className="select-wrapper">
               <select
+                id="spaces-filter-province"
                 value={provinceFilter}
                 onChange={(e) => setProvinceFilter(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.65rem 0.85rem',
-                  fontSize: '0.86rem',
-                  fontWeight: '600',
-                  borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
-                  background: '#ffffff',
-                  color: '#0f172a',
-                  cursor: 'pointer',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
               >
                 <option value="All">All Sri Lanka</option>
                 <option value="Western Province">Western Province (Colombo)</option>
@@ -361,37 +330,18 @@ export default function VenuesPage({ showToast }) {
                 <option value="Uva Province">Uva Province</option>
                 <option value="Sabaragamuwa Province">Sabaragamuwa Province</option>
               </select>
+              <i className="fa-solid fa-chevron-down select-arrow"></i>
             </div>
+          </div>
 
-            {/* 3. Branch Selector */}
-            <div style={{ flex: '1 1 180px', minWidth: '160px' }}>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.8rem',
-                  fontWeight: '700',
-                  color: '#334155',
-                  marginBottom: '0.4rem',
-                }}
-              >
-                TRACE Branch
-              </label>
+          {/* 3. Branch Selector */}
+          <div className="filter-item">
+            <label htmlFor="spaces-filter-branch">TRACE Branch</label>
+            <div className="select-wrapper">
               <select
+                id="spaces-filter-branch"
                 value={selectedBranch}
                 onChange={(e) => setSelectedBranch(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.65rem 0.85rem',
-                  fontSize: '0.86rem',
-                  fontWeight: '600',
-                  borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
-                  background: '#ffffff',
-                  color: '#0f172a',
-                  cursor: 'pointer',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
               >
                 <option value="All">All TRACE Hubs</option>
                 <option value="TRACE Expert City">TRACE Expert City (Colombo)</option>
@@ -402,86 +352,44 @@ export default function VenuesPage({ showToast }) {
                 <option value="Jaffna">TRACE Tech Park (Jaffna)</option>
                 <option value="Wayamba">TRACE Wayamba Incubator</option>
               </select>
+              <i className="fa-solid fa-chevron-down select-arrow"></i>
             </div>
+          </div>
 
-            {/* 4. Capacity Selector */}
-            <div style={{ flex: '1 1 150px', minWidth: '140px' }}>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.8rem',
-                  fontWeight: '700',
-                  color: '#334155',
-                  marginBottom: '0.4rem',
-                }}
-              >
-                Capacity
-              </label>
+          {/* 4. Capacity Selector */}
+          <div className="filter-item">
+            <label htmlFor="spaces-filter-capacity">Capacity</label>
+            <div className="select-wrapper">
               <select
+                id="spaces-filter-capacity"
                 value={capacityFilter}
                 onChange={(e) => setCapacityFilter(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.65rem 0.85rem',
-                  fontSize: '0.86rem',
-                  fontWeight: '600',
-                  borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
-                  background: '#ffffff',
-                  color: '#0f172a',
-                  cursor: 'pointer',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
               >
                 <option value="All">Any Size</option>
                 <option value="small">Small (&lt; 100 Seats)</option>
                 <option value="medium">Medium (100-200)</option>
                 <option value="large">Large (&gt; 200 Seats)</option>
               </select>
+              <i className="fa-solid fa-chevron-down select-arrow"></i>
             </div>
+          </div>
 
-            {/* 5. Filter Button & Clear Button */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', paddingBottom: '2px' }}>
-              <button
-                type="button"
-                className="btn btn-primary"
-                style={{
-                  backgroundColor: '#5d4df6',
-                  color: '#ffffff',
-                  borderRadius: '10px',
-                  padding: '0.65rem 1.35rem',
-                  fontSize: '0.88rem',
-                  fontWeight: '700',
-                  border: 'none',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(93, 77, 246, 0.3)',
-                }}
-              >
-                Filter
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setProvinceFilter('All');
-                  setSelectedBranch('All');
-                  setCapacityFilter('All');
-                  setSearchQuery('');
-                }}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#64748b',
-                  fontSize: '0.86rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  padding: '0.65rem 0.4rem',
-                }}
-              >
-                Clear
-              </button>
-            </div>
+          {/* 5. Filter Button & Clear Button */}
+          <div className="filter-actions">
+            <button
+              type="button"
+              className="btn-filter-submit"
+              onClick={() => {}}
+            >
+              Filter
+            </button>
+            <button
+              type="button"
+              className="btn-filter-clear"
+              onClick={handleClearFilters}
+            >
+              Clear
+            </button>
           </div>
         </div>
 
@@ -621,448 +529,629 @@ export default function VenuesPage({ showToast }) {
         )}
       </div>
 
-      {/* 6. Venue Detail & Side-by-Side Showcase Modal */}
+      {/* 6. Modern Unified Space Showcase & Reservation Modal */}
       {activeVenueModal && (
-        <div className="modal-overlay" onClick={() => { setActiveVenueModal(null); setShowInquiryFormModal(false); }}>
+        <div
+          className="modal-overlay"
+          onClick={() => setActiveVenueModal(null)}
+          style={{ zIndex: 1050 }}
+        >
           <div
             className="modal-card venue-split-modal-card"
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              className="modal-close"
-              onClick={() => { setActiveVenueModal(null); setShowInquiryFormModal(false); }}
-              style={{ zIndex: 10, background: '#ffffff', color: '#0f172a', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', top: '16px', right: '16px' }}
-            >
-              <i className="fa-solid fa-xmark"></i>
-            </button>
+            {/* Top Navigation Bar: Space Name, Price, and Modern Tab Switcher */}
+            <div className="venue-modal-header-bar">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '1.15rem', fontWeight: '800', color: '#0f172a' }}>
+                  {activeVenueModal.name}
+                </span>
+                <span style={{ background: '#eef2ff', color: '#5d4df6', fontWeight: '700', padding: '0.25rem 0.65rem', borderRadius: '20px', fontSize: '0.74rem', border: '1px solid #c7d2fe' }}>
+                  <i className="fa-solid fa-building"></i> {activeVenueModal.branch || 'TRACE Expert City'}
+                </span>
+                <span style={{ fontSize: '0.74rem', fontWeight: '700', color: activeVenueModal.status === 'Available' ? '#059669' : '#d97706', background: activeVenueModal.status === 'Available' ? '#dcfce7' : '#fef3c7', padding: '0.25rem 0.65rem', borderRadius: '20px' }}>
+                  ● {activeVenueModal.status || 'Available'}
+                </span>
+                <span style={{ fontSize: '0.8rem', fontWeight: '800', color: '#059669', background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '0.25rem 0.65rem', borderRadius: '6px' }}>
+                  <i className="fa-solid fa-tag"></i> {activeVenueModal.rentalPrice || (activeVenueModal.pricePerHour ? `Rs. ${activeVenueModal.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr')}
+                </span>
+              </div>
 
-            {/* Side-by-Side Split Container */}
-            <div className="venue-split-grid">
-              
-              {/* LEFT SIDE: Space Details & Book Inquiry Trigger */}
-              <div className="venue-split-left-details">
-                <div>
-                  {/* Header Badges */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-                    <span style={{ background: '#eef2ff', color: '#5d4df6', fontWeight: '700', padding: '0.3rem 0.8rem', borderRadius: '20px', fontSize: '0.78rem', border: '1px solid #c7d2fe', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                      <i className="fa-solid fa-building"></i> {activeVenueModal.branch || 'TRACE Expert City (Colombo)'}
-                    </span>
-                    <span style={{ fontSize: '0.76rem', fontWeight: '700', color: activeVenueModal.status === 'Available' ? '#059669' : '#d97706', background: activeVenueModal.status === 'Available' ? '#dcfce7' : '#fef3c7', padding: '0.3rem 0.8rem', borderRadius: '20px' }}>
-                      ● {activeVenueModal.status || 'Available'}
-                    </span>
-                    <span style={{ fontSize: '0.76rem', fontWeight: '700', color: '#5d4df6', background: '#eff6ff', border: '1px solid #dbeafe', padding: '0.3rem 0.75rem', borderRadius: '20px' }}>
-                      📍 {getSpaceProvince(activeVenueModal)}
-                    </span>
-                  </div>
-
-                  {/* Space Title & Rental Price Tag */}
-                  <h2 style={{ fontSize: 'clamp(1.3rem, 4vw, 1.65rem)', fontWeight: '800', color: '#0f172a', marginBottom: '0.4rem', lineHeight: 1.2 }}>
-                    {activeVenueModal.name}
-                  </h2>
-
-                  <div style={{ fontSize: '1.1rem', fontWeight: '800', color: '#5d4df6', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <i className="fa-solid fa-tag"></i> {activeVenueModal.rentalPrice || (activeVenueModal.pricePerHour ? `Rs. ${activeVenueModal.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr')}
-                  </div>
-
-                  {/* Specs Chips Grid */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem', background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <i className="fa-solid fa-users" style={{ color: '#5d4df6', fontSize: '1rem' }}></i>
-                      <div>
-                        <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', fontWeight: '700', textTransform: 'uppercase' }}>Capacity</span>
-                        <strong style={{ fontSize: '0.85rem', color: '#0f172a' }}>{activeVenueModal.capacity} Guests</strong>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <i className="fa-solid fa-location-dot" style={{ color: '#5d4df6', fontSize: '1rem' }}></i>
-                      <div>
-                        <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', fontWeight: '700', textTransform: 'uppercase' }}>Location</span>
-                        <strong style={{ fontSize: '0.85rem', color: '#0f172a' }}>{activeVenueModal.city || 'Colombo'}</strong>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Formatted Description (Renders clean text/formatting without showing raw HTML tags) */}
-                  <div style={{ marginBottom: '1.1rem' }}>
-                    <h4 style={{ fontSize: '0.8rem', fontWeight: '800', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <i className="fa-solid fa-circle-info" style={{ color: '#5d4df6' }}></i> Space Overview
-                    </h4>
-                    {activeVenueModal.description ? (
-                      <div style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.55 }}>
-                        <FormattedText content={activeVenueModal.description} className="space-modal-description-text" />
-                      </div>
-                    ) : (
-                      <p style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.55 }}>
-                        Enterprise auditorium & event venue equipped with modern AV, air conditioning, stage lighting, and high-speed fiber internet.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Amenities */}
-                  {activeVenueModal.amenities && activeVenueModal.amenities.length > 0 && (
-                    <div style={{ marginBottom: '0.85rem' }}>
-                      <h4 style={{ fontSize: '0.8rem', fontWeight: '800', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <i className="fa-solid fa-sliders" style={{ color: '#5d4df6' }}></i> Included Facilities
-                      </h4>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-                        {activeVenueModal.amenities.map((am, i) => (
-                          <span key={i} style={{ fontSize: '0.74rem', fontWeight: '700', color: '#334155', background: '#f1f5f9', padding: '3px 8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
-                            ✓ {am}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Book Space Inquiry Action Button */}
-                <div style={{ marginTop: '1.25rem', paddingTop: '0.85rem', borderTop: '1px solid #eaecf0' }}>
+              {/* Modern Segmented Navigation Tabs */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div className="venue-modal-tabs">
                   <button
                     type="button"
-                    className="btn btn-primary"
-                    onClick={() => setShowInquiryFormModal(true)}
+                    className={`venue-modal-tab-btn ${modalActiveTab === 'details' ? 'active' : ''}`}
+                    onClick={() => setModalActiveTab('details')}
+                  >
+                    <i className="fa-solid fa-images"></i> Space & Photos
+                  </button>
+                  <button
+                    type="button"
+                    className={`venue-modal-tab-btn ${modalActiveTab === 'booking' ? 'active' : ''}`}
+                    onClick={() => setModalActiveTab('booking')}
+                  >
+                    <i className="fa-solid fa-calendar-check"></i> Reserve Space
+                  </button>
+                </div>
+
+                <button
+                  className="modal-close"
+                  onClick={() => setActiveVenueModal(null)}
+                  style={{
+                    position: 'static',
+                    background: '#f1f5f9',
+                    color: '#0f172a',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '34px',
+                    height: '34px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                  }}
+                  title="Close modal"
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            </div>
+
+            {/* TAB 1: SPACE DETAILS & INTERACTIVE PHOTO GALLERY */}
+            {modalActiveTab === 'details' && (
+              <div className="venue-split-grid">
+                {/* LEFT SIDE: Specifications, Amenities, Contact & Proceed CTA */}
+                <div className="venue-split-left-details">
+                  <div>
+                    {/* Location and Province */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.85rem', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.78rem', fontWeight: '700', color: '#5d4df6', background: '#eff6ff', border: '1px solid #dbeafe', padding: '0.3rem 0.75rem', borderRadius: '20px' }}>
+                        📍 {getSpaceProvince(activeVenueModal)}
+                      </span>
+                      <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                        {activeVenueModal.address}
+                      </span>
+                    </div>
+
+                    {/* Specs Cards Grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.25rem', background: '#f8fafc', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#eff6ff', color: '#0052cc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>
+                          <i className="fa-solid fa-users"></i>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', fontWeight: '700', textTransform: 'uppercase' }}>Capacity</span>
+                          <strong style={{ fontSize: '0.88rem', color: '#0f172a' }}>{activeVenueModal.capacity} Guests</strong>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>
+                          <i className="fa-solid fa-tag"></i>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', fontWeight: '700', textTransform: 'uppercase' }}>Rental Rate</span>
+                          <strong style={{ fontSize: '0.88rem', color: '#0f172a' }}>
+                            {activeVenueModal.rentalPrice || (activeVenueModal.pricePerHour ? `Rs. ${activeVenueModal.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr')}
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Formatted Description */}
+                    <div style={{ marginBottom: '1.25rem' }}>
+                      <h4 style={{ fontSize: '0.82rem', fontWeight: '800', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.45rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <i className="fa-solid fa-circle-info" style={{ color: '#0052cc' }}></i> Space Overview
+                      </h4>
+                      {activeVenueModal.description ? (
+                        <div style={{ fontSize: '0.88rem', color: '#475569', lineHeight: 1.6 }}>
+                          <FormattedText content={activeVenueModal.description} className="space-modal-description-text" />
+                        </div>
+                      ) : (
+                        <p style={{ fontSize: '0.88rem', color: '#475569', lineHeight: 1.6 }}>
+                          Enterprise auditorium & event venue equipped with modern AV, air conditioning, stage lighting, and high-speed fiber internet.
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Included Amenities */}
+                    {activeVenueModal.amenities && activeVenueModal.amenities.length > 0 && (
+                      <div style={{ marginBottom: '1.25rem' }}>
+                        <h4 style={{ fontSize: '0.82rem', fontWeight: '800', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <i className="fa-solid fa-sliders" style={{ color: '#0052cc' }}></i> Included Facilities
+                        </h4>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                          {activeVenueModal.amenities.map((am, i) => (
+                            <span key={i} style={{ fontSize: '0.76rem', fontWeight: '700', color: '#334155', background: '#f1f5f9', padding: '4px 9px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
+                              ✓ {am}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Contact Person Details */}
+                    <div style={{ background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid #e2e8f0', marginBottom: '0.5rem' }}>
+                      <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>Venue Coordinator</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.2rem' }}>
+                        <strong style={{ fontSize: '0.86rem', color: '#0f172a' }}>Senal (TRACE Facilities)</strong>
+                        <a href="tel:+94766433975" style={{ fontSize: '0.82rem', color: '#0052cc', textDecoration: 'none', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <i className="fa-solid fa-phone"></i> +94 76 643 3975
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Proceed to Booking Tab CTA */}
+                  <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #eaecf0' }}>
+                    <button
+                      type="button"
+                      className="btn-proceed-booking"
+                      onClick={() => setModalActiveTab('booking')}
+                    >
+                      <i className="fa-regular fa-paper-plane"></i> Book Space Inquiry Now <i className="fa-solid fa-arrow-right"></i>
+                    </button>
+                  </div>
+                </div>
+
+                {/* RIGHT SIDE: Interactive Multi-Photo Gallery Showcase (Displays & Changes Photos) */}
+                <div className="venue-split-right-gallery">
+                  {(() => {
+                    const modalImages = getModalImages(activeVenueModal);
+                    const currentImg = modalImages[modalActivePhotoIndex] || modalImages[0];
+
+                    return (
+                      <>
+                        {/* Main Active Photo View */}
+                        <div style={{ flex: 1, position: 'relative', overflow: 'hidden', width: '100%', background: '#020617', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <img
+                            key={modalActivePhotoIndex}
+                            src={currentImg}
+                            alt={`${activeVenueModal.name} view ${modalActivePhotoIndex + 1}`}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              transition: 'opacity 0.4s ease-in-out',
+                            }}
+                          />
+
+                          {/* Left Navigation Arrow */}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setModalActivePhotoIndex((prev) =>
+                                prev === 0 ? modalImages.length - 1 : prev - 1
+                              )
+                            }
+                            style={{
+                              position: 'absolute',
+                              left: '14px',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              background: 'rgba(15, 23, 42, 0.75)',
+                              backdropFilter: 'blur(6px)',
+                              color: '#ffffff',
+                              border: '1px solid rgba(255, 255, 255, 0.25)',
+                              borderRadius: '50%',
+                              width: '40px',
+                              height: '40px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1rem',
+                              zIndex: 5,
+                              transition: 'all 0.2s ease',
+                            }}
+                            title="Previous Photo"
+                            aria-label="Previous Photo"
+                          >
+                            <i className="fa-solid fa-chevron-left"></i>
+                          </button>
+
+                          {/* Right Navigation Arrow */}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setModalActivePhotoIndex((prev) =>
+                                prev === modalImages.length - 1 ? 0 : prev + 1
+                              )
+                            }
+                            style={{
+                              position: 'absolute',
+                              right: '14px',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              background: 'rgba(15, 23, 42, 0.75)',
+                              backdropFilter: 'blur(6px)',
+                              color: '#ffffff',
+                              border: '1px solid rgba(255, 255, 255, 0.25)',
+                              borderRadius: '50%',
+                              width: '40px',
+                              height: '40px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1rem',
+                              zIndex: 5,
+                              transition: 'all 0.2s ease',
+                            }}
+                            title="Next Photo"
+                            aria-label="Next Photo"
+                          >
+                            <i className="fa-solid fa-chevron-right"></i>
+                          </button>
+
+                          {/* Photo Counter Badge */}
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: '14px',
+                              right: '14px',
+                              background: 'rgba(15, 23, 42, 0.85)',
+                              backdropFilter: 'blur(6px)',
+                              color: '#ffffff',
+                              padding: '5px 14px',
+                              borderRadius: '20px',
+                              fontSize: '0.78rem',
+                              fontWeight: '700',
+                              border: '1px solid rgba(255, 255, 255, 0.2)',
+                              zIndex: 5,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                            }}
+                          >
+                            <i className="fa-solid fa-camera"></i> {modalActivePhotoIndex + 1} / {modalImages.length}
+                          </div>
+
+                          {/* Auto-Slide Indicator Pill */}
+                          <div
+                            style={{
+                              position: 'absolute',
+                              bottom: '12px',
+                              left: '14px',
+                              background: 'rgba(15, 23, 42, 0.75)',
+                              backdropFilter: 'blur(4px)',
+                              color: '#94a3b8',
+                              padding: '3px 10px',
+                              borderRadius: '12px',
+                              fontSize: '0.7rem',
+                              fontWeight: '600',
+                              zIndex: 5,
+                            }}
+                          >
+                            <i className="fa-solid fa-arrows-rotate"></i> Auto-rotating photos
+                          </div>
+                        </div>
+
+                        {/* Interactive Clickable Thumbnail Bar to change photos */}
+                        <div
+                          style={{
+                            background: 'rgba(15, 23, 42, 0.96)',
+                            padding: '0.75rem 1.25rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            overflowX: 'auto',
+                            borderTop: '1px solid #1e293b',
+                          }}
+                        >
+                          {modalImages.map((imgUrl, idx) => (
+                            <div
+                              key={idx}
+                              onClick={() => setModalActivePhotoIndex(idx)}
+                              style={{
+                                width: '74px',
+                                height: '52px',
+                                borderRadius: '8px',
+                                overflow: 'hidden',
+                                cursor: 'pointer',
+                                border: modalActivePhotoIndex === idx ? '2.5px solid #3b82f6' : '2px solid transparent',
+                                opacity: modalActivePhotoIndex === idx ? 1 : 0.55,
+                                transform: modalActivePhotoIndex === idx ? 'scale(1.05)' : 'scale(1)',
+                                transition: 'all 0.2s ease',
+                                flexShrink: 0,
+                                background: '#0f172a',
+                              }}
+                              title={`View photo ${idx + 1}`}
+                            >
+                              <img
+                                src={imgUrl}
+                                alt={`Thumbnail ${idx + 1}`}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: MODERN INLINE RESERVATION & INQUIRY FORM */}
+            {modalActiveTab === 'booking' && (
+              <div className="venue-booking-split-grid">
+                {/* Left Sidebar: Space Summary & Current Photo */}
+                <div className="venue-booking-sidebar">
+                  <div>
+                    {(() => {
+                      const modalImages = getModalImages(activeVenueModal);
+                      const currentImg = modalImages[modalActivePhotoIndex] || modalImages[0];
+                      return (
+                        <div style={{ borderRadius: '12px', overflow: 'hidden', height: '180px', position: 'relative', marginBottom: '1.25rem', background: '#0f172a' }}>
+                          <img
+                            src={currentImg}
+                            alt={activeVenueModal.name}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                          <div style={{ position: 'absolute', bottom: '8px', right: '8px', display: 'flex', gap: '4px' }}>
+                            <button
+                              type="button"
+                              onClick={() => setModalActivePhotoIndex((prev) => (prev === 0 ? modalImages.length - 1 : prev - 1))}
+                              style={{ background: 'rgba(15, 23, 42, 0.8)', color: '#ffffff', border: 'none', borderRadius: '4px', width: '26px', height: '26px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            >
+                              ‹
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setModalActivePhotoIndex((prev) => (prev === modalImages.length - 1 ? 0 : prev + 1))}
+                              style={{ background: 'rgba(15, 23, 42, 0.8)', color: '#ffffff', border: 'none', borderRadius: '4px', width: '26px', height: '26px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            >
+                              ›
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#0f172a', margin: '0 0 0.4rem 0' }}>
+                      {activeVenueModal.name}
+                    </h3>
+                    <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '0 0 0.85rem 0' }}>
+                      <i className="fa-solid fa-location-dot" style={{ color: '#0052cc', marginRight: '4px' }}></i>
+                      {activeVenueModal.address}
+                    </p>
+
+                    <div style={{ background: '#ffffff', borderRadius: '10px', padding: '0.85rem', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
+                        <span style={{ color: '#64748b' }}>Rate per Hour:</span>
+                        <strong style={{ color: '#0f172a' }}>
+                          {activeVenueModal.rentalPrice || `Rs. ${(activeVenueModal.pricePerHour || 25000).toLocaleString()}`}
+                        </strong>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
+                        <span style={{ color: '#64748b' }}>Capacity:</span>
+                        <strong style={{ color: '#0f172a' }}>{activeVenueModal.capacity} Seats</strong>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
+                        <span style={{ color: '#64748b' }}>Branch:</span>
+                        <strong style={{ color: '#0052cc' }}>{activeVenueModal.branch || 'TRACE Colombo'}</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setModalActiveTab('details')}
                     style={{
-                      width: '100%',
-                      padding: '0.85rem 1.25rem',
-                      fontSize: '0.98rem',
-                      fontWeight: '800',
-                      borderRadius: '12px',
-                      backgroundColor: '#5d4df6',
-                      color: '#ffffff',
-                      border: 'none',
+                      background: 'none',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '8px',
+                      padding: '0.65rem 1rem',
+                      fontSize: '0.84rem',
+                      fontWeight: '700',
+                      color: '#475569',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '0.6rem',
-                      boxShadow: '0 4px 14px rgba(93, 77, 246, 0.35)',
+                      gap: '6px',
                       transition: 'all 0.2s ease',
                     }}
                   >
-                    <i className="fa-regular fa-paper-plane"></i> Book Space Inquiry Now
+                    <i className="fa-solid fa-arrow-left"></i> View Full Space Details
                   </button>
                 </div>
-              </div>
 
-              {/* RIGHT SIDE: Interactive Multi-Photo Gallery Showcase (Displays ALL Uploaded Photos) */}
-              <div className="venue-split-right-gallery">
-                {/* Main Active Photo View */}
-                <div style={{ flex: 1, position: 'relative', overflow: 'hidden', width: '100%', background: '#000000' }}>
-                  <img
-                    src={
-                      (activeVenueModal.images && activeVenueModal.images[modalActivePhotoIndex]) ||
-                      activeVenueModal.coverImage ||
-                      'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80'
-                    }
-                    alt={activeVenueModal.name}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      transition: 'all 0.3s ease',
-                    }}
-                  />
-
-                  {/* Left & Right Navigation Arrows if > 1 Photo */}
-                  {activeVenueModal.images && activeVenueModal.images.length > 1 && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setModalActivePhotoIndex((prev) =>
-                            prev === 0 ? activeVenueModal.images.length - 1 : prev - 1
-                          )
-                        }
-                        style={{
-                          position: 'absolute',
-                          left: '12px',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          background: 'rgba(15, 23, 42, 0.75)',
-                          backdropFilter: 'blur(4px)',
-                          color: '#ffffff',
-                          border: 'none',
-                          borderRadius: '50%',
-                          width: '36px',
-                          height: '36px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.9rem',
-                          zIndex: 5,
-                        }}
-                        title="Previous Photo"
-                      >
-                        <i className="fa-solid fa-chevron-left"></i>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setModalActivePhotoIndex((prev) =>
-                            prev === activeVenueModal.images.length - 1 ? 0 : prev + 1
-                          )
-                        }
-                        style={{
-                          position: 'absolute',
-                          right: '12px',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          background: 'rgba(15, 23, 42, 0.75)',
-                          backdropFilter: 'blur(4px)',
-                          color: '#ffffff',
-                          border: 'none',
-                          borderRadius: '50%',
-                          width: '36px',
-                          height: '36px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.9rem',
-                          zIndex: 5,
-                        }}
-                        title="Next Photo"
-                      >
-                        <i className="fa-solid fa-chevron-right"></i>
-                      </button>
-
-                      {/* Photo Counter Badge */}
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: '14px',
-                          right: '14px',
-                          background: 'rgba(15, 23, 42, 0.85)',
-                          backdropFilter: 'blur(4px)',
-                          color: '#ffffff',
-                          padding: '4px 12px',
-                          borderRadius: '20px',
-                          fontSize: '0.76rem',
-                          fontWeight: '700',
-                          zIndex: 5,
-                        }}
-                      >
-                        📸 {modalActivePhotoIndex + 1} / {activeVenueModal.images.length} Photos
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* Bottom Interactive Thumbnail Bar if > 1 Photo */}
-                {activeVenueModal.images && activeVenueModal.images.length > 1 && (
-                  <div
-                    style={{
-                      background: 'rgba(15, 23, 42, 0.95)',
-                      padding: '0.65rem 1rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.6rem',
-                      overflowX: 'auto',
-                      borderTop: '1px solid #1e293b',
-                    }}
-                  >
-                    {activeVenueModal.images.map((imgUrl, idx) => (
-                      <img
-                        key={idx}
-                        src={imgUrl}
-                        alt={`Thumbnail ${idx + 1}`}
-                        onClick={() => setModalActivePhotoIndex(idx)}
-                        style={{
-                          width: '68px',
-                          height: '48px',
-                          objectFit: 'cover',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          border: modalActivePhotoIndex === idx ? '2px solid #5d4df6' : '2px solid transparent',
-                          opacity: modalActivePhotoIndex === idx ? 1 : 0.55,
-                          transition: 'all 0.2s ease',
-                          flexShrink: 0,
-                        }}
-                      />
-                    ))}
+                {/* Right Side: Reservation Form */}
+                <div className="venue-booking-form-content">
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <h2 style={{ fontSize: '1.35rem', fontWeight: '800', color: '#0f172a', margin: '0 0 0.35rem 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <i className="fa-solid fa-calendar-check" style={{ color: '#0052cc' }}></i>
+                      Space Reservation Inquiry
+                    </h2>
+                    <p style={{ fontSize: '0.88rem', color: '#64748b', margin: 0 }}>
+                      Submit your reservation request for <strong>{activeVenueModal.name}</strong>. Our TRACE team will confirm availability.
+                    </p>
                   </div>
-                )}
-              </div>
 
-            </div>
-          </div>
-        </div>
-      )}
+                  <form onSubmit={handleInquirySubmit}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                      <div>
+                        <label htmlFor="inquiry-name" style={{ fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
+                          Your Full Name *
+                        </label>
+                        <input
+                          type="text"
+                          id="inquiry-name"
+                          required
+                          placeholder="e.g. Kasun Perera"
+                          value={inquiryForm.name}
+                          onChange={(e) => setInquiryForm({ ...inquiryForm, name: e.target.value })}
+                          style={{ width: '100%', height: '42px', padding: '0 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', boxSizing: 'border-box' }}
+                        />
+                      </div>
 
-      {/* 7. Short Booking Inquiry Popup Modal */}
-      {showInquiryFormModal && activeVenueModal && (
-        <div className="modal-overlay" onClick={() => setShowInquiryFormModal(false)} style={{ zIndex: 1100 }}>
-          <div
-            className="modal-card"
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: '580px', padding: '2rem', borderRadius: '16px' }}
-          >
-            <button
-              className="modal-close"
-              onClick={() => setShowInquiryFormModal(false)}
-            >
-              <i className="fa-solid fa-xmark"></i>
-            </button>
+                      <div>
+                        <label htmlFor="inquiry-email" style={{ fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
+                          Email Address *
+                        </label>
+                        <input
+                          type="email"
+                          id="inquiry-email"
+                          required
+                          placeholder="kasun@techstartup.lk"
+                          value={inquiryForm.email}
+                          onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })}
+                          style={{ width: '100%', height: '42px', padding: '0 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                    </div>
 
-            <div className="modal-header" style={{ marginBottom: '1.25rem' }}>
-              <h2 style={{ fontSize: '1.3rem', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <i className="fa-solid fa-calendar-check" style={{ color: '#5d4df6' }}></i>
-                Quick Space Reservation Inquiry
-              </h2>
-              <p className="modal-sub">
-                Submit inquiry for <strong style={{ color: '#5d4df6' }}>{activeVenueModal.name}</strong> ({activeVenueModal.branch || 'TRACE Expert City'})
-              </p>
-            </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                      <div>
+                        <label htmlFor="inquiry-phone" style={{ fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
+                          Phone Number *
+                        </label>
+                        <input
+                          type="tel"
+                          id="inquiry-phone"
+                          required
+                          placeholder="+94 77 123 4567"
+                          value={inquiryForm.phone}
+                          onChange={(e) => setInquiryForm({ ...inquiryForm, phone: e.target.value })}
+                          style={{ width: '100%', height: '42px', padding: '0 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', boxSizing: 'border-box' }}
+                        />
+                      </div>
 
-            <form onSubmit={handleInquirySubmit}>
-              <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '0.85rem' }}>
-                <div className="form-group">
-                  <label htmlFor="inquiry-name" style={{ fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.3rem', display: 'block' }}>Your Full Name *</label>
-                  <input
-                    type="text"
-                    id="inquiry-name"
-                    required
-                    placeholder="e.g. Kasun Perera"
-                    value={inquiryForm.name}
-                    onChange={(e) => setInquiryForm({ ...inquiryForm, name: e.target.value })}
-                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}
-                  />
+                      <div>
+                        <label htmlFor="inquiry-date" style={{ fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
+                          Target Event Date *
+                        </label>
+                        <input
+                          type="date"
+                          id="inquiry-date"
+                          required
+                          value={inquiryForm.eventDate}
+                          onChange={(e) => setInquiryForm({ ...inquiryForm, eventDate: e.target.value })}
+                          style={{ width: '100%', height: '42px', padding: '0 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label htmlFor="inquiry-title" style={{ fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
+                        Event Title / Purpose *
+                      </label>
+                      <input
+                        type="text"
+                        id="inquiry-title"
+                        required
+                        placeholder="e.g. Annual Developer Summit 2026 / AI Hackathon"
+                        value={inquiryForm.eventTitle}
+                        onChange={(e) => setInquiryForm({ ...inquiryForm, eventTitle: e.target.value })}
+                        style={{ width: '100%', height: '42px', padding: '0 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', boxSizing: 'border-box' }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+                      <div>
+                        <label htmlFor="inquiry-hours" style={{ fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
+                          Duration (Hours) *
+                        </label>
+                        <input
+                          type="number"
+                          id="inquiry-hours"
+                          required
+                          min="1"
+                          max="24"
+                          value={inquiryForm.durationHours}
+                          onChange={(e) => setInquiryForm({ ...inquiryForm, durationHours: e.target.value })}
+                          style={{ width: '100%', height: '42px', padding: '0 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', boxSizing: 'border-box' }}
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="inquiry-guests" style={{ fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
+                          Expected Attendees
+                        </label>
+                        <input
+                          type="number"
+                          id="inquiry-guests"
+                          placeholder="35"
+                          value={inquiryForm.guests}
+                          onChange={(e) => setInquiryForm({ ...inquiryForm, guests: e.target.value })}
+                          style={{ width: '100%', height: '42px', padding: '0 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Live Dynamic Cost Preview Badge */}
+                    <div style={{ background: '#f0fdf4', border: '1.5px solid #bbf7d0', padding: '0.85rem 1.25rem', borderRadius: '10px', marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '0.84rem', color: '#166534', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <i className="fa-solid fa-calculator"></i> Estimated Rental Cost:
+                      </span>
+                      <strong style={{ fontSize: '1.05rem', color: '#15803d' }}>
+                        Rs. {((activeVenueModal?.pricePerHour || 25000) * (Number(inquiryForm.durationHours) || 4)).toLocaleString()}
+                        <span style={{ fontSize: '0.78rem', color: '#166534', fontWeight: '600', marginLeft: '6px' }}>
+                          ({inquiryForm.durationHours || 4} hrs @ Rs. {(activeVenueModal?.pricePerHour || 25000).toLocaleString()}/hr)
+                        </span>
+                      </strong>
+                    </div>
+
+                    <div style={{ marginBottom: '1.5rem' }}>
+                      <label htmlFor="inquiry-notes" style={{ fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
+                        Special Notes or Equipment Requirements (Optional)
+                      </label>
+                      <textarea
+                        id="inquiry-notes"
+                        rows="2"
+                        placeholder="e.g. Need live streaming cameras, dual microphone setup, stage backdrop..."
+                        value={inquiryForm.notes}
+                        onChange={(e) => setInquiryForm({ ...inquiryForm, notes: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.86rem', boxSizing: 'border-box' }}
+                      ></textarea>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.85rem', alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => setModalActiveTab('details')}
+                        style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: '700', fontSize: '0.88rem', cursor: 'pointer', padding: '0.6rem 1rem' }}
+                      >
+                        Back to Details
+                      </button>
+                      <button
+                        type="submit"
+                        className="btn btn-primary"
+                        style={{
+                          backgroundColor: 'var(--primary-blue, #0052cc)',
+                          color: '#ffffff',
+                          fontWeight: '800',
+                          fontSize: '0.95rem',
+                          padding: '0.75rem 1.75rem',
+                          borderRadius: '10px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          boxShadow: '0 4px 14px rgba(0, 82, 204, 0.25)',
+                        }}
+                        disabled={isSubmittingInquiry}
+                      >
+                        {isSubmittingInquiry ? (
+                          <>
+                            <i className="fa-solid fa-spinner fa-spin"></i> Submitting...
+                          </>
+                        ) : (
+                          <>
+                            <i className="fa-solid fa-paper-plane"></i> Send Booking Inquiry
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
                 </div>
-
-                <div className="form-group">
-                  <label htmlFor="inquiry-email" style={{ fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.3rem', display: 'block' }}>Email Address *</label>
-                  <input
-                    type="email"
-                    id="inquiry-email"
-                    required
-                    placeholder="kasun@techstartup.lk"
-                    value={inquiryForm.email}
-                    onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })}
-                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}
-                  />
-                </div>
               </div>
-
-              <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '0.85rem' }}>
-                <div className="form-group">
-                  <label htmlFor="inquiry-phone" style={{ fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.3rem', display: 'block' }}>Phone Number *</label>
-                  <input
-                    type="tel"
-                    id="inquiry-phone"
-                    required
-                    placeholder="+94 77 123 4567"
-                    value={inquiryForm.phone}
-                    onChange={(e) => setInquiryForm({ ...inquiryForm, phone: e.target.value })}
-                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="inquiry-date" style={{ fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.3rem', display: 'block' }}>Target Event Date *</label>
-                  <input
-                    type="date"
-                    id="inquiry-date"
-                    required
-                    value={inquiryForm.eventDate}
-                    onChange={(e) => setInquiryForm({ ...inquiryForm, eventDate: e.target.value })}
-                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}
-                  />
-                </div>
-              </div>
-
-              <div className="form-group" style={{ marginBottom: '0.85rem' }}>
-                <label htmlFor="inquiry-title" style={{ fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.3rem', display: 'block' }}>Event Title / Purpose *</label>
-                <input
-                  type="text"
-                  id="inquiry-title"
-                  required
-                  placeholder="e.g. Annual Developer Summit 2026"
-                  value={inquiryForm.eventTitle}
-                  onChange={(e) => setInquiryForm({ ...inquiryForm, eventTitle: e.target.value })}
-                  style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}
-                />
-              </div>
-
-              <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '0.85rem' }}>
-                <div className="form-group">
-                  <label htmlFor="inquiry-hours" style={{ fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.3rem', display: 'block' }}>Duration (Hours) *</label>
-                  <input
-                    type="number"
-                    id="inquiry-hours"
-                    required
-                    min="1"
-                    max="24"
-                    placeholder="4"
-                    value={inquiryForm.durationHours}
-                    onChange={(e) => setInquiryForm({ ...inquiryForm, durationHours: e.target.value })}
-                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="inquiry-guests" style={{ fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.3rem', display: 'block' }}>Expected Attendees</label>
-                  <input
-                    type="number"
-                    id="inquiry-guests"
-                    placeholder="50"
-                    value={inquiryForm.guests}
-                    onChange={(e) => setInquiryForm({ ...inquiryForm, guests: e.target.value })}
-                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}
-                  />
-                </div>
-              </div>
-
-              {/* Estimated Cost Preview */}
-              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '0.75rem 1rem', borderRadius: '10px', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem' }}>
-                <span style={{ fontSize: '0.82rem', color: '#166534', fontWeight: '600' }}>
-                  <i className="fa-solid fa-calculator" style={{ marginRight: '6px' }}></i> Estimated Rental Cost:
-                </span>
-                <strong style={{ fontSize: '0.92rem', color: '#15803d' }}>
-                  Rs. {((activeVenueModal?.pricePerHour || 25000) * (Number(inquiryForm.durationHours) || 4)).toLocaleString()} ({inquiryForm.durationHours || 4} hrs @ Rs. {(activeVenueModal?.pricePerHour || 25000).toLocaleString()}/hr)
-                </strong>
-              </div>
-
-              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-                <label htmlFor="inquiry-notes" style={{ fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.3rem', display: 'block' }}>Special Notes (Optional)</label>
-                <textarea
-                  id="inquiry-notes"
-                  rows="2"
-                  placeholder="e.g. Need live streaming setup, stage lighting..."
-                  value={inquiryForm.notes}
-                  onChange={(e) => setInquiryForm({ ...inquiryForm, notes: e.target.value })}
-                  style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
-                ></textarea>
-              </div>
-
-              <div className="form-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
-                <button
-                  type="button"
-                  className="btn btn-outline"
-                  onClick={() => setShowInquiryFormModal(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  style={{ backgroundColor: '#5d4df6' }}
-                  disabled={isSubmittingInquiry}
-                >
-                  {isSubmittingInquiry ? (
-                    <>
-                      <i className="fa-solid fa-spinner fa-spin"></i> Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <i className="fa-solid fa-paper-plane"></i> Send Booking Inquiry
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
+            )}
           </div>
         </div>
       )}

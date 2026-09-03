@@ -1506,21 +1506,24 @@ textarea:focus {
   }
 }
 
-/* Upcoming & Past Events Dedicated Page Styles matching exact reference layout */
+/* Upcoming & Past Events & Spaces Dedicated Page Styles matching exact reference layout */
 .upcoming-events-page,
-.past-events-page {
+.past-events-page,
+.spaces-page {
   padding: 3rem 0 5rem 0;
   background-color: var(--bg-main);
   min-height: calc(100vh - 160px);
 }
 
 .upcoming-events-page .page-header,
-.past-events-page .page-header {
+.past-events-page .page-header,
+.spaces-page .page-header {
   margin-bottom: 2rem;
 }
 
 .upcoming-events-page .page-title,
-.past-events-page .page-title {
+.past-events-page .page-title,
+.spaces-page .page-title {
   font-size: 2.25rem;
   font-weight: 800;
   color: #0f172a;
@@ -1529,7 +1532,8 @@ textarea:focus {
 }
 
 .upcoming-events-page .page-subtitle,
-.past-events-page .page-subtitle {
+.past-events-page .page-subtitle,
+.spaces-page .page-subtitle {
   font-size: 1.05rem;
   color: #64748b;
   font-weight: 500;
@@ -6850,8 +6854,22 @@ input:checked+.slider:before {
 /* Venues Modern Grid & Cards */
 .venues-modern-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.75rem;
+}
+
+@media (max-width: 1024px) {
+  .venues-modern-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .venues-modern-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
 }
 
 .venue-card-redesign {
@@ -6863,6 +6881,7 @@ input:checked+.slider:before {
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .venue-card-redesign:hover {
@@ -6873,9 +6892,10 @@ input:checked+.slider:before {
 
 .venue-banner-wrapper {
   position: relative;
-  height: 200px;
+  height: 220px;
   width: 100%;
   overflow: hidden;
+  background-color: #0f172a;
 }
 
 .venue-card-image {
@@ -8281,19 +8301,107 @@ body.dark-mode .meta-value {
 .venue-split-modal-card {
   max-width: 1120px;
   width: 95%;
-  max-height: 85vh;
+  max-height: 88vh;
   border-radius: 20px;
   overflow: hidden;
   padding: 0;
   background: #ffffff;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+.venue-modal-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.75rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.venue-modal-tabs {
+  display: flex;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 30px;
+  gap: 4px;
+}
+
+.venue-modal-tab-btn {
+  background: transparent;
+  border: none;
+  padding: 0.5rem 1.25rem;
+  border-radius: 20px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.venue-modal-tab-btn.active {
+  background: #ffffff;
+  color: var(--primary-blue, #0052cc);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.btn-proceed-booking {
+  width: 100%;
+  background: linear-gradient(135deg, var(--primary-blue, #0052cc) 0%, #0747a6 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0.85rem 1.25rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  box-shadow: 0 4px 14px rgba(0, 82, 204, 0.25);
+  transition: all 0.2s ease;
+  margin-top: 1.5rem;
+}
+
+.btn-proceed-booking:hover {
+  background: linear-gradient(135deg, #0043a8 0%, #05337a 100%);
+  box-shadow: 0 6px 18px rgba(0, 82, 204, 0.35);
+  transform: translateY(-1px);
+}
+
+.venue-booking-split-grid {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  max-height: calc(88vh - 75px);
+  overflow-y: auto;
+}
+
+.venue-booking-sidebar {
+  background: #f8fafc;
+  padding: 2rem;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.venue-booking-form-content {
+  padding: 2rem 2.5rem;
+  overflow-y: auto;
+  background: #ffffff;
 }
 
 .venue-split-grid {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
-  max-height: 85vh;
+  max-height: calc(88vh - 75px);
   overflow: hidden;
 }
 
@@ -8304,7 +8412,7 @@ body.dark-mode .meta-value {
   justify-content: space-between;
   background: #ffffff;
   overflow-y: auto;
-  max-height: 85vh;
+  max-height: calc(88vh - 75px);
 }
 
 .venue-split-right-gallery {
@@ -8313,7 +8421,7 @@ body.dark-mode .meta-value {
   display: flex;
   flex-direction: column;
   height: 100%;
-  max-height: 85vh;
+  max-height: calc(88vh - 75px);
   overflow: hidden;
 }
 
