@@ -3,12 +3,15 @@ import { isEventPast } from '../utils/eventUtils';
 
 export default function PastEventsSection({
   events = [],
+  loading = false,
   setActiveTab,
   onSelectPastEvent,
   isFullView = false,
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('Any Location');
 
   // Filter real past events from database (events where date and set time have finished)
   const dbPastEvents = useMemo(() => {
@@ -18,13 +21,39 @@ export default function PastEventsSection({
   // Only use published DB past events (no hardcoded samples)
   const allPastEvents = dbPastEvents;
 
-  // Filter list based on search and category when in full view
+  const categories = useMemo(() => {
+    const cats = new Set(['All Categories', 'Talk', 'Meetup', 'Workshop', 'Sprint']);
+    allPastEvents.forEach((e) => {
+      if (e.category && e.category.trim()) cats.add(e.category.trim());
+    });
+    return Array.from(cats);
+  }, [allPastEvents]);
+
+  const locations = useMemo(() => {
+    const locs = new Set([
+      'Any Location',
+      'TRACE Expert City',
+      'TRACE Hub',
+      'Innovation Center',
+      'Main Hall',
+    ]);
+    allPastEvents.forEach((e) => {
+      if (e.location && e.location.trim()) {
+        const mainLoc = e.location.split(',')[0].trim();
+        locs.add(mainLoc);
+      }
+    });
+    return Array.from(locs);
+  }, [allPastEvents]);
+
+  // Filter list based on search, category, location, and date
   const filteredPastEvents = useMemo(() => {
     return allPastEvents.filter((item) => {
+      // Search Query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchesTitle = item.title?.toLowerCase().includes(q);
-        const matchesDesc = item.description?.toLowerCase().includes(q);
+        const matchesDesc = (item.description || item.shortDescription)?.toLowerCase().includes(q);
         const matchesCat = item.category?.toLowerCase().includes(q);
         const matchesLoc = item.location?.toLowerCase().includes(q);
         if (!matchesTitle && !matchesDesc && !matchesCat && !matchesLoc) {
@@ -32,6 +61,7 @@ export default function PastEventsSection({
         }
       }
 
+      // Category filter
       if (
         selectedCategory !== 'All Categories' &&
         item.category?.toLowerCase() !== selectedCategory.toLowerCase()
@@ -39,17 +69,47 @@ export default function PastEventsSection({
         return false;
       }
 
+      // Location filter
+      if (selectedLocation !== 'Any Location') {
+        if (!item.location?.toLowerCase().includes(selectedLocation.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // Date filter
+      if (selectedDate) {
+        if (!item.date) return false;
+        let matched = false;
+        if (typeof item.date === 'string' && item.date.split('T')[0] === selectedDate) {
+          matched = true;
+        }
+        try {
+          const d = new Date(item.date);
+          const localStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          const isoStr = d.toISOString().split('T')[0];
+          if (localStr === selectedDate || isoStr === selectedDate) {
+            matched = true;
+          }
+        } catch (e) {
+          // ignore
+        }
+        if (!matched) return false;
+      }
+
       return true;
     });
-  }, [allPastEvents, searchQuery, selectedCategory]);
+  }, [allPastEvents, searchQuery, selectedCategory, selectedLocation, selectedDate]);
 
-  const categories = useMemo(() => {
-    const cats = new Set(['All Categories']);
-    allPastEvents.forEach((e) => {
-      if (e.category) cats.add(e.category);
-    });
-    return Array.from(cats);
-  }, [allPastEvents]);
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('All Categories');
+    setSelectedDate('');
+    setSelectedLocation('Any Location');
+  };
+
+  const handleFilterClick = (e) => {
+    e?.preventDefault();
+  };
 
   const handleCardClick = (evt) => {
     if (onSelectPastEvent) {
@@ -59,18 +119,17 @@ export default function PastEventsSection({
     }
   };
 
-  const formatPastDate = (dateVal) => {
-    if (!dateVal) return 'Completed';
+  const formatPastDate = (dateVal, timeStr) => {
+    if (!dateVal) return timeStr || 'Completed';
     try {
       const d = new Date(dateVal);
-      if (isNaN(d.getTime())) return 'Completed';
-      return d.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      });
+      if (isNaN(d.getTime())) return timeStr || 'Completed';
+      const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+      const day = String(d.getDate()).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${month} ${day}, ${year}${timeStr ? ` • ${timeStr}` : ''}`;
     } catch (e) {
-      return 'Completed';
+      return timeStr || 'Completed';
     }
   };
 
@@ -79,35 +138,33 @@ export default function PastEventsSection({
   // ----------------------------------------------------
   if (isFullView) {
     return (
-      <div className="past-events-page" style={{ padding: '2rem 0 4rem 0' }}>
+      <div className="past-events-page">
         <div className="section-container">
+          {/* Page Title & Subtitle Header matching Upcoming Events */}
           <div className="page-header">
-            <h1 className="page-title">
-              <i className="fa-solid fa-clock-rotate-left" style={{ color: '#5d4df6', marginRight: '10px' }}></i>
-              Past Events & Community Archive
-            </h1>
+            <h1 className="page-title">Past Events</h1>
             <p className="page-subtitle">
-              Browse completed workshops, hackathons, and user-uploaded events. Access recordings, summaries, and photo galleries.
+              Discover past talks, meetups, workshops and community events at TRACE.
             </p>
           </div>
 
-          {/* Search & Filter Bar */}
-          <div className="filter-bar-container" style={{ marginBottom: '2rem' }}>
-            <div className="filter-item" style={{ flex: 2 }}>
-              <label htmlFor="past-filter-search">Search Past Archive</label>
+          {/* Filters Bar matching reference screenshot */}
+          <div className="filter-bar-container">
+            <div className="filter-item">
+              <label htmlFor="past-filter-search">Search Events</label>
               <div className="search-input-wrapper">
                 <i className="fa-solid fa-magnifying-glass search-icon"></i>
                 <input
                   type="text"
                   id="past-filter-search"
-                  placeholder="Search by title, location, description..."
+                  placeholder="Search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
             </div>
 
-            <div className="filter-item" style={{ flex: 1 }}>
+            <div className="filter-item">
               <label htmlFor="past-filter-category">Category</label>
               <div className="select-wrapper">
                 <select
@@ -125,38 +182,69 @@ export default function PastEventsSection({
               </div>
             </div>
 
+            <div className="filter-item">
+              <label htmlFor="past-filter-date">Date</label>
+              <div className="date-input-wrapper">
+                <input
+                  type="date"
+                  id="past-filter-date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="filter-item">
+              <label htmlFor="past-filter-location">Location</label>
+              <div className="select-wrapper">
+                <select
+                  id="past-filter-location"
+                  value={selectedLocation}
+                  onChange={(e) => setSelectedLocation(e.target.value)}
+                >
+                  {locations.map((loc) => (
+                    <option key={loc} value={loc}>
+                      {loc}
+                    </option>
+                  ))}
+                </select>
+                <i className="fa-solid fa-chevron-down select-arrow"></i>
+              </div>
+            </div>
+
             <div className="filter-actions">
-              <button
-                className="btn-filter-clear"
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedCategory('All Categories');
-                }}
-              >
-                Clear Filters
+              <button className="btn-filter-submit" type="button" onClick={handleFilterClick}>
+                Filter
+              </button>
+              <button className="btn-filter-clear" type="button" onClick={handleClearFilters}>
+                Clear
               </button>
             </div>
           </div>
 
-          {/* Count bar */}
-          <div style={{ marginBottom: '1.5rem', fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
-            Showing <strong>{filteredPastEvents.length}</strong> past event{filteredPastEvents.length !== 1 ? 's' : ''}
-          </div>
+          {/* Loading Spinner */}
+          {loading && (
+            <div className="loading-state">
+              <div className="spinner"></div>
+              <p>Loading past events...</p>
+            </div>
+          )}
 
-          {/* Empty state */}
-          {filteredPastEvents.length === 0 && (
+          {/* Empty State matching Upcoming Events */}
+          {!loading && filteredPastEvents.length === 0 && (
             <div className="empty-state">
-              <i className="fa-solid fa-folder-open"></i>
-              <h3>No past events match your filters</h3>
-              <p>Try clearing your search query or selecting a different category.</p>
+              <i className="fa-solid fa-calendar-xmark"></i>
+              <h3>No past events found</h3>
+              <p>Try resetting or adjusting your search criteria and filters.</p>
             </div>
           )}
 
           {/* Full Grid of Past Events */}
-          {filteredPastEvents.length > 0 && (
+          {!loading && filteredPastEvents.length > 0 && (
             <div className="events-grid-3col">
               {filteredPastEvents.map((item) => {
                 const isUserUploaded = Boolean(item.createdBy || (item._id && !item._id.startsWith('past-evt-')));
+                const formattedDate = formatPastDate(item.date, item.time);
                 return (
                   <div
                     className="event-card-modern past-archive-card"
@@ -183,7 +271,7 @@ export default function PastEventsSection({
 
                     <div className="card-content">
                       <div className="event-date-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span><i className="fa-regular fa-calendar" style={{ marginRight: '5px' }}></i> {formatPastDate(item.date)}</span>
+                        <span><i className="fa-regular fa-calendar" style={{ marginRight: '5px' }}></i> {formattedDate}</span>
                         {isUserUploaded && (
                           <span
                             style={{
@@ -217,7 +305,7 @@ export default function PastEventsSection({
                             handleCardClick(item);
                           }}
                         >
-                          <i className="fa-solid fa-eye" style={{ marginRight: '6px' }}></i> View Showcase & Gallery
+                          <i className="fa-solid fa-eye" style={{ marginRight: '6px' }}></i> View Details & Recap
                         </button>
                       </div>
                     </div>

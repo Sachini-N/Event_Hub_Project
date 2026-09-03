@@ -273,6 +273,7 @@ export default function App() {
         {activeTab === 'past' && (
           <PastEventsSection
             events={events}
+            loading={loading}
             setActiveTab={setActiveTab}
             isFullView={true}
             onSelectPastEvent={(evt) => {
