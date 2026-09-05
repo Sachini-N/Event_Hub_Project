@@ -454,6 +454,24 @@ body {
   box-shadow: 0 2px 10px rgba(255, 255, 255, 0.6);
 }
 
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 1.1rem;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(8px);
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 1.2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
 .hero-content {
   max-width: 860px;
   margin: 0 auto;
@@ -480,6 +498,58 @@ body {
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
 }
 
+.hero-content.fade-in {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.hero-content.fade-out {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.hero-stats-strip {
+  position: absolute;
+  bottom: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(12px);
+  padding: 0.55rem 1.8rem;
+  border-radius: var(--radius-pill);
+  z-index: 4;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stat-number {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.stat-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.stat-divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
 .hero-actions {
   display: flex;
   justify-content: center;
@@ -487,15 +557,16 @@ body {
 }
 
 .hero-actions .btn-outline-pill {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(30, 25, 20, 0.45);
   color: #ffffff;
-  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   backdrop-filter: blur(8px);
 }
 
 .hero-actions .btn-outline-pill:hover {
-  background-color: #ffffff;
-  color: #0f172a;
+  background-color: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.8);
+  color: #ffffff;
 }
 
 /* Features Section ("Why Join TRACE Events?") */
