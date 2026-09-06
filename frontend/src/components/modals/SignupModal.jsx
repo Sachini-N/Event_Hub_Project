@@ -15,6 +15,25 @@ export default function SignupModal({
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
+  React.useEffect(() => {
+    if (isOpen) {
+      setName('');
+      setEmail('');
+      setPhone('');
+      setPassword('');
+      setShowPassword(false);
+    }
+  }, [isOpen]);
+
+  const handleClose = () => {
+    setName('');
+    setEmail('');
+    setPhone('');
+    setPassword('');
+    setShowPassword(false);
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
@@ -35,6 +54,11 @@ export default function SignupModal({
       const result = await response.json();
 
       if (result.success && result.data) {
+        setName('');
+        setEmail('');
+        setPhone('');
+        setPassword('');
+        setShowPassword(false);
         onSignupSuccess(result.data);
         onClose();
         showToast(`Account created! Welcome to TRACE Event Hub, ${result.data.user.name}!`, 'success');
@@ -50,7 +74,7 @@ export default function SignupModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1200 }}>
+    <div className="modal-overlay" onClick={handleClose} style={{ zIndex: 1200 }}>
       <div
         className="modal-card"
         onClick={(e) => e.stopPropagation()}
@@ -68,7 +92,7 @@ export default function SignupModal({
         {/* Close Button */}
         <button
           className="modal-close"
-          onClick={onClose}
+          onClick={handleClose}
           style={{
             top: '20px',
             right: '20px',
@@ -102,10 +126,10 @@ export default function SignupModal({
           </div>
 
           <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0f172a', margin: '0 0 0.35rem 0' }}>
-            Create Your Account
+            Join TRACE Hub
           </h2>
           <p style={{ fontSize: '0.86rem', color: '#64748b', margin: 0, lineHeight: 1.4 }}>
-            Join TRACE Event Hub to register for events & reserve spaces across Sri Lanka.
+            Create an account to register for tech events & explore bookings
           </p>
         </div>
 

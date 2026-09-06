@@ -86,7 +86,7 @@ export default function Navbar({
           >
             Spaces
           </button>
-          {currentUser && !(currentUser?.isAdmin || currentUser?.role === 'admin' || currentUser?.email === 'admin@trace.lk') && (
+          {currentUser && !(currentUser?.isAdmin || currentUser?.role === 'admin' || currentUser?.role === 'super_admin' || currentUser?.role === 'branch_admin' || currentUser?.email === 'admin@trace.lk') && (
             <>
               <button
                 className={`nav-link ${activeTab === 'my-events' ? 'active' : ''}`}
@@ -138,7 +138,7 @@ export default function Navbar({
             </div>
           )}
 
-          {(currentUser?.isAdmin || currentUser?.role === 'admin' || currentUser?.email === 'admin@trace.lk') && (
+          {(currentUser?.isAdmin || currentUser?.role === 'admin' || currentUser?.role === 'super_admin' || currentUser?.role === 'branch_admin' || currentUser?.email === 'admin@trace.lk') && (
             <button className="btn btn-sm btn-admin" onClick={() => { openAdminModal(); closeMobile(); }} title="Admin Panel">
               <i className="fa-solid fa-sliders"></i> Admin
             </button>

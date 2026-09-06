@@ -14,8 +14,8 @@ export default function AdminDashboardPage({
   showToast,
 }) {
   // Admin Login Form State
-  const [adminEmail, setAdminEmail] = useState('admin@trace.lk');
-  const [adminPassword, setAdminPassword] = useState('admin123');
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
   const [loggingIn, setLoggingIn] = useState(false);
 
   // Dashboard Data & Navigation State
@@ -224,7 +224,7 @@ export default function AdminDashboardPage({
   const [inquiryStatusFilter, setInquiryStatusFilter] = useState('all');
   const [sidebarHidden, setSidebarHidden] = useState(false);
 
-  const isAdmin = currentUser && currentUser.role === 'admin';
+  const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'super_admin' || currentUser.role === 'branch_admin' || currentUser.email === 'admin@trace.lk' || currentUser.isAdmin);
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -493,12 +493,13 @@ export default function AdminDashboardPage({
             Please log in with administrator credentials to access the Event Management Dashboard.
           </p>
 
-          <form onSubmit={handleAdminLogin}>
+          <form onSubmit={handleAdminLogin} autoComplete="off">
             <div className="profile-form-group" style={{ marginBottom: '1.25rem' }}>
               <label htmlFor="admin-email-input">Admin Email Address</label>
               <input
                 type="email"
                 id="admin-email-input"
+                autoComplete="off"
                 required
                 value={adminEmail}
                 onChange={(e) => setAdminEmail(e.target.value)}
@@ -511,6 +512,7 @@ export default function AdminDashboardPage({
               <input
                 type="password"
                 id="admin-password-input"
+                autoComplete="new-password"
                 required
                 value={adminPassword}
                 onChange={(e) => setAdminPassword(e.target.value)}

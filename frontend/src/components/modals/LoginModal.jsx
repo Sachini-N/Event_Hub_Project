@@ -6,20 +6,41 @@ export default function LoginModal({
   onLoginSuccess,
   switchToSignup,
   showToast,
-  initialAdminMode = false,
 }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [isAdminMode, setIsAdminMode] = useState(initialAdminMode);
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
 
+  // Initialize or reset inputs whenever the modal opens
   React.useEffect(() => {
     if (isOpen) {
-      setIsAdminMode(initialAdminMode);
+      const isRemembered = localStorage.getItem('eventhub_remember_me') === 'true';
+      const savedEmail = localStorage.getItem('eventhub_remember_email') || '';
+
+      if (isRemembered && savedEmail) {
+        setEmail(savedEmail);
+        setRememberMe(true);
+      } else {
+        setEmail('');
+        setRememberMe(false);
+      }
+      // Password is always kept empty for security
+      setPassword('');
+      setShowPassword(false);
     }
-  }, [isOpen, initialAdminMode]);
+  }, [isOpen]);
+
+  const handleClose = () => {
+    const isRemembered = localStorage.getItem('eventhub_remember_me') === 'true';
+    if (!isRemembered) {
+      setEmail('');
+    }
+    setPassword('');
+    setShowPassword(false);
+    onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -38,25 +59,31 @@ export default function LoginModal({
 
       if (result.success && result.data) {
         const user = result.data.user;
-        const isAdmin = user.role === 'admin' || user.email === 'admin@trace.lk';
+        const isAdmin = Boolean(
+          user.role === 'admin' ||
+          user.role === 'super_admin' ||
+          user.role === 'branch_admin' ||
+          user.email === 'admin@trace.lk' ||
+          user.isAdmin
+        );
 
-        // Strict Role-Tab Enforcement Rules
-        if (isAdminMode && !isAdmin) {
-          showToast('Access denied. Regular members cannot log in through the Admin Portal tab.', 'error');
-          setSubmitting(false);
-          return;
+        // Handle Remember Me for email persistence
+        if (rememberMe) {
+          localStorage.setItem('eventhub_remember_me', 'true');
+          localStorage.setItem('eventhub_remember_email', email.trim());
+        } else {
+          localStorage.removeItem('eventhub_remember_me');
+          localStorage.removeItem('eventhub_remember_email');
+          setEmail('');
         }
 
-        if (!isAdminMode && isAdmin) {
-          showToast('Access denied. Administrators must log in through the Admin Portal tab.', 'error');
-          setSubmitting(false);
-          return;
-        }
-
-        onLoginSuccess(result.data, isAdminMode);
+        // Always clear password from state on complete
+        setPassword('');
+        setShowPassword(false);
+        onLoginSuccess(result.data, isAdmin);
         onClose();
         showToast(
-          isAdminMode
+          isAdmin
             ? `Welcome to Admin Portal, ${user.name}!`
             : `Welcome back, ${user.name}!`,
           'success'
@@ -73,7 +100,7 @@ export default function LoginModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1200 }}>
+    <div className="modal-overlay" onClick={handleClose} style={{ zIndex: 1200 }}>
       <div
         className="modal-card"
         onClick={(e) => e.stopPropagation()}
@@ -91,7 +118,7 @@ export default function LoginModal({
         {/* Close Button */}
         <button
           className="modal-close"
-          onClick={onClose}
+          onClick={handleClose}
           style={{
             top: '20px',
             right: '20px',
@@ -111,7 +138,7 @@ export default function LoginModal({
         </button>
 
         {/* Brand Header */}
-        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.85rem' }}>
             <img
               src="/trace-logo.png"
@@ -125,78 +152,18 @@ export default function LoginModal({
           </div>
 
           <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0f172a', margin: '0 0 0.35rem 0' }}>
-            {isAdminMode ? 'Admin Access Portal' : 'Welcome Back'}
+            Welcome Back
           </h2>
           <p style={{ fontSize: '0.86rem', color: '#64748b', margin: 0, lineHeight: 1.4 }}>
-            {isAdminMode
-              ? 'Authorized TRACE Administrator Access Management'
-              : 'Log in to access your TRACE events, bookings & portal'}
+            Log in to access your TRACE events, bookings & portal
           </p>
         </div>
 
-        {/* Dual Role Selector Tabs */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            background: '#f1f5f9',
-            padding: '4px',
-            borderRadius: '12px',
-            marginBottom: '1.5rem',
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => setIsAdminMode(false)}
-            style={{
-              padding: '0.55rem 0.75rem',
-              borderRadius: '9px',
-              fontSize: '0.82rem',
-              fontWeight: '700',
-              border: 'none',
-              cursor: 'pointer',
-              background: !isAdminMode ? '#ffffff' : 'transparent',
-              color: !isAdminMode ? '#5d4df6' : '#64748b',
-              boxShadow: !isAdminMode ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-            }}
-          >
-            <i className="fa-solid fa-user"></i> Member Login
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsAdminMode(true)}
-            style={{
-              padding: '0.55rem 0.75rem',
-              borderRadius: '9px',
-              fontSize: '0.82rem',
-              fontWeight: '700',
-              border: 'none',
-              cursor: 'pointer',
-              background: isAdminMode ? '#ffffff' : 'transparent',
-              color: isAdminMode ? '#5d4df6' : '#64748b',
-              boxShadow: isAdminMode ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-            }}
-          >
-            <i className="fa-solid fa-shield-halved"></i> Admin Portal
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} autoComplete="off">
           {/* Email Address */}
           <div className="form-group" style={{ marginBottom: '1.15rem' }}>
             <label htmlFor="login-email" style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.4rem' }}>
-              {isAdminMode ? 'Administrator Email Address' : 'Email Address'} *
+              Email Address *
             </label>
             <div style={{ position: 'relative' }}>
               <i
@@ -214,9 +181,9 @@ export default function LoginModal({
                 type="email"
                 id="login-email"
                 name="email"
-                autoComplete="email"
+                autoComplete="off"
                 required
-                placeholder={isAdminMode ? 'admin@trace.lk' : 'john.doe@example.com'}
+                placeholder="john.doe@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 style={{
@@ -237,7 +204,7 @@ export default function LoginModal({
           {/* Password with Show/Hide Toggle */}
           <div className="form-group" style={{ marginBottom: '1.15rem' }}>
             <label htmlFor="login-password" style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.4rem' }}>
-              {isAdminMode ? 'Administrator Password' : 'Password'} *
+              Password *
             </label>
             <div style={{ position: 'relative' }}>
               <i
@@ -255,7 +222,7 @@ export default function LoginModal({
                 type={showPassword ? 'text' : 'password'}
                 id="login-password"
                 name="password"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 required
                 placeholder="Enter password"
                 value={password}
@@ -308,14 +275,21 @@ export default function LoginModal({
               <input
                 type="checkbox"
                 checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setRememberMe(checked);
+                  if (!checked) {
+                    localStorage.removeItem('eventhub_remember_me');
+                    localStorage.removeItem('eventhub_remember_email');
+                  }
+                }}
                 style={{ accentColor: '#5d4df6', width: '15px', height: '15px' }}
               />
               Remember me
             </label>
             <span
               style={{ color: '#5d4df6', fontWeight: '600', cursor: 'pointer' }}
-              onClick={() => showToast('Please contact TRACE IT support or check admin credentials.', 'info')}
+              onClick={() => showToast('Please contact TRACE IT support or check credentials.', 'info')}
             >
               Need help?
             </span>
@@ -331,7 +305,7 @@ export default function LoginModal({
               fontSize: '0.95rem',
               fontWeight: '800',
               borderRadius: '12px',
-              background: isAdminMode ? 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)' : 'linear-gradient(135deg, #5d4df6 0%, #4338ca 100%)',
+              background: 'linear-gradient(135deg, #5d4df6 0%, #4338ca 100%)',
               color: '#ffffff',
               border: 'none',
               cursor: 'pointer',
@@ -339,17 +313,13 @@ export default function LoginModal({
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px',
-              boxShadow: isAdminMode ? '0 4px 14px rgba(30, 27, 75, 0.3)' : '0 4px 14px rgba(93, 77, 246, 0.35)',
+              boxShadow: '0 4px 14px rgba(93, 77, 246, 0.35)',
               transition: 'all 0.2s ease',
             }}
           >
             {submitting ? (
               <>
                 <i className="fa-solid fa-spinner fa-spin"></i> Authenticating...
-              </>
-            ) : isAdminMode ? (
-              <>
-                <i className="fa-solid fa-shield-halved"></i> Log In to Admin Portal
               </>
             ) : (
               <>

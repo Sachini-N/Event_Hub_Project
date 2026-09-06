@@ -163,12 +163,22 @@ export default function App() {
     checkAuthStatus(token);
   }, []);
 
-  const handleAuthSuccess = (data, isAdminMode = false) => {
+  const handleAuthSuccess = (data, isAdminUser = false) => {
     setToken(data.token);
     setCurrentUser(data.user);
     localStorage.setItem('eventhub_token', data.token);
 
-    if (isAdminMode) {
+    const user = data.user;
+    const isAdmin = Boolean(
+      isAdminUser ||
+      user?.role === 'admin' ||
+      user?.role === 'super_admin' ||
+      user?.role === 'branch_admin' ||
+      user?.email === 'admin@trace.lk' ||
+      user?.isAdmin
+    );
+
+    if (isAdmin) {
       setActiveTab('admin');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
