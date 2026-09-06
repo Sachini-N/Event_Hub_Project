@@ -3,7 +3,7 @@ import Footer from './Footer';
 import FormattedText from './FormattedText';
 
 export default function EventDetailsPage({
-  event,
+  event: initialEvent,
   onBack,
   currentUser,
   onRegistrationSuccess,
@@ -11,6 +11,8 @@ export default function EventDetailsPage({
   onOpenCalendar,
   showToast,
 }) {
+  const [activeEvent, setActiveEvent] = useState(initialEvent);
+  const [loadingEvent, setLoadingEvent] = useState(!initialEvent);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -21,6 +23,38 @@ export default function EventDetailsPage({
   const [registrationData, setRegistrationData] = useState(null);
 
   useEffect(() => {
+    if (initialEvent) {
+      setActiveEvent(initialEvent);
+      setLoadingEvent(false);
+      return;
+    }
+
+    const hash = window.location.hash || '';
+    const match = hash.match(/[?&]id=([^&]+)/);
+    const eventId = match ? match[1] : sessionStorage.getItem('eventhub_details_event_id');
+
+    if (eventId) {
+      setLoadingEvent(true);
+      fetch(`/api/events/${eventId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.data) {
+            setActiveEvent(data.data);
+          } else {
+            setActiveEvent(null);
+          }
+        })
+        .catch((err) => {
+          console.error('Error fetching event details on reload:', err);
+          setActiveEvent(null);
+        })
+        .finally(() => setLoadingEvent(false));
+    } else {
+      setLoadingEvent(false);
+    }
+  }, [initialEvent]);
+
+  useEffect(() => {
     if (currentUser) {
       setName(currentUser.name || '');
       setEmail(currentUser.email || '');
@@ -28,11 +62,34 @@ export default function EventDetailsPage({
     }
   }, [currentUser]);
 
-  if (!event) return null;
+  const event = activeEvent;
+
+  if (loadingEvent) {
+    return (
+      <div className="event-details-page" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem', padding: '4rem 1rem' }}>
+        <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2.5rem', color: '#5d4df6' }}></i>
+        <p style={{ color: '#64748b', fontWeight: '600' }}>Loading event details...</p>
+      </div>
+    );
+  }
+
+  if (!event) {
+    return (
+      <div className="event-details-page" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem', padding: '4rem 1rem', textAlign: 'center' }}>
+        <i className="fa-regular fa-calendar-xmark" style={{ fontSize: '3rem', color: '#94a3b8' }}></i>
+        <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: '0.5rem 0' }}>Event Not Found</h2>
+        <p style={{ color: '#64748b', maxWidth: '400px', marginBottom: '1rem' }}>The event you are looking for does not exist or may have been removed.</p>
+        <button className="btn btn-primary" onClick={onBack}>
+          <i className="fa-solid fa-arrow-left"></i> Back to Events
+        </button>
+      </div>
+    );
+  }
 
   const formatDate = (dateStr) => {
-    if (!dateStr) return 'November 12, 2024';
+    if (!dateStr) return '';
     const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
     return d.toLocaleDateString('en-US', {
       month: 'long',
       day: 'numeric',

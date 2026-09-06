@@ -56,8 +56,9 @@ const HASH_TO_TAB_MAP = {
 export default function App() {
   const [events, setEvents] = useState([]);
   const [activeTab, setActiveTabState] = useState(() => {
-    const initialHash = window.location.hash || '#home';
-    return HASH_TO_TAB_MAP[initialHash] || 'home';
+    const rawHash = window.location.hash || '#home';
+    const cleanHash = rawHash.split('?')[0];
+    return HASH_TO_TAB_MAP[cleanHash] || 'home';
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -83,10 +84,13 @@ export default function App() {
   // Toast State
   const [toast, setToast] = useState({ visible: false, message: '', type: 'info' });
 
-  // Custom function to update activeTab AND synchronize URL Hash
-  const setActiveTab = (newTab) => {
+  // Custom function to update activeTab AND synchronize URL Hash with optional entity id
+  const setActiveTab = (newTab, entityId = null) => {
     setActiveTabState(newTab);
-    const targetHash = TAB_TO_HASH_MAP[newTab] || '#home';
+    let targetHash = TAB_TO_HASH_MAP[newTab] || '#home';
+    if (entityId && (newTab === 'event-details' || newTab === 'past-details')) {
+      targetHash += `?id=${entityId}`;
+    }
     if (window.location.hash !== targetHash) {
       window.history.pushState({ tab: newTab }, '', targetHash);
     }
@@ -95,8 +99,9 @@ export default function App() {
   // Synchronize browser URL hash & back/forward history navigation
   useEffect(() => {
     const handleHashChange = () => {
-      const currentHash = window.location.hash || '#home';
-      const targetTab = HASH_TO_TAB_MAP[currentHash] || 'home';
+      const rawHash = window.location.hash || '#home';
+      const cleanHash = rawHash.split('?')[0];
+      const targetTab = HASH_TO_TAB_MAP[cleanHash] || 'home';
       setActiveTabState(targetTab);
     };
 
@@ -203,7 +208,12 @@ export default function App() {
 
   const openEventDetails = (evt) => {
     setSelectedDetailsEvent(evt);
-    setActiveTab('event-details');
+    if (evt?._id) {
+      sessionStorage.setItem('eventhub_details_event_id', evt._id);
+      setActiveTab('event-details', evt._id);
+    } else {
+      setActiveTab('event-details');
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 

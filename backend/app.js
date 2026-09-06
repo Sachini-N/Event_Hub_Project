@@ -69,12 +69,14 @@ const PORT = process.env.PORT || 5000;
 // Start server immediately
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
+if (!process.env.MONGO_URI) {
+  console.error("FATAL ERROR: MONGO_URI is not defined in environment variables.");
+  process.exit(1);
+}
+
 // Connect to MongoDB and seed initial data
 mongoose
-  .connect(
-    process.env.MONGO_URI ||
-    "mongodb+srv://admin:3fg96tRd1iREyBza@cluster0.tkag7mg.mongodb.net/eventhub?retryWrites=true&w=majority&appName=Cluster0"
-  )
+  .connect(process.env.MONGO_URI)
   .then(async () => {
     console.log("Connected to MongoDB successfully!");
     await seedInitialEvents();

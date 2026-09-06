@@ -80,11 +80,32 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
   };
 
   // Cover Image File Upload Handler
-  const handleImageFile = (e) => {
+  const handleImageFile = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     setCoverFileName(file.name);
+    const token = localStorage.getItem('eventhub_token');
+    if (token) {
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        const result = await res.json();
+        if (result.success && result.data?.url) {
+          setCoverImage(result.data.url);
+          if (showToast) showToast('Cover image uploaded to CDN successfully!', 'success');
+          return;
+        }
+      } catch (uploadErr) {
+        console.warn('CDN upload fallback triggered:', uploadErr);
+      }
+    }
+
     compressImageFile(file, 1200, 800, 0.8, (compressedBase64) => {
       setCoverImage(compressedBase64);
       if (showToast) showToast('Cover image optimized & loaded!', 'success');
@@ -92,9 +113,30 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
   };
 
   // Speaker Avatar File Upload Handler
-  const handleSpeakerAvatarFile = (e) => {
+  const handleSpeakerAvatarFile = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    const token = localStorage.getItem('eventhub_token');
+    if (token) {
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        const result = await res.json();
+        if (result.success && result.data?.url) {
+          setSpeakerAvatar(result.data.url);
+          if (showToast) showToast('Speaker photo uploaded to CDN successfully!', 'success');
+          return;
+        }
+      } catch (uploadErr) {
+        console.warn('CDN speaker avatar upload fallback triggered:', uploadErr);
+      }
+    }
 
     compressImageFile(file, 400, 400, 0.85, (compressedBase64) => {
       setSpeakerAvatar(compressedBase64);

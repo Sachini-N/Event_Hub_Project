@@ -1,7 +1,10 @@
 const jwt = require("jsonwebtoken");
 const User = require("../model/User");
 
-const JWT_SECRET = process.env.JWT_SECRET || "eventhub_super_secret_jwt_key_2026";
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error("FATAL ERROR: JWT_SECRET environment variable is required.");
+}
 
 // Sign JWT Token using jsonwebtoken
 const signToken = (payload) => {

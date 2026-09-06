@@ -14,9 +14,16 @@ const getAllVenueBookings = async (req, res) => {
 // GET /api/venue-bookings/user/:email (Fetch bookings by user email)
 const getUserVenueBookings = async (req, res) => {
   try {
-    const email = req.params.email;
+    const email = (req.params.email || "").trim().toLowerCase();
+
+    // Verify caller authorization
+    const isAdmin = req.user && ["admin", "super_admin", "branch_admin"].includes(req.user.role);
+    if (!isAdmin && (!req.user || req.user.email.toLowerCase() !== email)) {
+      return res.status(403).json({ success: false, message: "Access denied. You can only view your own venue booking inquiries." });
+    }
+
     const bookings = await VenueBooking.find({
-      email: { $regex: new RegExp(`^${email.trim()}$`, "i") }
+      email: email
     }).sort({ createdAt: -1 });
 
     res.json({ success: true, count: bookings.length, data: bookings });

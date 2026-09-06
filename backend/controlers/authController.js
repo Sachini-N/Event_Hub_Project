@@ -256,9 +256,6 @@ const sendRealEmail = async ({ to, subject, html }) => {
           user: cleanUser,
           pass: cleanPass,
         },
-        tls: {
-          rejectUnauthorized: false,
-        },
       });
     } else {
       console.log(`Sending test email via Ethereal SMTP fallback to: ${to}`);
@@ -369,7 +366,6 @@ const createBranchAdmin = async (req, res) => {
       adminName: name,
       branchName: branch,
       email: emailClean,
-      temporaryPassword: password,
       grantedPermissions: permissions || ["manage_events", "manage_registrations"],
       sentAt: new Date().toISOString(),
       previewUrl: emailResult.previewUrl || null,
@@ -446,7 +442,6 @@ const sendEmailCredentials = async (req, res) => {
         adminName: user.name,
         branchName: user.branch || "TRACE Main",
         email: user.email,
-        temporaryPassword: tempPass,
         grantedPermissions: perms,
         sentAt: new Date().toISOString(),
       },

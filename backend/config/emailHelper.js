@@ -25,9 +25,6 @@ const sendEmail = async ({ to, subject, html, replyTo }) => {
           user: cleanUser,
           pass: cleanPass,
         },
-        tls: {
-          rejectUnauthorized: false,
-        },
       });
     } else {
       console.log(`[SMTP Test] Dispatching test email via Ethereal to: ${to}`);

@@ -1,4 +1,5 @@
 import React from 'react';
+import DOMPurify from 'dompurify';
 
 // FormattedText safely renders text containing rich HTML formatting (<b>, <i>, <u>, <h3>, <ul>, <li>, etc.) or plain text with linebreaks
 export default function FormattedText({ content = '', className = '', style = {} }) {
@@ -6,13 +7,14 @@ export default function FormattedText({ content = '', className = '', style = {}
 
   const contentStr = String(content);
 
-  // If content contains HTML tags, render directly via dangerouslySetInnerHTML
+  // If content contains HTML tags, render sanitized HTML via dangerouslySetInnerHTML
   if (/<[a-z][\s\S]*>/i.test(contentStr)) {
+    const cleanHtml = DOMPurify.sanitize(contentStr);
     return (
       <div
         className={`formatted-text-content ${className}`}
         style={{ whiteSpace: 'normal', wordBreak: 'break-word', lineBreak: 'anywhere', ...style }}
-        dangerouslySetInnerHTML={{ __html: contentStr }}
+        dangerouslySetInnerHTML={{ __html: cleanHtml }}
       />
     );
   }

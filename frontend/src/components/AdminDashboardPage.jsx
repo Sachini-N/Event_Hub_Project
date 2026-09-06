@@ -296,7 +296,8 @@ export default function AdminDashboardPage({
         const user = result.data.user;
         const authToken = result.data.token;
 
-        if (user.role !== 'admin') {
+        const allowedAdminRoles = ['admin', 'super_admin', 'branch_admin'];
+        if (!allowedAdminRoles.includes(user.role) && user.email !== 'admin@trace.lk' && !user.isAdmin) {
           if (showToast) {
             showToast('Access denied. Account does not have admin privileges.', 'error');
           }
@@ -509,9 +510,7 @@ export default function AdminDashboardPage({
               />
             </div>
 
-            <div className="admin-hint-box" style={{ marginBottom: '1.5rem' }}>
-              <i className="fa-solid fa-circle-info"></i> Demo Admin Email: <strong>admin@trace.lk</strong> | Pass: <strong>admin123</strong>
-            </div>
+
 
             <button
               type="submit"

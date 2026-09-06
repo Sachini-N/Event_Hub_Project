@@ -2,9 +2,11 @@ const mongoose = require('mongoose');
 const Registration = require('./model/Registration');
 require('dotenv').config();
 
-const mongoUri =
-  process.env.MONGO_URI ||
-  'mongodb+srv://admin:3fg96tRd1iREyBza@cluster0.tkag7mg.mongodb.net/eventhub?retryWrites=true&w=majority&appName=Cluster0';
+const mongoUri = process.env.MONGO_URI;
+if (!mongoUri) {
+  console.error("MONGO_URI not set in environment.");
+  process.exit(1);
+}
 
 async function clean() {
   try {

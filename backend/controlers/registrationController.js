@@ -29,13 +29,26 @@ const registerForEvent = async (req, res) => {
       return res.status(400).json({ success: false, message: "Cannot register for past events." });
     }
 
-    if (event.registeredCount >= event.capacity) {
-      return res.status(400).json({ success: false, message: "Sorry, this event is fully booked!" });
+    // Atomically reserve a slot if capacity is available
+    const updatedEvent = await Event.findOneAndUpdate(
+      {
+        _id: eventId,
+        status: { $ne: "past" },
+        $expr: { $lt: ["$registeredCount", "$capacity"] },
+      },
+      { $inc: { registeredCount: 1 } },
+      { new: true }
+    );
+
+    if (!updatedEvent) {
+      return res.status(400).json({ success: false, message: "Sorry, this event is fully booked or closed for registration." });
     }
 
     // Check if user is already registered for this event
     const existingRegistration = await Registration.findOne({ eventId, email: email.toLowerCase() });
     if (existingRegistration) {
+      // Revert increment
+      await Event.findByIdAndUpdate(eventId, { $inc: { registeredCount: -1 } });
       return res.status(400).json({
         success: false,
         message: "You are already registered for this event with this email address.",
@@ -58,12 +71,13 @@ const registerForEvent = async (req, res) => {
       status: "Confirmed",
     });
 
-    await registration.save();
-
-    await registration.save();
-
-    // Atomic increment of event registeredCount for high concurrency safety
-    await Event.findByIdAndUpdate(eventId, { $inc: { registeredCount: 1 } });
+    try {
+      await registration.save();
+    } catch (saveErr) {
+      // Revert reservation on failure
+      await Event.findByIdAndUpdate(eventId, { $inc: { registeredCount: -1 } });
+      throw saveErr;
+    }
 
     res.status(201).json({
       success: true,
@@ -87,7 +101,14 @@ const registerForEvent = async (req, res) => {
 // GET /api/registrations/user/:email
 const getUserRegistrations = async (req, res) => {
   try {
-    const email = req.params.email.toLowerCase();
+    const email = req.params.email.toLowerCase().trim();
+
+    // Verify caller identity: user can only view their own registrations unless they are an admin
+    const isAdmin = req.user && ["admin", "super_admin", "branch_admin"].includes(req.user.role);
+    if (!isAdmin && (!req.user || req.user.email.toLowerCase() !== email)) {
+      return res.status(403).json({ success: false, message: "Access denied. You can only view your own event registrations." });
+    }
+
     const registrations = await Registration.find({ email }).populate("eventId").sort({ createdAt: -1 });
     res.json({ success: true, count: registrations.length, data: registrations });
   } catch (error) {

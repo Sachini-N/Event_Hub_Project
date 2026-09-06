@@ -1,12 +1,46 @@
 import React, { useState } from 'react';
 
 export default function PastEventDetailsPage({
-  event,
+  event: initialEvent,
   onBack,
   showToast,
   onOpenGalleryLightbox,
 }) {
+  const [activeEvent, setActiveEvent] = useState(initialEvent);
+  const [loadingEvent, setLoadingEvent] = useState(!initialEvent);
   const [isPlayingVideo, setIsPlayingVideo] = useState(false);
+
+  React.useEffect(() => {
+    if (initialEvent) {
+      setActiveEvent(initialEvent);
+      setLoadingEvent(false);
+      return;
+    }
+
+    const hash = window.location.hash || '';
+    const match = hash.match(/[?&]id=([^&]+)/);
+    const eventId = match ? match[1] : sessionStorage.getItem('eventhub_past_event_id');
+
+    if (eventId) {
+      setLoadingEvent(true);
+      fetch(`/api/events/${eventId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.data) {
+            setActiveEvent(data.data);
+          } else {
+            setActiveEvent(null);
+          }
+        })
+        .catch((err) => {
+          console.error('Error fetching past event on reload:', err);
+          setActiveEvent(null);
+        })
+        .finally(() => setLoadingEvent(false));
+    } else {
+      setLoadingEvent(false);
+    }
+  }, [initialEvent]);
 
   const getYouTubeEmbedUrl = (url) => {
     if (!url) return null;
@@ -14,33 +48,30 @@ export default function PastEventDetailsPage({
     const match = url.match(regExp);
     return match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}?autoplay=1` : null;
   };
-  // Default fallback data if event object is partial or missing
-  const pastEvent = event || {
-    _id: 'default-past-1',
-    title: 'CodeFest Colombo: Annual Hackathon',
-    category: 'Top Pick',
-    date: '2024-08-10T09:00:00.000Z',
-    endDate: '2024-08-12T17:00:00.000Z',
-    location: 'TRACE Expert City, Colombo, Sri Lanka',
-    coverImage: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1200&q=80',
-    description:
-      'Over 500 developers, designers, and innovators gathered for 48 hours of non-stop coding, solving real-world challenges in sustainable tech, artificial intelligence, and green mobility.',
-    attendeesCount: '520+ Participants',
-    winners: 'Team EcoTech (1st Place)',
-    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    highlights: [
-      '48-Hour Non-stop Innovation Hackathon',
-      'Over 50 Mentors, Industry Experts & Judges',
-      'Rs. 1,500,000 Total Prize Pool Awarded',
-      '12 Seed-Stage Sustainable Tech Startups Formed',
-    ],
-    gallery: [
-      'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=800&q=80',
-    ],
-  };
+
+  if (loadingEvent) {
+    return (
+      <div className="past-event-details-page" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem', padding: '4rem 1rem' }}>
+        <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2.5rem', color: '#5d4df6' }}></i>
+        <p style={{ color: '#64748b', fontWeight: '600' }}>Loading past event details...</p>
+      </div>
+    );
+  }
+
+  if (!activeEvent) {
+    return (
+      <div className="past-event-details-page" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem', padding: '4rem 1rem', textAlign: 'center' }}>
+        <i className="fa-regular fa-calendar-xmark" style={{ fontSize: '3rem', color: '#94a3b8' }}></i>
+        <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: '0.5rem 0' }}>Past Event Not Found</h2>
+        <p style={{ color: '#64748b', maxWidth: '400px', marginBottom: '1rem' }}>The requested past event could not be found.</p>
+        <button className="btn btn-primary" onClick={onBack}>
+          <i className="fa-solid fa-arrow-left"></i> Back to Past Events
+        </button>
+      </div>
+    );
+  }
+
+  const pastEvent = activeEvent;
 
   const handleDownloadResource = (resourceName) => {
     if (showToast) showToast(`Downloading ${resourceName}...`, 'info');

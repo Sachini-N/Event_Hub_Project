@@ -14,7 +14,7 @@ const { protect, authorize } = require("../middleware/authMiddleware");
 router.get("/", protect, authorize("admin", "super_admin", "branch_admin"), getAllVenueBookings);
 
 // GET venue bookings for user by email
-router.get("/user/:email", getUserVenueBookings);
+router.get("/user/:email", protect, getUserVenueBookings);
 
 // POST new venue booking inquiry
 router.post("/", createVenueBooking);

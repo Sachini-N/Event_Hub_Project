@@ -27,12 +27,12 @@ export default function ProfilePage({
   };
 
   useEffect(() => {
-    const initialName = currentUser?.name || 'Saduni Madushika';
-    const initialEmail = currentUser?.email || 'saduni@gmail.com';
+    const initialName = currentUser?.name || '';
+    const initialEmail = currentUser?.email || '';
     setName(initialName);
     setEmail(initialEmail);
-    setPhone(currentUser?.contactNumber || '+94 77 123 4567');
-    setAvatar(currentUser?.avatar ? currentUser.avatar : getInitialsAvatar(initialName));
+    setPhone(currentUser?.contactNumber || '');
+    setAvatar(currentUser?.avatar ? currentUser.avatar : (initialName ? getInitialsAvatar(initialName) : ''));
   }, [currentUser]);
 
   const handleImageUpload = (e) => {

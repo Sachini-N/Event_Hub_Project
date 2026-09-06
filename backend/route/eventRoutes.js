@@ -12,7 +12,7 @@ const { protect, authorize } = require("../middleware/authMiddleware");
 
 router.get("/", getEvents);
 router.get("/:id", getEventById);
-router.post("/", protect, createEvent);
+router.post("/", protect, authorize("admin", "super_admin", "branch_admin"), createEvent);
 router.put("/:id", protect, authorize("admin", "super_admin", "branch_admin"), updateEvent);
 router.delete("/:id", protect, authorize("admin", "super_admin", "branch_admin"), deleteEvent);
 
