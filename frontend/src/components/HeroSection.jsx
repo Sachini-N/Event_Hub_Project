@@ -101,23 +101,6 @@ export default function HeroSection({ scrollToEvents }) {
         </div>
       </div>
 
-      {/* Quick Stats Strip */}
-      <div className="hero-stats-strip">
-        <div className="stat-item">
-          <span className="stat-number">50+</span>
-          <span className="stat-label">Annual Tech Events</span>
-        </div>
-        <div className="stat-divider"></div>
-        <div className="stat-item">
-          <span className="stat-number">1,000+</span>
-          <span className="stat-label">Community Members</span>
-        </div>
-        <div className="stat-divider"></div>
-        <div className="stat-item">
-          <span className="stat-number">5+</span>
-          <span className="stat-label">Event Spaces</span>
-        </div>
-      </div>
 
       {/* Slide Indicators */}
       <div className="hero-indicators">

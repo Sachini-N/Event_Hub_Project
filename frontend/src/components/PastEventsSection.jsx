@@ -449,17 +449,6 @@ export default function PastEventsSection({
           })}
         </div>
 
-        {/* Prominent Center See More Button */}
-        <div style={{ textAlign: 'center', marginTop: '3rem' }}>
-          <button
-            type="button"
-            className="btn-see-more-past"
-            onClick={handleNavigateToPastEvents}
-          >
-            <span>See More Past Events</span>
-            <i className="fa-solid fa-arrow-right-long"></i>
-          </button>
-        </div>
       </div>
     </section>
   );
