@@ -120,13 +120,13 @@ export default function AdminDashboardPage({
       if (res.ok && data.success) {
         setShowAddBranchAdminModal(false);
         if (showToast) showToast(data.message, 'success');
-        
+
         // Show Email Dispatch Notification Modal to Admin
         setEmailNotificationModalData(data.emailNotification);
 
         // Refresh registered users list
         fetchDashboardData();
-        
+
         // Reset form
         setBranchAdminForm({
           name: '',
@@ -1181,10 +1181,10 @@ export default function AdminDashboardPage({
                                 <span style={{ color: '#475569', fontSize: '0.86rem', fontWeight: '500' }}>
                                   {u.createdAt
                                     ? new Date(u.createdAt).toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: 'short',
-                                        day: 'numeric',
-                                      })
+                                      year: 'numeric',
+                                      month: 'short',
+                                      day: 'numeric',
+                                    })
                                     : 'N/A'}
                                 </span>
                               </td>
@@ -1995,9 +1995,9 @@ export default function AdminDashboardPage({
                       <span>
                         {eventDateFilter
                           ? new Date(eventDateFilter + 'T00:00:00').toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                            })
+                            month: 'short',
+                            day: 'numeric',
+                          })
                           : 'Any Date'}
                       </span>
                       {eventDateFilter && (
@@ -2510,10 +2510,10 @@ export default function AdminDashboardPage({
                   <div className="current-status-value">
                     <span
                       className={`status-indicator-dot ${editingRegStatus === 'Confirmed'
-                          ? 'dot-confirmed'
-                          : editingRegStatus === 'Pending'
-                            ? 'dot-pending'
-                            : 'dot-cancelled'
+                        ? 'dot-confirmed'
+                        : editingRegStatus === 'Pending'
+                          ? 'dot-pending'
+                          : 'dot-cancelled'
                         }`}
                     ></span>
                     <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>{editingRegStatus}</strong>
@@ -2753,10 +2753,10 @@ export default function AdminDashboardPage({
                 <label style={{ marginBottom: '0.5rem', display: 'block' }}>Granted Permissions & Control Scope</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                   {[
-                    { id: 'manage_events', label: 'Create & Edit Branch Events' },
-                    { id: 'manage_registrations', label: 'Manage Participant Registrations' },
-                    { id: 'manage_spaces', label: 'Manage Branch Spaces & Inquiries' },
-                    { id: 'view_analytics', label: 'View Analytics & Reports' },
+                    { id: 'manage_events', label: '📅 Create & Edit Branch Events' },
+                    { id: 'manage_registrations', label: '👥 Manage Participant Registrations' },
+                    { id: 'manage_spaces', label: '🏢 Manage Branch Spaces & Inquiries' },
+                    { id: 'view_analytics', label: '📊 View Analytics & Reports' },
                   ].map((perm) => (
                     <label key={perm.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: '600', color: '#334155', cursor: 'pointer' }}>
                       <input
@@ -2924,10 +2924,10 @@ export default function AdminDashboardPage({
                 <label style={{ marginBottom: '0.5rem', display: 'block', fontWeight: '700', fontSize: '0.85rem' }}>Granted Permissions & Scope</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                   {[
-                    { id: 'manage_events', label: 'Create & Edit Branch Events' },
-                    { id: 'manage_registrations', label: 'Manage Participant Registrations' },
-                    { id: 'manage_spaces', label: 'Manage Branch Spaces & Inquiries' },
-                    { id: 'view_analytics', label: 'View Analytics & Reports' },
+                    { id: 'manage_events', label: '📅 Create & Edit Branch Events' },
+                    { id: 'manage_registrations', label: '👥 Manage Participant Registrations' },
+                    { id: 'manage_spaces', label: '🏢 Manage Branch Spaces & Inquiries' },
+                    { id: 'view_analytics', label: '📊 View Analytics & Reports' },
                   ].map((perm) => (
                     <label key={perm.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: '600', color: '#334155', cursor: 'pointer' }}>
                       <input

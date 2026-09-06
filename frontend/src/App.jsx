@@ -252,13 +252,12 @@ export default function App() {
       )}
 
       <main
-        className={`main-content ${
-          activeTab === 'home'
+        className={`main-content ${activeTab === 'home'
             ? 'is-home'
             : hideHeaderFooter
-            ? 'no-nav-offset'
-            : 'has-nav-offset'
-        }`}
+              ? 'no-nav-offset'
+              : 'has-nav-offset'
+          }`}
       >
         {activeTab === 'home' && (
           <>

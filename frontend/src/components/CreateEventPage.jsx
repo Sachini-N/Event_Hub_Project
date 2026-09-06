@@ -3,15 +3,15 @@ import { isEventPast } from '../utils/eventUtils';
 import RichTextEditor from './RichTextEditor';
 
 const TRACE_VENUE_PRESETS = [
-  { label: 'Bay 07 - TRACE Main Auditorium & Event Center', venue: 'Bay 07 - TRACE Main Auditorium', address: 'Bay 07, TRACE Expert City, Maradana Road, Colombo 01000, Sri Lanka' },
-  { label: 'CodeGen International (Bay 01-04)', venue: 'CodeGen International (Bay 01-04)', address: 'CodeGen International, Bay 01-04, TRACE Expert City, Colombo 01000, Sri Lanka' },
-  { label: 'LSEG Sri Lanka (Bay 11-12)', venue: 'LSEG Sri Lanka (Bay 11-12)', address: 'London Stock Exchange Group (LSEG), Bay 11-12, TRACE Expert City, Colombo 01000' },
-  { label: 'Sysco LABS Sri Lanka (Bay 05)', venue: 'Sysco LABS Sri Lanka (Bay 05)', address: 'Sysco LABS Sri Lanka, Bay 05, TRACE Expert City, Colombo 01000, Sri Lanka' },
-  { label: 'WSO2 Innovation Hub (Bay 08)', venue: 'WSO2 Innovation Hub (Bay 08)', address: 'WSO2 Sri Lanka, Bay 08, TRACE Expert City, Colombo 01000, Sri Lanka' },
-  { label: 'Calcey Technologies (Bay 09)', venue: 'Calcey Technologies (Bay 09)', address: 'Calcey Technologies, Bay 09, TRACE Expert City, Colombo 01000, Sri Lanka' },
-  { label: 'Pearson Sri Lanka (Bay 10)', venue: 'Pearson Sri Lanka (Bay 10)', address: 'Pearson Sri Lanka, Bay 10, TRACE Expert City, Colombo 01000, Sri Lanka' },
-  { label: 'Zone24x7 / Venture Engine (Bay 06)', venue: 'Zone24x7 / Venture Engine (Bay 06)', address: 'Zone24x7, Bay 06, TRACE Expert City, Colombo 01000, Sri Lanka' },
-  { label: 'TRACE Open Amphitheatre & Central Lawn', venue: 'TRACE Open Amphitheatre', address: 'TRACE Central Lawn & Open Amphitheatre, TRACE Expert City, Colombo 01000' },
+  { label: '🏛️ Bay 07 - TRACE Main Auditorium & Event Center', venue: 'Bay 07 - TRACE Main Auditorium', address: 'Bay 07, TRACE Expert City, Maradana Road, Colombo 01000, Sri Lanka' },
+  { label: '💻 CodeGen International (Bay 01-04)', venue: 'CodeGen International (Bay 01-04)', address: 'CodeGen International, Bay 01-04, TRACE Expert City, Colombo 01000, Sri Lanka' },
+  { label: '📈 LSEG Sri Lanka (Bay 11-12)', venue: 'LSEG Sri Lanka (Bay 11-12)', address: 'London Stock Exchange Group (LSEG), Bay 11-12, TRACE Expert City, Colombo 01000' },
+  { label: '🍔 Sysco LABS Sri Lanka (Bay 05)', venue: 'Sysco LABS Sri Lanka (Bay 05)', address: 'Sysco LABS Sri Lanka, Bay 05, TRACE Expert City, Colombo 01000, Sri Lanka' },
+  { label: '🚀 WSO2 Innovation Hub (Bay 08)', venue: 'WSO2 Innovation Hub (Bay 08)', address: 'WSO2 Sri Lanka, Bay 08, TRACE Expert City, Colombo 01000, Sri Lanka' },
+  { label: '⚙️ Calcey Technologies (Bay 09)', venue: 'Calcey Technologies (Bay 09)', address: 'Calcey Technologies, Bay 09, TRACE Expert City, Colombo 01000, Sri Lanka' },
+  { label: '📚 Pearson Sri Lanka (Bay 10)', venue: 'Pearson Sri Lanka (Bay 10)', address: 'Pearson Sri Lanka, Bay 10, TRACE Expert City, Colombo 01000, Sri Lanka' },
+  { label: '⚡ Zone24x7 / Venture Engine (Bay 06)', venue: 'Zone24x7 / Venture Engine (Bay 06)', address: 'Zone24x7, Bay 06, TRACE Expert City, Colombo 01000, Sri Lanka' },
+  { label: '🎭 TRACE Open Amphitheatre & Central Lawn', venue: 'TRACE Open Amphitheatre', address: 'TRACE Central Lawn & Open Amphitheatre, TRACE Expert City, Colombo 01000' },
 ];
 
 export default function CreateEventPage({ onCancel, onEventCreated, showToast, currentUser }) {
@@ -149,13 +149,13 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
       videoUrl: videoUrl.trim(),
       speaker: speakerName.trim()
         ? {
-            name: speakerName.trim(),
-            role: speakerRole.trim() || 'Guest Speaker',
-            bio: speakerBio.trim() || '',
-            avatar:
-              speakerAvatar ||
-              'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80',
-          }
+          name: speakerName.trim(),
+          role: speakerRole.trim() || 'Guest Speaker',
+          bio: speakerBio.trim() || '',
+          avatar:
+            speakerAvatar ||
+            'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80',
+        }
         : null,
     };
 
@@ -210,7 +210,8 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
         {/* Top Header & Actions Bar */}
         <div className="create-event-header" style={{ paddingRight: '2.5rem' }}>
           <div>
-            <h1 className="create-event-title">
+            <h1 className="create-event-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <i className="fa-solid fa-calendar-plus" style={{ color: '#5d4df6' }}></i>
               Create New Event
             </h1>
             <p className="create-event-sub">
@@ -241,7 +242,15 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
               onClick={() => handleSubmit(false)}
               disabled={submitting}
             >
-              {submitting ? 'Publishing...' : 'Publish Event'}
+              {submitting ? (
+                <>
+                  <i className="fa-solid fa-spinner fa-spin"></i> Publishing...
+                </>
+              ) : (
+                <>
+                  <i className="fa-solid fa-rocket"></i> Publish Event
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -253,11 +262,15 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
             {/* Block 1: Basic Information */}
             <div className="create-card-block">
               <div className="block-title-row">
+                <div className="section-icon-badge badge-indigo">
+                  <i className="fa-solid fa-pen-to-square"></i>
+                </div>
                 <h3>Basic Information</h3>
               </div>
 
               <div className="profile-form-group" style={{ marginBottom: '1.25rem' }}>
                 <label htmlFor="evt-title">
+                  <i className="fa-solid fa-heading" style={{ color: '#6366f1' }}></i>
                   Event Title *
                 </label>
                 <input
@@ -272,6 +285,7 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
 
               <div className="profile-form-group" style={{ marginBottom: '1.25rem' }}>
                 <label htmlFor="evt-category">
+                  <i className="fa-solid fa-layer-group" style={{ color: '#6366f1' }}></i>
                   Category *
                 </label>
                 <select
@@ -294,6 +308,7 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
               <div className="profile-form-group" style={{ marginBottom: '1.25rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <label htmlFor="evt-excerpt">
+                    <i className="fa-solid fa-align-left" style={{ color: '#6366f1' }}></i>
                     Short Description (Excerpt)
                   </label>
                   <span className="char-count">{shortDescription.length}/150 chars</span>
@@ -310,6 +325,7 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
 
               <div className="profile-form-group">
                 <label htmlFor="evt-full-desc">
+                  <i className="fa-solid fa-paragraph" style={{ color: '#6366f1' }}></i>
                   Full Description
                 </label>
                 <RichTextEditor
@@ -326,6 +342,9 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
             <div className="create-card-block" style={{ marginTop: '1.75rem' }}>
               <div className="block-title-row" style={{ justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div className="section-icon-badge badge-purple">
+                    <i className="fa-solid fa-user-tie"></i>
+                  </div>
                   <h3>Speaker Information</h3>
                 </div>
                 <button
@@ -345,7 +364,10 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
                     {speakerAvatar ? (
                       <img src={speakerAvatar} alt="Speaker" />
                     ) : (
-                      <span>Upload</span>
+                      <>
+                        <i className="fa-solid fa-camera"></i>
+                        <span>Upload</span>
+                      </>
                     )}
                   </label>
                   <input
@@ -359,6 +381,7 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
                   <div className="speaker-fields-grid">
                     <div className="profile-form-group">
                       <label>
+                        <i className="fa-solid fa-user" style={{ color: '#7c3aed' }}></i>
                         Name
                       </label>
                       <input
@@ -371,6 +394,7 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
 
                     <div className="profile-form-group">
                       <label>
+                        <i className="fa-solid fa-briefcase" style={{ color: '#7c3aed' }}></i>
                         Role/Title
                       </label>
                       <input
@@ -385,6 +409,7 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
 
                 <div className="profile-form-group" style={{ marginTop: '1rem' }}>
                   <label>
+                    <i className="fa-solid fa-id-card" style={{ color: '#7c3aed' }}></i>
                     Bio
                   </label>
                   <textarea
@@ -403,11 +428,15 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
             {/* Block 2: Schedule & Location */}
             <div className="create-card-block">
               <div className="block-title-row">
+                <div className="section-icon-badge badge-emerald">
+                  <i className="fa-solid fa-calendar-days"></i>
+                </div>
                 <h3>Schedule & Location</h3>
               </div>
 
               <div className="profile-form-group" style={{ marginBottom: '1.25rem' }}>
                 <label htmlFor="evt-date">
+                  <i className="fa-regular fa-calendar" style={{ color: '#059669' }}></i>
                   Date *
                 </label>
                 <input
@@ -422,6 +451,7 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
               <div className="time-row-grid" style={{ marginBottom: '1.25rem' }}>
                 <div className="profile-form-group">
                   <label>
+                    <i className="fa-regular fa-clock" style={{ color: '#059669' }}></i>
                     Start Time *
                   </label>
                   <input
@@ -433,6 +463,7 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
 
                 <div className="profile-form-group">
                   <label>
+                    <i className="fa-solid fa-clock-rotate-left" style={{ color: '#059669' }}></i>
                     End Time *
                   </label>
                   <input
@@ -445,7 +476,8 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
 
               {/* TRACE Venue Preset Selector */}
               <div className="profile-form-group" style={{ marginBottom: '1.25rem' }}>
-                <label style={{ display: 'block', fontWeight: '700', color: '#0f172a' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700', color: '#0f172a' }}>
+                  <i className="fa-solid fa-building" style={{ color: '#059669' }}></i>
                   Select TRACE Expert City Venue (Auto-Fill)
                 </label>
                 <select
@@ -479,6 +511,7 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
 
               <div className="profile-form-group" style={{ marginBottom: '1.25rem' }}>
                 <label>
+                  <i className="fa-solid fa-map-pin" style={{ color: '#059669' }}></i>
                   Venue Name *
                 </label>
                 <input
@@ -491,6 +524,7 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
 
               <div className="profile-form-group" style={{ marginBottom: '1.25rem' }}>
                 <label>
+                  <i className="fa-solid fa-location-dot" style={{ color: '#059669' }}></i>
                   Full Address
                 </label>
                 <input
@@ -517,7 +551,7 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
                         setFullAddress(preset.address);
                       }}
                     >
-                      {preset.venue.replace(' - TRACE', '').replace(' (Bay 01-04)', '')}
+                      📍 {preset.venue.replace(' - TRACE', '').replace(' (Bay 01-04)', '')}
                     </button>
                   ))}
                 </div>
@@ -527,11 +561,15 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
             {/* Block 4: Media & Registration */}
             <div className="create-card-block" style={{ marginTop: '1.75rem' }}>
               <div className="block-title-row">
+                <div className="section-icon-badge badge-amber">
+                  <i className="fa-solid fa-photo-film"></i>
+                </div>
                 <h3>Media & Registration</h3>
               </div>
 
               <div className="profile-form-group" style={{ marginBottom: '1.5rem' }}>
                 <label>
+                  <i className="fa-solid fa-image" style={{ color: '#d97706' }}></i>
                   Event Cover Image
                 </label>
                 <label htmlFor="cover-file-upload-input" className="cover-dropzone-box">
@@ -542,6 +580,9 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
                     </div>
                   ) : (
                     <>
+                      <div className="cloud-upload-circle">
+                        <i className="fa-solid fa-cloud-arrow-up"></i>
+                      </div>
                       <p className="dropzone-text">
                         <strong>Click to upload</strong> or drag and drop
                       </p>
@@ -560,7 +601,8 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
 
               {/* YouTube Video Link Input */}
               <div className="profile-form-group" style={{ marginBottom: '1.5rem' }}>
-                <label htmlFor="evt-video-url" style={{ display: 'block' }}>
+                <label htmlFor="evt-video-url" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <i className="fa-brands fa-youtube" style={{ color: '#ff0000', fontSize: '1.1rem' }}></i>
                   YouTube Video Link / Keynote Recording
                 </label>
                 <input
@@ -599,6 +641,7 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
               <div className="time-row-grid">
                 <div className="profile-form-group">
                   <label>
+                    <i className="fa-solid fa-users" style={{ color: '#d97706' }}></i>
                     Max Capacity
                   </label>
                   <input
@@ -612,6 +655,7 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
 
                 <div className="profile-form-group">
                   <label>
+                    <i className="fa-regular fa-calendar-xmark" style={{ color: '#d97706' }}></i>
                     Deadline
                   </label>
                   <input
