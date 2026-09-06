@@ -542,19 +542,21 @@ export default function VenuesPage({ showToast }) {
           >
             {/* Top Navigation Bar: Space Name, Price, and Modern Tab Switcher */}
             <div className="venue-modal-header-bar">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '1.15rem', fontWeight: '800', color: '#0f172a' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                <h2 style={{ fontSize: '1.65rem', fontWeight: '800', color: '#0f172a', margin: 0, lineHeight: 1.25, letterSpacing: '-0.02em' }}>
                   {activeVenueModal.name}
-                </span>
-                <span style={{ background: '#eef2ff', color: '#5d4df6', fontWeight: '700', padding: '0.25rem 0.65rem', borderRadius: '20px', fontSize: '0.74rem', border: '1px solid #c7d2fe' }}>
-                  <i className="fa-solid fa-building"></i> {activeVenueModal.branch || 'TRACE Expert City'}
-                </span>
-                <span style={{ fontSize: '0.74rem', fontWeight: '700', color: activeVenueModal.status === 'Available' ? '#059669' : '#d97706', background: activeVenueModal.status === 'Available' ? '#dcfce7' : '#fef3c7', padding: '0.25rem 0.65rem', borderRadius: '20px' }}>
-                  ● {activeVenueModal.status || 'Available'}
-                </span>
-                <span style={{ fontSize: '0.8rem', fontWeight: '800', color: '#059669', background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '0.25rem 0.65rem', borderRadius: '6px' }}>
-                  <i className="fa-solid fa-tag"></i> {activeVenueModal.rentalPrice || (activeVenueModal.pricePerHour ? `Rs. ${activeVenueModal.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr')}
-                </span>
+                </h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                  <span style={{ background: '#eef2ff', color: '#5d4df6', fontWeight: '700', padding: '0.25rem 0.65rem', borderRadius: '20px', fontSize: '0.76rem', border: '1px solid #c7d2fe', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                    <i className="fa-solid fa-building"></i> {activeVenueModal.branch || 'TRACE Expert City'}
+                  </span>
+                  <span style={{ fontSize: '0.76rem', fontWeight: '700', color: activeVenueModal.status === 'Available' ? '#059669' : '#d97706', background: activeVenueModal.status === 'Available' ? '#dcfce7' : '#fef3c7', padding: '0.25rem 0.65rem', borderRadius: '20px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    ● {activeVenueModal.status || 'Available'}
+                  </span>
+                  <span style={{ fontSize: '0.82rem', fontWeight: '800', color: '#059669', background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '0.25rem 0.65rem', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                    <i className="fa-solid fa-tag"></i> {activeVenueModal.rentalPrice || (activeVenueModal.pricePerHour ? `Rs. ${activeVenueModal.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr')}
+                  </span>
+                </div>
               </div>
 
               {/* Modern Segmented Navigation Tabs */}
