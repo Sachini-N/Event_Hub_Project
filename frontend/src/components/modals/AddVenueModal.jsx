@@ -16,12 +16,8 @@ export default function AddVenueModal({
   const [capacity, setCapacity] = useState('150');
   const [pricePerHour, setPricePerHour] = useState('25000');
   const [status, setStatus] = useState('Available');
-  const [coverImage, setCoverImage] = useState('https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80');
-  const [imageList, setImageList] = useState([
-    'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1431540015161-0bf868a2d407?auto=format&fit=crop&w=800&q=80'
-  ]);
+  const [coverImage, setCoverImage] = useState('');
+  const [imageList, setImageList] = useState([]);
   const [amenities, setAmenities] = useState('High-Speed WiFi, 4K Projectors, Air Conditioned, Sound System');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -58,7 +54,7 @@ export default function AddVenueModal({
         ? editingVenue.images
         : (editingVenue.coverImage ? [editingVenue.coverImage] : []);
       setImageList(existingImgs);
-      setCoverImage(editingVenue.coverImage || existingImgs[0] || 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80');
+      setCoverImage(editingVenue.coverImage || existingImgs[0] || '');
       setAmenities(Array.isArray(editingVenue.amenities) ? editingVenue.amenities.join(', ') : (editingVenue.amenities || ''));
       setDescription(editingVenue.description || '');
     } else {
@@ -69,13 +65,8 @@ export default function AddVenueModal({
       setCapacity('150');
       setPricePerHour('25000');
       setStatus('Available');
-      const defaultImgs = [
-        'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1431540015161-0bf868a2d407?auto=format&fit=crop&w=800&q=80'
-      ];
-      setCoverImage(defaultImgs[0]);
-      setImageList(defaultImgs);
+      setCoverImage('');
+      setImageList([]);
       setAmenities('High-Speed WiFi, 4K Projectors, Air Conditioned, Sound System');
       setDescription('');
     }
@@ -189,18 +180,13 @@ export default function AddVenueModal({
 
         {/* Modal Header */}
         <div className="create-event-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div className="create-event-title-badge" style={{ background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)' }}>
-              <i className="fa-solid fa-building-circle-check"></i>
-            </div>
-            <div>
-              <h1 className="create-event-title">
-                {editingVenue ? 'Edit Space Facility' : 'Add New Space'}
-              </h1>
-              <p className="create-event-sub">
-                {editingVenue ? 'Modify details, capacity, rental price, and amenities for this space.' : 'Create a new hall, auditorium, or event facility space on TRACE.'}
-              </p>
-            </div>
+          <div>
+            <h1 className="create-event-title">
+              {editingVenue ? 'Edit Space Facility' : 'Add New Space'}
+            </h1>
+            <p className="create-event-sub">
+              {editingVenue ? 'Modify details, capacity, rental price, and amenities for this space.' : 'Create a new hall, auditorium, or event facility space on TRACE.'}
+            </p>
           </div>
         </div>
 
@@ -209,16 +195,12 @@ export default function AddVenueModal({
           {/* Section 1: Location & Branch */}
           <div className="create-card-block" style={{ marginBottom: '1.5rem' }}>
             <div className="block-title-row">
-              <div className="section-icon-badge badge-indigo">
-                <i className="fa-solid fa-location-dot"></i>
-              </div>
               <h3>Branch & Location Details</h3>
             </div>
 
             <div className="time-row-grid" style={{ marginBottom: '1.25rem' }}>
               <div className="profile-form-group">
                 <label htmlFor="venue-branch">
-                  <i className="fa-solid fa-building" style={{ color: '#6366f1' }}></i>
                   TRACE Branch *
                 </label>
                 <select
@@ -237,7 +219,6 @@ export default function AddVenueModal({
 
               <div className="profile-form-group">
                 <label htmlFor="venue-province">
-                  <i className="fa-solid fa-map" style={{ color: '#6366f1' }}></i>
                   Sri Lanka Province *
                 </label>
                 <select
@@ -262,7 +243,6 @@ export default function AddVenueModal({
             <div className="time-row-grid" style={{ marginBottom: '1.25rem' }}>
               <div className="profile-form-group">
                 <label htmlFor="venue-name">
-                  <i className="fa-solid fa-landmark" style={{ color: '#6366f1' }}></i>
                   Venue / Hall Name *
                 </label>
                 <input
@@ -277,7 +257,6 @@ export default function AddVenueModal({
 
               <div className="profile-form-group">
                 <label htmlFor="venue-status">
-                  <i className="fa-solid fa-shield-halved" style={{ color: '#6366f1' }}></i>
                   Availability Status
                 </label>
                 <select
@@ -294,7 +273,6 @@ export default function AddVenueModal({
 
             <div className="profile-form-group">
               <label htmlFor="venue-address">
-                <i className="fa-solid fa-location-dot" style={{ color: '#6366f1' }}></i>
                 Address & Location Details *
               </label>
               <input
@@ -311,16 +289,12 @@ export default function AddVenueModal({
           {/* Section 2: Space Specs & Pricing */}
           <div className="create-card-block" style={{ marginBottom: '1.5rem' }}>
             <div className="block-title-row">
-              <div className="section-icon-badge badge-emerald">
-                <i className="fa-solid fa-sliders"></i>
-              </div>
               <h3>Space Capacity & Rental Pricing</h3>
             </div>
 
             <div className="time-row-grid">
               <div className="profile-form-group">
                 <label htmlFor="venue-capacity">
-                  <i className="fa-solid fa-users" style={{ color: '#059669' }}></i>
                   Seating Capacity (Guests) *
                 </label>
                 <input
@@ -336,7 +310,6 @@ export default function AddVenueModal({
 
               <div className="profile-form-group">
                 <label htmlFor="venue-price">
-                  <i className="fa-solid fa-money-bill-wave" style={{ color: '#059669' }}></i>
                   Rental Price (LKR per hour) *
                 </label>
                 <input
@@ -355,16 +328,12 @@ export default function AddVenueModal({
           {/* Section 3: Photo Gallery & Amenities */}
           <div className="create-card-block">
             <div className="block-title-row">
-              <div className="section-icon-badge badge-amber">
-                <i className="fa-solid fa-photo-film"></i>
-              </div>
               <h3>Photo Gallery, Amenities & Description</h3>
             </div>
 
             {/* Cover Image Upload & URL Input */}
             <div className="profile-form-group" style={{ marginBottom: '1.5rem' }}>
               <label htmlFor="venue-image">
-                <i className="fa-solid fa-images" style={{ color: '#d97706' }}></i>
                 Venue Photos (Upload multiple photos for gallery carousel)
               </label>
               <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
@@ -389,7 +358,7 @@ export default function AddVenueModal({
                   className="btn-create-publish"
                   style={{ cursor: 'pointer', whiteSpace: 'nowrap', padding: '0.65rem 0.9rem', fontSize: '0.85rem' }}
                 >
-                  <i className="fa-solid fa-cloud-arrow-up"></i> Upload Photos
+                  Upload Photos
                 </label>
                 <input
                   type="file"
@@ -462,7 +431,6 @@ export default function AddVenueModal({
 
             <div className="profile-form-group" style={{ marginBottom: '1.25rem' }}>
               <label htmlFor="venue-amenities">
-                <i className="fa-solid fa-wand-magic-sparkles" style={{ color: '#d97706' }}></i>
                 Amenities & Facilities (Comma-separated)
               </label>
               <input
@@ -476,7 +444,6 @@ export default function AddVenueModal({
 
             <div className="profile-form-group">
               <label htmlFor="venue-desc">
-                <i className="fa-solid fa-paragraph" style={{ color: '#d97706' }}></i>
                 Space Description
               </label>
               <RichTextEditor
@@ -495,15 +462,7 @@ export default function AddVenueModal({
               Cancel
             </button>
             <button type="submit" className="btn-create-publish" disabled={submitting}>
-              {submitting ? (
-                <>
-                  <i className="fa-solid fa-spinner fa-spin"></i> Saving...
-                </>
-              ) : (
-                <>
-                  <i className="fa-solid fa-check"></i> {editingVenue ? 'Update Space' : 'Save & Publish Space'}
-                </>
-              )}
+              {submitting ? 'Saving...' : (editingVenue ? 'Update Space' : 'Save & Publish Space')}
             </button>
           </div>
         </form>

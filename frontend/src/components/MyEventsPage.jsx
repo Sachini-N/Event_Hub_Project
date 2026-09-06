@@ -12,6 +12,18 @@ export default function MyEventsPage({
   const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Filter States
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All Categories');
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('Any Location');
+  const [appliedFilters, setAppliedFilters] = useState({
+    searchQuery: '',
+    selectedCategory: 'All Categories',
+    selectedDate: '',
+    selectedLocation: 'Any Location',
+  });
+
   const fetchUserRegistrations = async (emailToFetch) => {
     if (!emailToFetch) {
       setRegistrations([]);
@@ -33,6 +45,7 @@ export default function MyEventsPage({
               _id: reg._id,
               eventId: evt._id,
               title: evt.title,
+              category: evt.category || 'Workshop',
               description: evt.description || '',
               date: evt.date || new Date(),
               time: evt.time || '10:00 AM',
@@ -61,6 +74,28 @@ export default function MyEventsPage({
       setRegistrations([]);
     }
   }, [currentUser]);
+
+  const handleFilterClick = () => {
+    setAppliedFilters({
+      searchQuery,
+      selectedCategory,
+      selectedDate,
+      selectedLocation,
+    });
+  };
+
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('All Categories');
+    setSelectedDate('');
+    setSelectedLocation('Any Location');
+    setAppliedFilters({
+      searchQuery: '',
+      selectedCategory: 'All Categories',
+      selectedDate: '',
+      selectedLocation: 'Any Location',
+    });
+  };
 
   const downloadIcs = (eventItem) => {
     const eventDate = new Date(eventItem.date || Date.now());
@@ -139,8 +174,43 @@ export default function MyEventsPage({
   };
 
   const filteredRegistrations = registrations.filter((item) => {
-    if (activeSubTab === 'upcoming') return item.status !== 'past';
-    return item.status === 'past';
+    // SubTab Filter
+    if (activeSubTab === 'upcoming' && item.status === 'past') return false;
+    if (activeSubTab === 'past' && item.status !== 'past') return false;
+
+    // Search Query Filter
+    if (appliedFilters.searchQuery.trim()) {
+      const q = appliedFilters.searchQuery.toLowerCase().trim();
+      const matchTitle = item.title?.toLowerCase().includes(q);
+      const matchDesc = item.description?.toLowerCase().includes(q);
+      const matchLoc = item.location?.toLowerCase().includes(q);
+      if (!matchTitle && !matchDesc && !matchLoc) return false;
+    }
+
+    // Category Filter
+    if (appliedFilters.selectedCategory && appliedFilters.selectedCategory !== 'All Categories') {
+      if (item.category && item.category !== appliedFilters.selectedCategory) {
+        return false;
+      }
+    }
+
+    // Date Filter
+    if (appliedFilters.selectedDate) {
+      const itemDateStr = item.date ? new Date(item.date).toISOString().split('T')[0] : '';
+      if (itemDateStr !== appliedFilters.selectedDate) {
+        return false;
+      }
+    }
+
+    // Location Filter
+    if (appliedFilters.selectedLocation && appliedFilters.selectedLocation !== 'Any Location') {
+      const locQ = appliedFilters.selectedLocation.toLowerCase();
+      if (!item.location?.toLowerCase().includes(locQ)) {
+        return false;
+      }
+    }
+
+    return true;
   });
 
   return (
@@ -150,6 +220,83 @@ export default function MyEventsPage({
         <div className="my-events-header">
           <h1 className="my-events-title">My Events</h1>
           <p className="my-events-subtitle">Manage your registrations and event schedules.</p>
+        </div>
+
+        {/* Filters Bar matching reference screenshot */}
+        <div className="filter-bar-container" style={{ marginBottom: '1.75rem' }}>
+          <div className="filter-item">
+            <label htmlFor="my-filter-search">Search Events</label>
+            <div className="search-input-wrapper">
+              <i className="fa-solid fa-magnifying-glass search-icon"></i>
+              <input
+                type="text"
+                id="my-filter-search"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="filter-item">
+            <label htmlFor="my-filter-category">Category</label>
+            <div className="select-wrapper">
+              <select
+                id="my-filter-category"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+              >
+                <option value="All Categories">All Categories</option>
+                <option value="Talk">Talk</option>
+                <option value="Meetup">Meetup</option>
+                <option value="Workshop">Workshop</option>
+                <option value="Sprint">Sprint</option>
+                <option value="Hackathon">Hackathon</option>
+                <option value="Keynote">Keynote</option>
+              </select>
+              <i className="fa-solid fa-chevron-down select-arrow"></i>
+            </div>
+          </div>
+
+          <div className="filter-item">
+            <label htmlFor="my-filter-date">Date</label>
+            <div className="date-input-wrapper">
+              <input
+                type="date"
+                id="my-filter-date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="filter-item">
+            <label htmlFor="my-filter-location">Location</label>
+            <div className="select-wrapper">
+              <select
+                id="my-filter-location"
+                value={selectedLocation}
+                onChange={(e) => setSelectedLocation(e.target.value)}
+              >
+                <option value="Any Location">Any Location</option>
+                <option value="TRACE Expert City">TRACE Expert City</option>
+                <option value="Colombo">Colombo</option>
+                <option value="Kandy">Kandy</option>
+                <option value="Galle">Galle</option>
+                <option value="Jaffna">Jaffna</option>
+              </select>
+              <i className="fa-solid fa-chevron-down select-arrow"></i>
+            </div>
+          </div>
+
+          <div className="filter-actions">
+            <button className="btn btn-primary btn-filter" onClick={handleFilterClick}>
+              Filter
+            </button>
+            <button className="btn btn-link btn-clear" onClick={handleClearFilters}>
+              Clear
+            </button>
+          </div>
         </div>
 
         {/* Subtab Filter Bar matching screenshot */}
