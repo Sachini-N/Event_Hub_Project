@@ -191,43 +191,6 @@ export default function PastEventDetailsPage({
                 )}
               </div>
             </div>
-
-            {/* Photo Gallery Showcase Grid */}
-            {(() => {
-              const galleryList = (pastEvent.gallery && pastEvent.gallery.length > 0)
-                ? pastEvent.gallery
-                : (pastEvent.coverImage ? [pastEvent.coverImage] : []);
-
-              if (galleryList.length === 0) return null;
-
-              return (
-                <div className="past-content-card">
-                  <h2 className="past-card-heading">
-                    <i className="fa-solid fa-images"></i> Event Photo Gallery & Moments
-                  </h2>
-                  <div className="past-gallery-grid-4col">
-                    {galleryList.map((item, gIdx) => {
-                      const imgUrl = typeof item === 'string' ? item : (item.url || item);
-                      return (
-                        <div
-                          key={gIdx}
-                          className="past-gallery-thumb"
-                          onClick={() =>
-                            onOpenGalleryLightbox &&
-                            onOpenGalleryLightbox({ title: pastEvent.title, gallery: galleryList }, gIdx)
-                          }
-                        >
-                          <img src={imgUrl} alt={`Gallery moment ${gIdx + 1}`} />
-                          <div className="thumb-hover-overlay">
-                            <i className="fa-solid fa-magnifying-glass-plus"></i>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })()}
           </div>
 
           {/* RIGHT SIDEBAR COLUMN */}
@@ -270,7 +233,6 @@ export default function PastEventDetailsPage({
               </div>
             </div>
 
-
             {/* Share Panel */}
             <div className="past-sidebar-card">
               <h3 className="sidebar-card-title">Share Event Archive</h3>
@@ -280,6 +242,49 @@ export default function PastEventDetailsPage({
                 </button>
               </div>
             </div>
+
+            {/* Photo Gallery Showcase Grid (positioned in the right space next to the YouTube recording) */}
+            {(() => {
+              const galleryList = (pastEvent.gallery && pastEvent.gallery.length > 0)
+                ? pastEvent.gallery
+                : (pastEvent.coverImage ? [pastEvent.coverImage] : []);
+
+              if (galleryList.length === 0) return null;
+
+              return (
+                <div className="past-sidebar-card past-gallery-sidebar-card">
+                  <h3 className="sidebar-card-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.15rem' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <i className="fa-solid fa-images" style={{ color: '#5d4df6' }}></i> Event Gallery & Moments
+                    </span>
+                    <span style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: '700', background: '#f1f5f9', padding: '3px 9px', borderRadius: '12px' }}>
+                      {galleryList.length} Photos
+                    </span>
+                  </h3>
+                  <div className="past-gallery-sidebar-grid">
+                    {galleryList.map((item, gIdx) => {
+                      const imgUrl = typeof item === 'string' ? item : (item.url || item);
+                      return (
+                        <div
+                          key={gIdx}
+                          className="past-gallery-thumb"
+                          onClick={() =>
+                            onOpenGalleryLightbox &&
+                            onOpenGalleryLightbox({ title: pastEvent.title, gallery: galleryList }, gIdx)
+                          }
+                          title="Click to view full photo"
+                        >
+                          <img src={imgUrl} alt={`Gallery moment ${gIdx + 1}`} />
+                          <div className="thumb-hover-overlay">
+                            <i className="fa-solid fa-magnifying-glass-plus"></i>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>

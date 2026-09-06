@@ -6305,6 +6305,22 @@ input:checked+.slider:before {
   opacity: 1;
 }
 
+/* Sidebar Photo Gallery Grid (placed in right sidebar space next to YouTube video) */
+.past-gallery-sidebar-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.85rem;
+}
+
+.past-gallery-sidebar-grid .past-gallery-thumb {
+  height: 125px;
+  border-radius: 10px;
+}
+
+.past-gallery-sidebar-card {
+  padding: 1.5rem;
+}
+
 /* Right Sidebar Column */
 .past-details-right-column {
   display: flex;
