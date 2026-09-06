@@ -204,19 +204,6 @@ export default function AdminDashboardPage({
     },
   ]);
 
-  // Settings State
-  const [settingsForm, setSettingsForm] = useState({
-    orgName: 'TRACE Sri Lanka',
-    contactEmail: 'support@trace.lk',
-    contactPhone: '+94 11 234 5678',
-    timezone: 'Asia/Colombo (GMT+5:30)',
-    currency: 'LKR (Rs.)',
-    emailConfirmations: true,
-    smsReminders: true,
-    adminDigest: true,
-    requireDeleteConfirm: true,
-  });
-
   const [showAddVenueModal, setShowAddVenueModal] = useState(false);
   const [venueBookings, setVenueBookings] = useState([]);
   const [inquirySearchQuery, setInquirySearchQuery] = useState('');
@@ -697,12 +684,6 @@ export default function AdminDashboardPage({
                 {pendingInquiriesCount}
               </span>
             )}
-          </button>
-          <button
-            className={`admin-nav-item ${activeMenu === 'settings' ? 'active' : ''}`}
-            onClick={() => setActiveMenu('settings')}
-          >
-            <i className="fa-solid fa-gear"></i> Settings
           </button>
         </nav>
 
@@ -1811,128 +1792,6 @@ export default function AdminDashboardPage({
                     </table>
                   </div>
                 )}
-              </div>
-            </div>
-          ) : activeMenu === 'settings' ? (
-            /* VIEW: SETTINGS VIEW */
-            <div className="manage-settings-container">
-              <div className="admin-dashboard-title-row">
-                <div>
-                  <h1 className="admin-page-title">Platform Settings</h1>
-                  <p style={{ fontSize: '0.95rem', color: '#64748b', marginTop: '0.2rem' }}>
-                    Configure enterprise platform details, notifications, and security preferences.
-                  </p>
-                </div>
-                <button
-                  className="btn-create-event-blue"
-                  onClick={() => {
-                    if (showToast) showToast('Platform settings saved successfully!', 'success');
-                  }}
-                >
-                  <i className="fa-regular fa-floppy-disk"></i> Save Settings
-                </button>
-              </div>
-
-              <div className="settings-container-box">
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '1.25rem', color: '#0f172a' }}>
-                  Organization Profile
-                </h3>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
-                  <div className="form-group">
-                    <label>Organization Name</label>
-                    <input
-                      type="text"
-                      value={settingsForm.orgName}
-                      onChange={(e) => setSettingsForm({ ...settingsForm, orgName: e.target.value })}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Support Contact Email</label>
-                    <input
-                      type="email"
-                      value={settingsForm.contactEmail}
-                      onChange={(e) => setSettingsForm({ ...settingsForm, contactEmail: e.target.value })}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Support Contact Phone</label>
-                    <input
-                      type="tel"
-                      value={settingsForm.contactPhone}
-                      onChange={(e) => setSettingsForm({ ...settingsForm, contactPhone: e.target.value })}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Default Timezone</label>
-                    <input
-                      type="text"
-                      value={settingsForm.timezone}
-                      onChange={(e) => setSettingsForm({ ...settingsForm, timezone: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <hr style={{ borderColor: 'var(--border-light)', margin: '1.5rem 0' }} />
-
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '1rem', color: '#0f172a' }}>
-                  Notifications & Automated Emails
-                </h3>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.92rem', color: '#334155' }}>
-                    <input
-                      type="checkbox"
-                      checked={settingsForm.emailConfirmations}
-                      onChange={(e) => setSettingsForm({ ...settingsForm, emailConfirmations: e.target.checked })}
-                      style={{ width: '18px', height: '18px', accentColor: '#5d4df6' }}
-                    />
-                    Send automatic email confirmation with QR pass upon user registration.
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.92rem', color: '#334155' }}>
-                    <input
-                      type="checkbox"
-                      checked={settingsForm.smsReminders}
-                      onChange={(e) => setSettingsForm({ ...settingsForm, smsReminders: e.target.checked })}
-                      style={{ width: '18px', height: '18px', accentColor: '#5d4df6' }}
-                    />
-                    Send automated event reminder 24 hours prior to event start.
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.92rem', color: '#334155' }}>
-                    <input
-                      type="checkbox"
-                      checked={settingsForm.adminDigest}
-                      onChange={(e) => setSettingsForm({ ...settingsForm, adminDigest: e.target.checked })}
-                      style={{ width: '18px', height: '18px', accentColor: '#5d4df6' }}
-                    />
-                    Daily registration digest summary sent to administrator inbox.
-                  </label>
-                </div>
-
-                <hr style={{ borderColor: 'var(--border-light)', margin: '1.5rem 0' }} />
-
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '1rem', color: '#0f172a' }}>
-                  Security & Access Control
-                </h3>
-
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.92rem', color: '#334155', marginBottom: '1.5rem' }}>
-                  <input
-                    type="checkbox"
-                    checked={settingsForm.requireDeleteConfirm}
-                    onChange={(e) => setSettingsForm({ ...settingsForm, requireDeleteConfirm: e.target.checked })}
-                    style={{ width: '18px', height: '18px', accentColor: '#5d4df6' }}
-                  />
-                  Require explicit admin confirmation dialog for deleting events or user registrations.
-                </label>
-
-                <button
-                  className="btn-save-changes-blue"
-                  onClick={() => {
-                    if (showToast) showToast('Platform settings saved successfully!', 'success');
-                  }}
-                >
-                  Save Platform Configuration
-                </button>
               </div>
             </div>
           ) : isEventsView ? (
