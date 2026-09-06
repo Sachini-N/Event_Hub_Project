@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import EditEventModal from './modals/EditEventModal';
 import AddVenueModal from './modals/AddVenueModal';
 import CreateEventPage from './CreateEventPage';
@@ -26,6 +26,8 @@ export default function AdminDashboardPage({
   const [activeMenu, setActiveMenu] = useState('dashboard');
   const [eventTab, setEventTab] = useState('all'); // 'all', 'upcoming', 'past'
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'upcoming', 'past'
+  const [eventDateFilter, setEventDateFilter] = useState('');
+  const dateInputRef = useRef(null);
 
   // Registrations View State
   const [regEventFilter, setRegEventFilter] = useState('all');
@@ -545,6 +547,21 @@ export default function AdminDashboardPage({
     if (eventTab === 'upcoming' && evt.status !== 'upcoming') return false;
     if (eventTab === 'past' && evt.status !== 'past') return false;
     if (statusFilter !== 'all' && evt.status !== statusFilter) return false;
+    if (eventDateFilter) {
+      try {
+        const [selY, selM, selD] = eventDateFilter.split('-').map(Number);
+        const evtD = new Date(evt.date);
+        if (
+          evtD.getFullYear() !== selY ||
+          evtD.getMonth() + 1 !== selM ||
+          evtD.getDate() !== selD
+        ) {
+          return false;
+        }
+      } catch (e) {
+        // ignore date parse issues
+      }
+    }
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -1856,9 +1873,75 @@ export default function AdminDashboardPage({
                     <option value="past">Past</option>
                   </select>
 
-                  <button className="filter-btn-outline">
-                    <i className="fa-regular fa-calendar"></i> Any Date
-                  </button>
+                  <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                    <input
+                      type="date"
+                      ref={dateInputRef}
+                      value={eventDateFilter}
+                      onChange={(e) => setEventDateFilter(e.target.value)}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: 0,
+                        height: 0,
+                        opacity: 0,
+                        pointerEvents: 'none',
+                        border: 'none',
+                        padding: 0,
+                        margin: 0,
+                      }}
+                    />
+                    <button
+                      className="filter-btn-outline"
+                      type="button"
+                      onClick={() => {
+                        try {
+                          if (dateInputRef.current && typeof dateInputRef.current.showPicker === 'function') {
+                            dateInputRef.current.showPicker();
+                          } else if (dateInputRef.current) {
+                            dateInputRef.current.focus();
+                          }
+                        } catch (err) {
+                          dateInputRef.current?.focus();
+                        }
+                      }}
+                      title={eventDateFilter ? 'Click to change date' : 'Filter by date'}
+                    >
+                      <i className="fa-regular fa-calendar"></i>
+                      <span>
+                        {eventDateFilter
+                          ? new Date(eventDateFilter + 'T00:00:00').toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                            })
+                          : 'Any Date'}
+                      </span>
+                      {eventDateFilter && (
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          title="Clear date filter"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEventDateFilter('');
+                          }}
+                          style={{
+                            marginLeft: '4px',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            color: '#94a3b8',
+                            fontSize: '0.85rem',
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
+                          onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
+                        >
+                          <i className="fa-solid fa-xmark"></i>
+                        </span>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
 
