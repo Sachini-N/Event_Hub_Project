@@ -33,6 +33,33 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
+// Serverless-friendly cached MongoDB connection helper
+let isDbConnected = false;
+const connectDB = async () => {
+  if (isDbConnected || mongoose.connection.readyState >= 1) return;
+  if (!process.env.MONGO_URI) {
+    throw new Error("MONGO_URI is not defined in environment variables.");
+  }
+  await mongoose.connect(process.env.MONGO_URI);
+  isDbConnected = true;
+  console.log("Connected to MongoDB successfully!");
+  await seedInitialEvents();
+  await seedAdminUser();
+  await seedInitialVenues();
+  await seedInitialVenueBookings();
+};
+
+// Ensure database connection before serving any request (essential for Vercel serverless cold starts)
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error("Database connection error:", err.message);
+    res.status(500).json({ success: false, message: "Database connection failed", error: err.message });
+  }
+});
+
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
@@ -66,22 +93,10 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-// Start server immediately
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-if (!process.env.MONGO_URI) {
-  console.error("FATAL ERROR: MONGO_URI is not defined in environment variables.");
-  process.exit(1);
+// Start server locally when not running inside Vercel serverless runtime
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  connectDB().catch((err) => console.log("MongoDB initial connection error:", err.message));
 }
 
-// Connect to MongoDB and seed initial data
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(async () => {
-    console.log("Connected to MongoDB successfully!");
-    await seedInitialEvents();
-    await seedAdminUser();
-    await seedInitialVenues();
-    await seedInitialVenueBookings();
-  })
-  .catch((err) => console.log("MongoDB connection error:", err));
+module.exports = app;
