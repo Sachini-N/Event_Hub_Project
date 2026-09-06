@@ -5133,6 +5133,40 @@ input:checked+.slider:before {
   border-left: 4px solid var(--primary-blue);
 }
 
+/* Registered Members Table Styling (More spacious, breathable, not compact) */
+.members-data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.members-data-table th {
+  text-align: left;
+  padding: 1.1rem 1.25rem !important;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fafafa;
+}
+
+.members-data-table td {
+  padding: 1.25rem 1.25rem !important;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+  color: #334155;
+  font-size: 0.88rem;
+}
+
+.members-data-table tbody tr {
+  cursor: default !important;
+  transition: background-color 0.2s ease;
+}
+
+.members-data-table tbody tr:hover {
+  background-color: #f8fafc !important;
+}
+
 /* Registration Details Slide-Over Drawer Panel matching reference screenshot */
 .drawer-backdrop {
   position: fixed;

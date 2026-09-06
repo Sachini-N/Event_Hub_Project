@@ -1068,21 +1068,21 @@ export default function AdminDashboardPage({
                 </div>
 
                 <div className="table-responsive-wrapper">
-                  <table className="admin-data-table reg-table-interactive">
+                  <table className="admin-data-table members-data-table">
                     <thead>
                       <tr>
-                        <th>USER / ADMIN</th>
-                        <th>EMAIL ADDRESS</th>
-                        <th>ASSIGNED BRANCH</th>
-                        <th>ROLE & PERMISSIONS</th>
-                        <th>REGISTERED DATE</th>
-                        <th style={{ textAlign: 'center' }}>ACTIONS</th>
+                        <th style={{ width: '22%' }}>USER / ADMIN</th>
+                        <th style={{ width: '22%' }}>EMAIL ADDRESS</th>
+                        <th style={{ width: '20%' }}>ASSIGNED BRANCH</th>
+                        <th style={{ width: '16%' }}>ROLE & PERMISSIONS</th>
+                        <th style={{ width: '12%' }}>REGISTERED DATE</th>
+                        <th style={{ width: '8%', textAlign: 'center' }}>ACTIONS</th>
                       </tr>
                     </thead>
                     <tbody>
                       {registeredUsers.length === 0 ? (
                         <tr>
-                          <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
+                          <td colSpan="6" style={{ textAlign: 'center', padding: '3.5rem', color: '#64748b' }}>
                             No registered user accounts found.
                           </td>
                         </tr>
@@ -1105,52 +1105,80 @@ export default function AdminDashboardPage({
                           .map((u) => (
                             <tr key={u._id || u.id}>
                               <td>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                                   <img
                                     src={
                                       u.avatar ||
                                       `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=5d4df6&color=fff&size=80`
                                     }
                                     alt={u.name}
-                                    style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
+                                    style={{
+                                      width: '40px',
+                                      height: '40px',
+                                      borderRadius: '50%',
+                                      objectFit: 'cover',
+                                      border: '2px solid #eef2ff',
+                                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.06)',
+                                    }}
                                   />
-                                  <strong style={{ color: '#0f172a' }}>{u.name}</strong>
+                                  <div>
+                                    <div style={{ color: '#0f172a', fontWeight: '700', fontSize: '0.94rem' }}>{u.name}</div>
+                                  </div>
                                 </div>
                               </td>
                               <td>
-                                <span style={{ color: '#5d4df6', fontWeight: '500' }}>{u.email}</span>
+                                <span style={{ color: '#4f46e5', fontWeight: '500', fontSize: '0.88rem' }}>{u.email}</span>
                               </td>
                               <td>
-                                <span style={{ fontSize: '0.82rem', fontWeight: '600', color: '#0f172a' }}>
+                                <span style={{ fontSize: '0.86rem', fontWeight: '600', color: '#1e293b' }}>
                                   {u.branch || 'TRACE Main (Colombo)'}
                                 </span>
                               </td>
                               <td>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                   <span
                                     style={{
-                                      padding: '3px 10px',
+                                      padding: '4px 12px',
                                       borderRadius: '9999px',
-                                      fontSize: '0.76rem',
+                                      fontSize: '0.78rem',
                                       fontWeight: '700',
                                       display: 'inline-block',
                                       width: 'fit-content',
-                                      backgroundColor: u.role === 'admin' || u.role === 'super_admin' ? '#eff6ff' : u.role === 'branch_admin' ? '#f0fdf4' : '#f1f5f9',
-                                      color: u.role === 'admin' || u.role === 'super_admin' ? '#5d4df6' : u.role === 'branch_admin' ? '#16a34a' : '#475569',
-                                      border: u.role === 'admin' || u.role === 'super_admin' ? '1px solid #bfdbfe' : u.role === 'branch_admin' ? '1px solid #bbf7d0' : '1px solid #cbd5e1',
+                                      backgroundColor:
+                                        u.role === 'admin' || u.role === 'super_admin'
+                                          ? '#eff6ff'
+                                          : u.role === 'branch_admin'
+                                            ? '#f0fdf4'
+                                            : '#f1f5f9',
+                                      color:
+                                        u.role === 'admin' || u.role === 'super_admin'
+                                          ? '#5d4df6'
+                                          : u.role === 'branch_admin'
+                                            ? '#16a34a'
+                                            : '#475569',
+                                      border:
+                                        u.role === 'admin' || u.role === 'super_admin'
+                                          ? '1px solid #bfdbfe'
+                                          : u.role === 'branch_admin'
+                                            ? '1px solid #bbf7d0'
+                                            : '1px solid #cbd5e1',
                                     }}
                                   >
-                                    {u.role === 'admin' ? '● Super Admin' : u.role === 'branch_admin' ? '● Branch Admin' : 'User Member'}
+                                    {u.role === 'admin'
+                                      ? '● Super Admin'
+                                      : u.role === 'branch_admin'
+                                        ? '● Branch Admin'
+                                        : 'User Member'}
                                   </span>
                                   {u.permissions && u.permissions.length > 0 && (
-                                    <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                                    <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
                                       {u.permissions.map((p) => p.replace('manage_', '')).join(', ')}
                                     </div>
                                   )}
                                 </div>
                               </td>
                               <td>
-                                <span style={{ color: '#64748b', fontSize: '0.85rem' }}>
+                                <span style={{ color: '#475569', fontSize: '0.86rem', fontWeight: '500' }}>
                                   {u.createdAt
                                     ? new Date(u.createdAt).toLocaleDateString('en-US', {
                                         year: 'numeric',
@@ -1160,8 +1188,16 @@ export default function AdminDashboardPage({
                                     : 'N/A'}
                                 </span>
                               </td>
-                              <td style={{ textAlign: 'center' }}>
-                                <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+                              <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                                <div
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'flex-end',
+                                    gap: '0.5rem',
+                                    width: '112px',
+                                  }}
+                                >
                                   {(u.role === 'branch_admin' || u.role === 'admin' || u.role === 'super_admin') && (
                                     <>
                                       <button
