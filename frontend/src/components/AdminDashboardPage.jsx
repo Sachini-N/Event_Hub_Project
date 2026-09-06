@@ -1286,56 +1286,87 @@ export default function AdminDashboardPage({
               <div className="venues-grid-2col">
                 {venues.map((v) => {
                   const venueId = v._id || v.id;
+                  const formattedAddress = (v.address || '').replace(/,/g, ', ');
+                  const priceDisplay = v.rentalPrice || (v.pricePerHour ? `Rs. ${v.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr');
+
                   return (
-                    <div key={venueId || Math.random()} className="venue-card">
-                      <img src={v.coverImage} alt={v.name} className="venue-card-banner" />
-                      <div className="venue-card-body">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                          <span className={`venue-tag-badge ${v.status === 'Available' ? 'venue-tag-available' : 'venue-tag-reserved'}`}>
-                            ● {v.status || 'Available'}
+                    <div key={venueId || Math.random()} className="admin-venue-card">
+                      <div className="admin-venue-card-banner-wrapper">
+                        <img src={v.coverImage} alt={v.name} className="admin-venue-card-banner" />
+                      </div>
+                      <div className="admin-venue-card-body">
+                        <div className="admin-venue-badges-row">
+                          <span className={`admin-venue-status-pill ${v.status === 'Available' ? 'available' : 'reserved'}`}>
+                            <span className="admin-venue-status-dot"></span>
+                            {v.status || 'Available'}
                           </span>
                           {v.branch && (
-                            <span style={{ fontSize: '0.78rem', fontWeight: '700', color: '#5d4df6', background: '#eff6ff', padding: '2px 8px', borderRadius: '4px' }}>
+                            <span className="admin-venue-branch-tag" title={v.branch}>
+                              <i className="fa-solid fa-location-dot" style={{ fontSize: '0.7rem' }}></i>
                               {v.branch}
                             </span>
                           )}
                         </div>
-                        <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', marginBottom: '0.2rem' }}>
-                          {v.name}
-                        </h3>
-                        <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.75rem' }}>
-                          <i className="fa-solid fa-location-dot" style={{ color: '#5d4df6' }}></i> {v.address}
-                        </p>
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.88rem', fontWeight: '600', color: '#334155', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                          <span><i className="fa-solid fa-users" style={{ color: '#5d4df6' }}></i> Seating Capacity: <strong>{v.capacity} Seats</strong></span>
-                          <span style={{ color: '#059669', fontWeight: '700' }}><i className="fa-solid fa-tag"></i> {v.rentalPrice || (v.pricePerHour ? `Rs. ${v.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr')}</span>
+                        <h3 className="admin-venue-card-title">{v.name}</h3>
+
+                        <div className="admin-venue-location">
+                          <i className="fa-solid fa-location-dot"></i>
+                          <span title={formattedAddress}>{formattedAddress}</span>
                         </div>
 
-                        <div className="venue-amenities-tags">
-                          {v.amenities && v.amenities.map((am, i) => (
-                            <span key={i} className="amenity-chip">✓ {am}</span>
-                          ))}
+                        {/* Structured Stats Grid for Uniform Height & Alignment */}
+                        <div className="admin-venue-stats-grid">
+                          <div className="admin-venue-stat-box">
+                            <div className="admin-venue-stat-label">
+                              <i className="fa-solid fa-users"></i> Capacity
+                            </div>
+                            <div className="admin-venue-stat-val">
+                              {v.capacity} Seats
+                            </div>
+                          </div>
+                          <div className="admin-venue-stat-box">
+                            <div className="admin-venue-stat-label">
+                              <i className="fa-solid fa-tag"></i> Rate / Hr
+                            </div>
+                            <div className="admin-venue-stat-val rate-val" title={priceDisplay}>
+                              {priceDisplay}
+                            </div>
+                          </div>
                         </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
+                        {/* Amenities Tags with consistent min-height */}
+                        <div className="admin-venue-amenities-section">
+                          <div className="admin-venue-amenities-tags">
+                            {v.amenities && v.amenities.map((am, i) => (
+                              <span key={i} className="admin-venue-amenity-chip">
+                                <i className="fa-solid fa-check"></i> {am}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Card Bottom Actions: Level baseline pinned to bottom */}
+                        <div className="admin-venue-card-actions">
                           <button
-                            className="btn-my-view-event"
-                            style={{ fontSize: '0.8rem', padding: '6px 14px' }}
+                            type="button"
+                            className="admin-btn-schedule"
                             onClick={() => showToast && showToast(`Booking schedule checked for "${v.name}"`, 'info')}
                           >
-                            Check Schedule
+                            <i className="fa-regular fa-calendar-check"></i> Check Schedule
                           </button>
                           <button
-                            className="btn-my-view-event"
-                            style={{ fontSize: '0.8rem', padding: '6px 14px', background: '#eff6ff', color: '#5d4df6', border: '1px solid #bfdbfe' }}
+                            type="button"
+                            className="admin-btn-edit-venue"
                             onClick={() => setEditingVenue(v)}
                             title="Edit Venue Facility"
                           >
-                            <i className="fa-regular fa-pen-to-square" style={{ marginRight: '4px' }}></i> Edit Facility
+                            <i className="fa-regular fa-pen-to-square"></i> Edit Facility
                           </button>
                           <button
-                            className="icon-btn-action danger"
+                            type="button"
+                            className="admin-btn-delete-venue"
+                            title="Delete Space"
                             onClick={async () => {
                               if (!venueId) return;
                               if (window.confirm(`Are you sure you want to delete venue "${v.name}"?`)) {
@@ -1407,62 +1438,80 @@ export default function AdminDashboardPage({
                     <p style={{ color: '#64748b', fontSize: '0.85rem', margin: 0 }}>Submitted user space reservation inquiries will appear here.</p>
                   </div>
                 ) : (
-                  <div className="table-responsive-wrapper" style={{ overflowX: 'auto' }}>
-                    <table className="admin-data-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                  <div className="table-responsive-wrapper venue-inquiries-table-wrapper">
+                    <table className="admin-data-table admin-inquiries-fixed-table">
+                      <colgroup>
+                        <col style={{ width: '10%' }} />
+                        <col style={{ width: '19%' }} />
+                        <col style={{ width: '16%' }} />
+                        <col style={{ width: '16%' }} />
+                        <col style={{ width: '8%' }} />
+                        <col style={{ width: '15%' }} />
+                        <col style={{ width: '9%' }} />
+                        <col style={{ width: '7%' }} />
+                      </colgroup>
                       <thead>
-                        <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                          <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>REF</th>
-                          <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>APPLICANT</th>
-                          <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>VENUE & BRANCH</th>
-                          <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>EVENT PURPOSE</th>
-                          <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>DURATION</th>
-                          <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>DATE & GUESTS</th>
-                          <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>STATUS</th>
-                          <th style={{ padding: '10px 14px', textAlign: 'center', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>ACTIONS</th>
+                        <tr>
+                          <th>REF</th>
+                          <th>APPLICANT</th>
+                          <th>VENUE & BRANCH</th>
+                          <th>EVENT PURPOSE</th>
+                          <th>DURATION</th>
+                          <th>DATE & GUESTS</th>
+                          <th>STATUS</th>
+                          <th className="col-center">ACTIONS</th>
                         </tr>
                       </thead>
                       <tbody>
                         {venueBookings.map((bk) => (
-                          <tr key={bk._id || bk.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                            <td style={{ padding: '12px 14px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
-                              <span style={{ color: '#5d4df6', background: '#eff6ff', padding: '3px 8px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '700', fontFamily: 'monospace' }}>
+                          <tr key={bk._id || bk.id}>
+                            <td>
+                              <span className="inquiry-ref-pill" title={bk.bookingRef}>
                                 {bk.bookingRef}
                               </span>
                             </td>
-                            <td style={{ padding: '12px 14px', verticalAlign: 'middle' }}>
-                              <div style={{ fontWeight: '600', color: '#0f172a', fontSize: '0.86rem' }}>{bk.name}</div>
-                              <div style={{ fontSize: '0.76rem', color: '#64748b', lineHeight: 1.35 }}>{bk.email}</div>
-                              <div style={{ fontSize: '0.76rem', color: '#64748b', lineHeight: 1.35 }}>{bk.phone}</div>
+                            <td>
+                              <div className="inquiry-applicant-name" title={bk.name}>{bk.name}</div>
+                              <div className="inquiry-applicant-meta" title={bk.email}>
+                                <i className="fa-regular fa-envelope"></i>
+                                <span>{bk.email}</span>
+                              </div>
+                              <div className="inquiry-applicant-meta" title={bk.phone}>
+                                <i className="fa-solid fa-phone"></i>
+                                <span>{bk.phone}</span>
+                              </div>
                             </td>
-                            <td style={{ padding: '12px 14px', verticalAlign: 'middle' }}>
-                              <div style={{ fontWeight: '600', color: '#0f172a', fontSize: '0.86rem' }}>{bk.venueName}</div>
-                              <span style={{ fontSize: '0.72rem', fontWeight: '600', color: '#0284c7', background: '#f0f9ff', border: '1px solid #bae6fd', padding: '2px 7px', borderRadius: '4px', display: 'inline-block', marginTop: '3px' }}>
-                                {bk.branch}
-                              </span>
+                            <td>
+                              <div className="inquiry-venue-name" title={bk.venueName}>{bk.venueName}</div>
+                              {bk.branch && (
+                                <span className="inquiry-branch-tag" title={bk.branch}>
+                                  {bk.branch}
+                                </span>
+                              )}
                             </td>
-                            <td style={{ padding: '12px 14px', verticalAlign: 'middle', maxWidth: '220px' }}>
-                              <div style={{ fontWeight: '600', color: '#334155', fontSize: '0.86rem' }}>{bk.eventTitle}</div>
+                            <td>
+                              <div className="inquiry-event-title" title={bk.eventTitle}>{bk.eventTitle}</div>
                               {bk.notes && (
-                                <div style={{ fontSize: '0.76rem', color: '#64748b', fontStyle: 'italic', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={bk.notes}>
+                                <div className="inquiry-notes" title={bk.notes}>
                                   "{bk.notes}"
                                 </div>
                               )}
                             </td>
-                            <td style={{ padding: '12px 14px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
-                              <span style={{ fontWeight: '700', color: '#5d4df6', background: '#eff6ff', border: '1px solid #dbeafe', padding: '3px 8px', borderRadius: '6px', fontSize: '0.8rem' }}>
-                                <i className="fa-regular fa-clock" style={{ marginRight: '4px' }}></i>
-                                {bk.durationHours || 4} Hours
+                            <td>
+                              <span className="inquiry-duration-pill">
+                                <i className="fa-regular fa-clock"></i>
+                                {bk.durationHours || 4}h
                               </span>
                             </td>
-                            <td style={{ padding: '12px 14px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
-                              <div style={{ fontWeight: '600', color: '#0f172a', fontSize: '0.85rem' }}>{bk.eventDate}</div>
-                              <div style={{ fontSize: '0.76rem', color: '#64748b' }}>
-                                {bk.guests} Guests • <span style={{ color: '#059669', fontWeight: '600' }}>{bk.price || 'Rs. 25,000 / hr'}</span>
+                            <td>
+                              <div className="inquiry-date-row">{bk.eventDate}</div>
+                              <div className="inquiry-guests-rate">
+                                <span>{bk.guests} Guests</span> • <span className="inquiry-rate-highlight">{bk.price || 'Rs. 25,000 / hr'}</span>
                               </div>
                             </td>
-                            <td style={{ padding: '12px 14px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                            <td>
                               <select
-                                className="status-dropdown-select"
+                                className="inquiry-status-select"
                                 value={bk.status || 'Pending'}
                                 onChange={async (e) => {
                                   const newStatus = e.target.value;
@@ -1484,14 +1533,6 @@ export default function AdminDashboardPage({
                                   }
                                 }}
                                 style={{
-                                  padding: '5px 12px 5px 8px',
-                                  borderRadius: '8px',
-                                  fontSize: '0.78rem',
-                                  fontWeight: '700',
-                                  minWidth: '120px',
-                                  border: '1px solid #cbd5e1',
-                                  cursor: 'pointer',
-                                  outline: 'none',
                                   backgroundColor: bk.status === 'Confirmed' ? '#dcfce7' : bk.status === 'Cancelled' ? '#fee2e2' : bk.status === 'Contacted' ? '#e0f2fe' : '#fef3c7',
                                   color: bk.status === 'Confirmed' ? '#15803d' : bk.status === 'Cancelled' ? '#b91c1c' : bk.status === 'Contacted' ? '#0369a1' : '#b45309',
                                 }}
@@ -1502,9 +1543,9 @@ export default function AdminDashboardPage({
                                 <option value="Cancelled">Cancelled</option>
                               </select>
                             </td>
-                            <td style={{ padding: '12px 14px', verticalAlign: 'middle', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                            <td className="col-center">
                               <button
-                                className="icon-btn-action danger"
+                                className="inquiry-delete-btn"
                                 title="Delete Booking Inquiry"
                                 onClick={async () => {
                                   if (window.confirm(`Delete booking request ${bk.bookingRef}?`)) {
@@ -1718,66 +1759,80 @@ export default function AdminDashboardPage({
                     </button>
                   </div>
                 ) : (
-                  <div className="table-responsive-wrapper" style={{ overflowX: 'auto' }}>
-                    <table className="admin-data-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                  <div className="table-responsive-wrapper venue-inquiries-table-wrapper">
+                    <table className="admin-data-table admin-inquiries-fixed-table">
+                      <colgroup>
+                        <col style={{ width: '10%' }} />
+                        <col style={{ width: '19%' }} />
+                        <col style={{ width: '16%' }} />
+                        <col style={{ width: '16%' }} />
+                        <col style={{ width: '8%' }} />
+                        <col style={{ width: '15%' }} />
+                        <col style={{ width: '9%' }} />
+                        <col style={{ width: '7%' }} />
+                      </colgroup>
                       <thead>
-                        <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                          <th style={{ padding: '12px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>REF</th>
-                          <th style={{ padding: '12px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>APPLICANT</th>
-                          <th style={{ padding: '12px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>VENUE & BRANCH</th>
-                          <th style={{ padding: '12px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>EVENT PURPOSE & NOTES</th>
-                          <th style={{ padding: '12px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>DURATION</th>
-                          <th style={{ padding: '12px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>DATE & GUESTS</th>
-                          <th style={{ padding: '12px 14px', textAlign: 'left', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>STATUS</th>
-                          <th style={{ padding: '12px 14px', textAlign: 'center', fontSize: '0.72rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>ACTIONS</th>
+                        <tr>
+                          <th>REF</th>
+                          <th>APPLICANT</th>
+                          <th>VENUE & BRANCH</th>
+                          <th>EVENT PURPOSE & NOTES</th>
+                          <th>DURATION</th>
+                          <th>DATE & GUESTS</th>
+                          <th>STATUS</th>
+                          <th className="col-center">ACTIONS</th>
                         </tr>
                       </thead>
                       <tbody>
                         {displayedVenueBookings.map((bk) => (
-                          <tr key={bk._id || bk.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                            <td style={{ padding: '14px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
-                              <span style={{ color: '#5d4df6', background: '#eff6ff', border: '1px solid #dbeafe', padding: '4px 10px', borderRadius: '6px', fontSize: '0.82rem', fontWeight: '700', fontFamily: 'monospace' }}>
+                          <tr key={bk._id || bk.id}>
+                            <td>
+                              <span className="inquiry-ref-pill" title={bk.bookingRef}>
                                 {bk.bookingRef}
                               </span>
                             </td>
-                            <td style={{ padding: '14px', verticalAlign: 'middle' }}>
-                              <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.88rem' }}>{bk.name}</div>
-                              <div style={{ fontSize: '0.78rem', color: '#64748b', lineHeight: 1.35 }}>
-                                <i className="fa-regular fa-envelope" style={{ marginRight: '4px' }}></i>{bk.email}
+                            <td>
+                              <div className="inquiry-applicant-name" title={bk.name}>{bk.name}</div>
+                              <div className="inquiry-applicant-meta" title={bk.email}>
+                                <i className="fa-regular fa-envelope"></i>
+                                <span>{bk.email}</span>
                               </div>
-                              <div style={{ fontSize: '0.78rem', color: '#64748b', lineHeight: 1.35 }}>
-                                <i className="fa-solid fa-phone" style={{ marginRight: '4px' }}></i>{bk.phone}
+                              <div className="inquiry-applicant-meta" title={bk.phone}>
+                                <i className="fa-solid fa-phone"></i>
+                                <span>{bk.phone}</span>
                               </div>
                             </td>
-                            <td style={{ padding: '14px', verticalAlign: 'middle' }}>
-                              <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.88rem' }}>{bk.venueName}</div>
-                              <span style={{ fontSize: '0.74rem', fontWeight: '600', color: '#0284c7', background: '#f0f9ff', border: '1px solid #bae6fd', padding: '2px 8px', borderRadius: '4px', display: 'inline-block', marginTop: '3px' }}>
-                                {bk.branch}
-                              </span>
+                            <td>
+                              <div className="inquiry-venue-name" title={bk.venueName}>{bk.venueName}</div>
+                              {bk.branch && (
+                                <span className="inquiry-branch-tag" title={bk.branch}>
+                                  {bk.branch}
+                                </span>
+                              )}
                             </td>
-                            <td style={{ padding: '14px', verticalAlign: 'middle', maxWidth: '240px' }}>
-                              <div style={{ fontWeight: '600', color: '#334155', fontSize: '0.88rem' }}>{bk.eventTitle}</div>
+                            <td>
+                              <div className="inquiry-event-title" title={bk.eventTitle}>{bk.eventTitle}</div>
                               {bk.notes && (
-                                <div style={{ fontSize: '0.78rem', color: '#64748b', fontStyle: 'italic', marginTop: '3px', background: '#f8fafc', padding: '4px 8px', borderRadius: '6px', borderLeft: '3px solid #cbd5e1' }} title={bk.notes}>
+                                <div className="inquiry-notes" title={bk.notes}>
                                   "{bk.notes}"
                                 </div>
                               )}
                             </td>
-                            <td style={{ padding: '14px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
-                              <span style={{ fontWeight: '700', color: '#5d4df6', background: '#eff6ff', border: '1px solid #dbeafe', padding: '4px 10px', borderRadius: '6px', fontSize: '0.82rem' }}>
-                                <i className="fa-regular fa-clock" style={{ marginRight: '4px' }}></i>
-                                {bk.durationHours || 4} Hours
+                            <td>
+                              <span className="inquiry-duration-pill">
+                                <i className="fa-regular fa-clock"></i>
+                                {bk.durationHours || 4}h
                               </span>
                             </td>
-                            <td style={{ padding: '14px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
-                              <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.86rem' }}>{bk.eventDate}</div>
-                              <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                                {bk.guests} Guests • <span style={{ color: '#059669', fontWeight: '700' }}>{bk.price || 'Rs. 25,000 / hr'}</span>
+                            <td>
+                              <div className="inquiry-date-row">{bk.eventDate}</div>
+                              <div className="inquiry-guests-rate">
+                                <span>{bk.guests} Guests</span> • <span className="inquiry-rate-highlight">{bk.price || 'Rs. 25,000 / hr'}</span>
                               </div>
                             </td>
-                            <td style={{ padding: '14px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                            <td>
                               <select
-                                className="status-dropdown-select"
+                                className="inquiry-status-select"
                                 value={bk.status || 'Pending'}
                                 onChange={async (e) => {
                                   const newStatus = e.target.value;
@@ -1799,14 +1854,6 @@ export default function AdminDashboardPage({
                                   }
                                 }}
                                 style={{
-                                  padding: '6px 12px',
-                                  borderRadius: '8px',
-                                  fontSize: '0.8rem',
-                                  fontWeight: '700',
-                                  minWidth: '125px',
-                                  border: '1px solid #cbd5e1',
-                                  cursor: 'pointer',
-                                  outline: 'none',
                                   backgroundColor: bk.status === 'Confirmed' ? '#dcfce7' : bk.status === 'Cancelled' ? '#fee2e2' : bk.status === 'Contacted' ? '#e0f2fe' : '#fef3c7',
                                   color: bk.status === 'Confirmed' ? '#15803d' : bk.status === 'Cancelled' ? '#b91c1c' : bk.status === 'Contacted' ? '#0369a1' : '#b45309',
                                 }}
@@ -1817,9 +1864,9 @@ export default function AdminDashboardPage({
                                 <option value="Cancelled">Cancelled</option>
                               </select>
                             </td>
-                            <td style={{ padding: '14px', verticalAlign: 'middle', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                            <td className="col-center">
                               <button
-                                className="icon-btn-action danger"
+                                className="inquiry-delete-btn"
                                 title="Delete Booking Inquiry"
                                 onClick={async () => {
                                   if (window.confirm(`Delete booking request ${bk.bookingRef}?`)) {
