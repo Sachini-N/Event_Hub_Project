@@ -2753,10 +2753,10 @@ export default function AdminDashboardPage({
                 <label style={{ marginBottom: '0.5rem', display: 'block' }}>Granted Permissions & Control Scope</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                   {[
-                    { id: 'manage_events', label: '📅 Create & Edit Branch Events' },
-                    { id: 'manage_registrations', label: '👥 Manage Participant Registrations' },
-                    { id: 'manage_spaces', label: '🏢 Manage Branch Spaces & Inquiries' },
-                    { id: 'view_analytics', label: '📊 View Analytics & Reports' },
+                    { id: 'manage_events', label: 'Create & Edit Branch Events' },
+                    { id: 'manage_registrations', label: 'Manage Participant Registrations' },
+                    { id: 'manage_spaces', label: 'Manage Branch Spaces & Inquiries' },
+                    { id: 'view_analytics', label: 'View Analytics & Reports' },
                   ].map((perm) => (
                     <label key={perm.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: '600', color: '#334155', cursor: 'pointer' }}>
                       <input
@@ -2924,10 +2924,10 @@ export default function AdminDashboardPage({
                 <label style={{ marginBottom: '0.5rem', display: 'block', fontWeight: '700', fontSize: '0.85rem' }}>Granted Permissions & Scope</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                   {[
-                    { id: 'manage_events', label: '📅 Create & Edit Branch Events' },
-                    { id: 'manage_registrations', label: '👥 Manage Participant Registrations' },
-                    { id: 'manage_spaces', label: '🏢 Manage Branch Spaces & Inquiries' },
-                    { id: 'view_analytics', label: '📊 View Analytics & Reports' },
+                    { id: 'manage_events', label: 'Create & Edit Branch Events' },
+                    { id: 'manage_registrations', label: 'Manage Participant Registrations' },
+                    { id: 'manage_spaces', label: 'Manage Branch Spaces & Inquiries' },
+                    { id: 'view_analytics', label: 'View Analytics & Reports' },
                   ].map((perm) => (
                     <label key={perm.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: '600', color: '#334155', cursor: 'pointer' }}>
                       <input
