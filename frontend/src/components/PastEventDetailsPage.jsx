@@ -72,6 +72,10 @@ export default function PastEventDetailsPage({
   }
 
   const pastEvent = activeEvent;
+  const hasVideoUrl = Boolean(pastEvent.videoUrl && pastEvent.videoUrl.trim());
+  const galleryList = (pastEvent.gallery && pastEvent.gallery.length > 0)
+    ? pastEvent.gallery
+    : (pastEvent.coverImage ? [pastEvent.coverImage] : []);
 
   const handleDownloadResource = (resourceName) => {
     if (showToast) showToast(`Downloading ${resourceName}...`, 'info');
@@ -177,51 +181,86 @@ export default function PastEventDetailsPage({
               )}
             </div>
 
-            {/* Keynote Video Recording Card */}
-            <div className="past-content-card">
-              <h2 className="past-card-heading">
-                <i className="fa-solid fa-circle-play"></i> Keynote Recording & Media Session
-              </h2>
-              <div className="video-player-container">
-                {isPlayingVideo && getYouTubeEmbedUrl(pastEvent.videoUrl) ? (
-                  <iframe
-                    src={getYouTubeEmbedUrl(pastEvent.videoUrl)}
-                    title={`${pastEvent.title} Keynote Recording`}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  ></iframe>
-                ) : (
-                  <>
-                    <img
-                      src={pastEvent.coverImage}
-                      alt="Keynote Recording Thumbnail"
-                      className="video-thumbnail"
-                    />
-                    <div className="video-play-overlay">
-                      <div
-                        className="video-play-btn"
-                        onClick={() => {
-                          const embedUrl = getYouTubeEmbedUrl(pastEvent.videoUrl);
-                          if (embedUrl) {
-                            setIsPlayingVideo(true);
-                            if (showToast) showToast('Playing Keynote Recording Video...', 'info');
-                          } else if (pastEvent.videoUrl) {
-                            if (showToast) showToast('Opening Keynote Recording Video...', 'info');
-                            window.open(pastEvent.videoUrl, '_blank');
-                          } else {
-                            if (showToast) showToast('Opening YouTube Keynote Video...', 'info');
-                            window.open('https://www.youtube.com', '_blank');
-                          }
-                        }}
-                      >
-                        <i className="fa-solid fa-play"></i>
+            {/* Keynote Video Recording Card (Only displayed if YouTube video link exists) */}
+            {hasVideoUrl && (
+              <div className="past-content-card">
+                <h2 className="past-card-heading">
+                  <i className="fa-solid fa-circle-play"></i> Keynote Recording & Media Session
+                </h2>
+                <div className="video-player-container">
+                  {isPlayingVideo && getYouTubeEmbedUrl(pastEvent.videoUrl) ? (
+                    <iframe
+                      src={getYouTubeEmbedUrl(pastEvent.videoUrl)}
+                      title={`${pastEvent.title} Keynote Recording`}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  ) : (
+                    <>
+                      <img
+                        src={pastEvent.coverImage}
+                        alt="Keynote Recording Thumbnail"
+                        className="video-thumbnail"
+                      />
+                      <div className="video-play-overlay">
+                        <div
+                          className="video-play-btn"
+                          onClick={() => {
+                            const embedUrl = getYouTubeEmbedUrl(pastEvent.videoUrl);
+                            if (embedUrl) {
+                              setIsPlayingVideo(true);
+                              if (showToast) showToast('Playing Keynote Recording Video...', 'info');
+                            } else if (pastEvent.videoUrl) {
+                              if (showToast) showToast('Opening Keynote Recording Video...', 'info');
+                              window.open(pastEvent.videoUrl, '_blank');
+                            }
+                          }}
+                        >
+                          <i className="fa-solid fa-play"></i>
+                        </div>
+                        <span className="video-label">Watch Full Keynote Recording</span>
                       </div>
-                      <span className="video-label">Watch Full Keynote & Winner Presentation</span>
-                    </div>
-                  </>
-                )}
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Event Photo Gallery Grid in Main Column (Displayed if NO YouTube video link exists) */}
+            {!hasVideoUrl && galleryList.length > 0 && (
+              <div className="past-content-card">
+                <h2 className="past-card-heading" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>
+                    <i className="fa-solid fa-images" style={{ color: '#5d4df6' }}></i> Event Gallery & Moments
+                  </span>
+                  <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '700', background: '#f1f5f9', padding: '4px 12px', borderRadius: '14px' }}>
+                    {galleryList.length} Photos
+                  </span>
+                </h2>
+                <div className="past-gallery-sidebar-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.85rem' }}>
+                  {galleryList.map((item, gIdx) => {
+                    const imgUrl = typeof item === 'string' ? item : (item.url || item);
+                    return (
+                      <div
+                        key={gIdx}
+                        className="past-gallery-thumb"
+                        onClick={() =>
+                          onOpenGalleryLightbox &&
+                          onOpenGalleryLightbox({ title: pastEvent.title, gallery: galleryList }, gIdx)
+                        }
+                        title="Click to view full photo"
+                        style={{ height: '120px' }}
+                      >
+                        <img src={imgUrl} alt={`Gallery moment ${gIdx + 1}`} />
+                        <div className="thumb-hover-overlay">
+                          <i className="fa-solid fa-magnifying-glass-plus"></i>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* RIGHT SIDEBAR COLUMN */}
@@ -274,48 +313,40 @@ export default function PastEventDetailsPage({
               </div>
             </div>
 
-            {/* Photo Gallery Showcase Grid (positioned in the right space next to the YouTube recording) */}
-            {(() => {
-              const galleryList = (pastEvent.gallery && pastEvent.gallery.length > 0)
-                ? pastEvent.gallery
-                : (pastEvent.coverImage ? [pastEvent.coverImage] : []);
-
-              if (galleryList.length === 0) return null;
-
-              return (
-                <div className="past-sidebar-card past-gallery-sidebar-card">
-                  <h3 className="sidebar-card-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.15rem' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <i className="fa-solid fa-images" style={{ color: '#5d4df6' }}></i> Event Gallery & Moments
-                    </span>
-                    <span style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: '700', background: '#f1f5f9', padding: '3px 9px', borderRadius: '12px' }}>
-                      {galleryList.length} Photos
-                    </span>
-                  </h3>
-                  <div className="past-gallery-sidebar-grid">
-                    {galleryList.map((item, gIdx) => {
-                      const imgUrl = typeof item === 'string' ? item : (item.url || item);
-                      return (
-                        <div
-                          key={gIdx}
-                          className="past-gallery-thumb"
-                          onClick={() =>
-                            onOpenGalleryLightbox &&
-                            onOpenGalleryLightbox({ title: pastEvent.title, gallery: galleryList }, gIdx)
-                          }
-                          title="Click to view full photo"
-                        >
-                          <img src={imgUrl} alt={`Gallery moment ${gIdx + 1}`} />
-                          <div className="thumb-hover-overlay">
-                            <i className="fa-solid fa-magnifying-glass-plus"></i>
-                          </div>
+            {/* Photo Gallery Showcase Grid in Sidebar (Displayed if video URL is present) */}
+            {hasVideoUrl && galleryList.length > 0 && (
+              <div className="past-sidebar-card past-gallery-sidebar-card">
+                <h3 className="sidebar-card-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.15rem' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <i className="fa-solid fa-images" style={{ color: '#5d4df6' }}></i> Event Gallery & Moments
+                  </span>
+                  <span style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: '700', background: '#f1f5f9', padding: '3px 9px', borderRadius: '12px' }}>
+                    {galleryList.length} Photos
+                  </span>
+                </h3>
+                <div className="past-gallery-sidebar-grid">
+                  {galleryList.map((item, gIdx) => {
+                    const imgUrl = typeof item === 'string' ? item : (item.url || item);
+                    return (
+                      <div
+                        key={gIdx}
+                        className="past-gallery-thumb"
+                        onClick={() =>
+                          onOpenGalleryLightbox &&
+                          onOpenGalleryLightbox({ title: pastEvent.title, gallery: galleryList }, gIdx)
+                        }
+                        title="Click to view full photo"
+                      >
+                        <img src={imgUrl} alt={`Gallery moment ${gIdx + 1}`} />
+                        <div className="thumb-hover-overlay">
+                          <i className="fa-solid fa-magnifying-glass-plus"></i>
                         </div>
-                      );
-                    })}
-                  </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })()}
+              </div>
+            )}
           </div>
         </div>
       </div>
