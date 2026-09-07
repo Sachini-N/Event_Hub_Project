@@ -9263,23 +9263,22 @@ textarea.venue-inquiry-input {
     overflow: visible !important;
   }
 
-  .venue-booking-sidebar {
-    width: 100% !important;
-    padding: 1rem !important;
-    border-right: none !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-    box-sizing: border-box !important;
-  }
-
-  .venue-booking-sidebar-img-box {
-    height: 140px !important;
-  }
-
   .venue-booking-form-content {
     width: 100% !important;
     padding: 1.25rem 1rem !important;
     overflow-y: visible !important;
     box-sizing: border-box !important;
+    order: 1 !important; /* Display form at the TOP on mobile screens */
+  }
+
+  .venue-booking-sidebar {
+    width: 100% !important;
+    padding: 1rem !important;
+    border-right: none !important;
+    border-top: 1px solid #e2e8f0 !important;
+    border-bottom: none !important;
+    box-sizing: border-box !important;
+    order: 2 !important; /* Position sidebar below form on mobile screens */
   }
 
   .venue-form-row-2col,

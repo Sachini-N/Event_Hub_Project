@@ -216,10 +216,20 @@ export default function VenuesPage({ showToast }) {
 
   const [bookingConfirmation, setBookingConfirmation] = useState(null);
 
+  const handleSwitchTab = (tabName) => {
+    setModalActiveTab(tabName);
+    setTimeout(() => {
+      const overlayElem = document.querySelector('.modal-overlay');
+      if (overlayElem) overlayElem.scrollTop = 0;
+      const cardElem = document.querySelector('.venue-split-modal-card');
+      if (cardElem) cardElem.scrollTop = 0;
+    }, 10);
+  };
+
   const handleOpenInquiryModal = (venue, initialTab = 'details') => {
     setActiveVenueModal(venue);
     setModalActivePhotoIndex(0);
-    setModalActiveTab(initialTab);
+    handleSwitchTab(initialTab);
     setInquiryForm({
       name: '',
       email: '',
@@ -565,14 +575,14 @@ export default function VenuesPage({ showToast }) {
                   <button
                     type="button"
                     className={`venue-modal-tab-btn ${modalActiveTab === 'details' ? 'active' : ''}`}
-                    onClick={() => setModalActiveTab('details')}
+                    onClick={() => handleSwitchTab('details')}
                   >
                     <i className="fa-solid fa-images"></i> Space & Photos
                   </button>
                   <button
                     type="button"
                     className={`venue-modal-tab-btn ${modalActiveTab === 'booking' ? 'active' : ''}`}
-                    onClick={() => setModalActiveTab('booking')}
+                    onClick={() => handleSwitchTab('booking')}
                   >
                     <i className="fa-solid fa-calendar-check"></i> Reserve Space
                   </button>
@@ -692,7 +702,7 @@ export default function VenuesPage({ showToast }) {
                     <button
                       type="button"
                       className="btn-proceed-booking"
-                      onClick={() => setModalActiveTab('booking')}
+                      onClick={() => handleSwitchTab('booking')}
                     >
                       <i className="fa-regular fa-paper-plane"></i> Book Space Inquiry Now <i className="fa-solid fa-arrow-right"></i>
                     </button>
@@ -942,7 +952,7 @@ export default function VenuesPage({ showToast }) {
 
                   <button
                     type="button"
-                    onClick={() => setModalActiveTab('details')}
+                    onClick={() => handleSwitchTab('details')}
                     style={{
                       background: 'none',
                       border: '1px solid #cbd5e1',
@@ -1116,7 +1126,7 @@ export default function VenuesPage({ showToast }) {
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.85rem', alignItems: 'center' }}>
                       <button
                         type="button"
-                        onClick={() => setModalActiveTab('details')}
+                        onClick={() => handleSwitchTab('details')}
                         style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: '700', fontSize: '0.88rem', cursor: 'pointer', padding: '0.6rem 1rem' }}
                       >
                         Back to Details
