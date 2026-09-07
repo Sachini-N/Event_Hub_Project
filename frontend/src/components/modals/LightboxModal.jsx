@@ -37,11 +37,11 @@ export default function LightboxModal({ isOpen, onClose, event, initialIndex = 0
         </div>
 
         <div className="lightbox-nav">
-          <button className="btn btn-outline" onClick={prevImage}>
+          <button className="btn lightbox-btn" onClick={prevImage}>
             <i className="fa-solid fa-chevron-left"></i> Previous
           </button>
-          <span>{currentIndex + 1} of {gallery.length}</span>
-          <button className="btn btn-outline" onClick={nextImage}>
+          <span className="lightbox-counter">{currentIndex + 1} of {gallery.length}</span>
+          <button className="btn lightbox-btn" onClick={nextImage}>
             Next <i className="fa-solid fa-chevron-right"></i>
           </button>
         </div>
