@@ -1,0 +1,397 @@
+import React, { useState, useEffect, useRef } from 'react';
+
+export default function ChatbotAgent({ currentUser, setActiveTab, events = [] }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [inputMessage, setInputMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(1);
+
+  // Generate a user handle for display (e.g. User_8s27gk or Logged-in Name)
+  const [userHandle] = useState(() => {
+    if (currentUser && currentUser.name) return currentUser.name;
+    const randomHash = Math.random().toString(36).substring(2, 8);
+    return `User_${randomHash}`;
+  });
+
+  // Initial welcome message
+  const [messages, setMessages] = useState(() => {
+    const saved = localStorage.getItem('trace_welcome_agent_messages');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse saved chat history:', e);
+      }
+    }
+    return [
+      {
+        id: 1,
+        sender: 'bot',
+        senderName: 'Welcome Agent',
+        text: `Hi, Welcome from TRACE Sri Lanka!`,
+        quickPrompts: ['What is next event?', '📅 Upcoming Events', '🏢 Explore Venues'],
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      },
+    ];
+  });
+
+  const chatEndRef = useRef(null);
+
+  // Save messages to LocalStorage
+  useEffect(() => {
+    localStorage.setItem('trace_welcome_agent_messages', JSON.stringify(messages));
+  }, [messages]);
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    if (isOpen) {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, isOpen, loading]);
+
+  const toggleOpen = () => {
+    setIsOpen(!isOpen);
+    if (!isOpen) {
+      setUnreadCount(0);
+    }
+  };
+
+  const handleClearHistory = () => {
+    const defaultMsg = [
+      {
+        id: Date.now(),
+        sender: 'bot',
+        senderName: 'Welcome Agent',
+        text: `Hi, Welcome from TRACE Sri Lanka!`,
+        quickPrompts: ['What is next event?', '📅 Upcoming Events', '🏢 Explore Venues'],
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      },
+    ];
+    setMessages(defaultMsg);
+  };
+
+  // Client-side query engine using REAL database events ONLY
+  const getClientFallbackReply = (userQuery) => {
+    const q = userQuery.toLowerCase().trim();
+
+    // 1. Greetings
+    if (
+      q === 'hi trace' ||
+      q === 'hello trace' ||
+      q === 'hey trace' ||
+      q === 'hi' ||
+      q === 'hello' ||
+      q === 'hey' ||
+      q === 'trace'
+    ) {
+      return {
+        reply: `Hi, thank you for reaching out. You are currently being assisted by our AI assistant.\n\nHello! How can I help you today with information about TRACE and its innovation ecosystem?`,
+        quickPrompts: ['What is next event?', '📅 Upcoming Events', '🏢 Explore Venues'],
+      };
+    }
+
+    // 2. How are you
+    if (q.includes('how are you') || q.includes('how r u')) {
+      return {
+        reply: `I'm doing well, thank you for asking! 😊 I am ready to assist you with TRACE events, venue bookings, and member registrations. How can I help you today?`,
+        quickPrompts: ['What is next event?', '📅 Upcoming Events', '🏢 Explore Venues'],
+      };
+    }
+
+    // Filter non-draft events from real DB state
+    const validEvents = (events || []).filter((e) => e.status !== 'draft');
+
+    // 3. Next event query (REAL DB DATA ONLY)
+    if (q.includes('next event') || q.includes('what is next') || q.includes('whats next') || q.includes('first event')) {
+      if (!validEvents || validEvents.length === 0) {
+        return {
+          reply: `📅 Currently, there are no events in the database.`,
+          quickPrompts: ['🏢 Explore Venues'],
+        };
+      }
+
+      const nextEvt = validEvents[0];
+      const evtDateStr = nextEvt.date ? new Date(nextEvt.date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : 'Date TBD';
+      const speakerInfo = nextEvt.speaker && nextEvt.speaker.name ? `\n🎤 **Speaker:** ${nextEvt.speaker.name} (${nextEvt.speaker.role || 'Guest'})` : '';
+
+      return {
+        reply: `🚀 **Next Event in Database:**\n\n📌 **${nextEvt.title}**\n📅 **Date:** ${evtDateStr}\n⏰ **Time:** ${nextEvt.time || 'TBA'}\n📍 **Location:** ${nextEvt.location}\n🏷️ **Category:** ${nextEvt.category || 'General'}${speakerInfo}\n👥 **Registered:** ${nextEvt.registeredCount || 0}/${nextEvt.capacity || 100} Seats\n\n📝 *Description:* ${nextEvt.description}\n\n💡 *Tip: Click **Upcoming Events** in navigation to view details!*`,
+        quickPrompts: ['📅 All Upcoming Events', '🏢 Explore Venues'],
+      };
+    }
+
+    // 4. Upcoming events (REAL DB DATA ONLY)
+    if (q.includes('upcoming') || q.includes('events') || q.includes('schedule')) {
+      if (!validEvents || validEvents.length === 0) {
+        return {
+          reply: `📅 Currently, there are no events in the database.`,
+          quickPrompts: ['🏢 Explore Venues'],
+        };
+      }
+
+      const eventListStr = validEvents
+        .map(
+          (e, i) =>
+            `**${i + 1}. ${e.title}**\n📍 *${e.location}* | 📅 ${new Date(e.date).toLocaleDateString()} | ⏰ ${e.time}\n👥 ${e.registeredCount || 0}/${e.capacity || 100} Registered`
+        )
+        .join('\n\n');
+
+      return {
+        reply: `🎉 **Events in Database (${validEvents.length}):**\n\n${eventListStr}\n\n💡 *Ask me "what is next event" for details!*`,
+        quickPrompts: ['What is next event?', '🏢 Explore Venues'],
+      };
+    }
+
+    // 5. Search events by keyword in real DB events array
+    const searchMatches = validEvents.filter(
+      (e) =>
+        (e.title && e.title.toLowerCase().includes(q)) ||
+        (e.description && e.description.toLowerCase().includes(q)) ||
+        (e.category && e.category.toLowerCase().includes(q)) ||
+        (e.location && e.location.toLowerCase().includes(q))
+    );
+
+    if (searchMatches.length > 0) {
+      const matchStr = searchMatches
+        .map((e) => `📌 **${e.title}**\n📍 ${e.location} | 📅 ${new Date(e.date).toLocaleDateString()} @ ${e.time}`)
+        .join('\n\n');
+
+      return {
+        reply: `🔍 **Database search results for "${userQuery}":**\n\n${matchStr}`,
+        quickPrompts: ['What is next event?', '📅 Upcoming Events'],
+      };
+    }
+
+    // Default response if no DB event match found
+    return {
+      reply: `Hi, thank you for reaching out. You are currently being assisted by our AI assistant.\n\nNo matching events were found in the database for "${userQuery}". Try asking about *"next event"* or *"upcoming events"*!`,
+      quickPrompts: ['What is next event?', '📅 Upcoming Events', '🏢 Explore Venues'],
+    };
+  };
+
+  const sendMessage = async (textToSend) => {
+    const text = (textToSend || inputMessage).trim();
+    if (!text || loading) return;
+
+    const userMsg = {
+      id: Date.now(),
+      sender: 'user',
+      senderName: userHandle,
+      text: text,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    if (!textToSend) setInputMessage('');
+    setLoading(true);
+
+    try {
+      const isDevHost = window.location.port === '3000' || window.location.port === '5173';
+      const apiUrl = isDevHost ? 'http://localhost:5000/api/chat/message' : '/api/chat/message';
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: text,
+          conversationHistory: messages.slice(-6),
+          userName: userHandle,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.success) {
+          const botMsg = {
+            id: Date.now() + 1,
+            sender: 'bot',
+            senderName: 'Welcome Agent',
+            text: data.reply,
+            quickPrompts: data.quickPrompts || [],
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          };
+          setMessages((prev) => [...prev, botMsg]);
+          return;
+        }
+      }
+
+      // Fallback using real DB events
+      const fallback = getClientFallbackReply(text);
+      const botMsg = {
+        id: Date.now() + 1,
+        sender: 'bot',
+        senderName: 'Welcome Agent',
+        text: fallback.reply,
+        quickPrompts: fallback.quickPrompts,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages((prev) => [...prev, botMsg]);
+    } catch (err) {
+      console.warn('Network issue reaching chat server, using DB fallback:', err.message);
+      const fallback = getClientFallbackReply(text);
+      const botMsg = {
+        id: Date.now() + 1,
+        sender: 'bot',
+        senderName: 'Welcome Agent',
+        text: fallback.reply,
+        quickPrompts: fallback.quickPrompts,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages((prev) => [...prev, botMsg]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  const formatText = (content) => {
+    if (!content) return '';
+    const lines = content.split('\n');
+    return lines.map((line, idx) => {
+      let formattedLine = line;
+      const parts = formattedLine.split(/(\*\*.*?\*\*)/g);
+      const renderedParts = parts.map((part, pIdx) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return <strong key={pIdx}>{part.slice(2, -2)}</strong>;
+        }
+        if (part.startsWith('*') && part.endsWith('*')) {
+          return <em key={pIdx}>{part.slice(1, -1)}</em>;
+        }
+        return part;
+      });
+
+      return (
+        <React.Fragment key={idx}>
+          {renderedParts}
+          {idx < lines.length - 1 && <br />}
+        </React.Fragment>
+      );
+    });
+  };
+
+  return (
+    <div className="chatbot-agent-container">
+      {/* Floating Action Button (FAB) */}
+      {!isOpen && (
+        <button
+          className="chatbot-fab-btn"
+          onClick={toggleOpen}
+          aria-label="Open Welcome Agent"
+          title="Open Welcome Agent"
+        >
+          <div className="chatbot-fab-icon">💬</div>
+          {unreadCount > 0 && <span className="chatbot-fab-badge">{unreadCount}</span>}
+          <span className="chatbot-fab-pulse"></span>
+        </button>
+      )}
+
+      {/* Floating Chat Modal Window */}
+      {isOpen && (
+        <div className="welcome-agent-window">
+          {/* Header */}
+          <div className="welcome-agent-header">
+            <h3 className="welcome-agent-title">Welcome Agent</h3>
+            <div className="welcome-agent-header-actions">
+              <button
+                className="welcome-agent-action-btn"
+                onClick={handleClearHistory}
+                title="Clear chat history"
+              >
+                🗑️
+              </button>
+              <button
+                className="welcome-agent-action-btn close-btn"
+                onClick={toggleOpen}
+                title="Close chat"
+              >
+                ✖
+              </button>
+            </div>
+          </div>
+
+          {/* Messages Body */}
+          <div className="welcome-agent-body">
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`welcome-agent-msg-group ${msg.sender === 'user' ? 'user-group' : 'bot-group'}`}
+              >
+                {/* Sender Name */}
+                <div className="welcome-agent-sender-name">
+                  {msg.sender === 'user' ? userHandle : (msg.senderName || 'Welcome Agent')}
+                </div>
+
+                {/* Bubble */}
+                <div className={`welcome-agent-bubble ${msg.sender === 'user' ? 'user-bubble' : 'bot-bubble'}`}>
+                  <div className="welcome-agent-text">{formatText(msg.text)}</div>
+
+                  {/* Quick Prompts */}
+                  {msg.quickPrompts && msg.quickPrompts.length > 0 && (
+                    <div className="welcome-agent-chips">
+                      {msg.quickPrompts.map((promptText, pIdx) => (
+                        <button
+                          key={pIdx}
+                          className="welcome-agent-chip"
+                          onClick={() => {
+                            if ((promptText.includes('Upcoming Events') || promptText.includes('next event')) && setActiveTab) {
+                              setActiveTab('upcoming');
+                            } else if (promptText.includes('Venues') && setActiveTab) {
+                              setActiveTab('venues-page');
+                            }
+                            sendMessage(promptText);
+                          }}
+                        >
+                          {promptText}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {/* Typing indicator */}
+            {loading && (
+              <div className="welcome-agent-msg-group bot-group">
+                <div className="welcome-agent-sender-name">Welcome Agent</div>
+                <div className="welcome-agent-bubble bot-bubble typing-bubble">
+                  <div className="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Footer Input Bar */}
+          <div className="welcome-agent-footer">
+            <input
+              type="text"
+              className="welcome-agent-input"
+              placeholder="Type a message..."
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyDown={handleKeyPress}
+            />
+            <button
+              className="welcome-agent-send-btn"
+              onClick={() => sendMessage()}
+              disabled={loading || !inputMessage.trim()}
+            >
+              Send
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

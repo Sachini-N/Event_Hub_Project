@@ -23,6 +23,7 @@ import LoginModal from './components/modals/LoginModal';
 import SignupModal from './components/modals/SignupModal';
 import LogoutConfirmModal from './components/modals/LogoutConfirmModal';
 import ToastNotification from './components/modals/ToastNotification';
+import ChatbotAgent from './components/ChatbotAgent';
 
 const TAB_TO_HASH_MAP = {
   home: '#home',
@@ -475,6 +476,9 @@ export default function App() {
       />
 
       <ToastNotification toast={toast} />
+
+      {/* Global AI Chatbot Agent */}
+      <ChatbotAgent currentUser={currentUser} setActiveTab={setActiveTab} events={events} />
     </div>
   );
 }

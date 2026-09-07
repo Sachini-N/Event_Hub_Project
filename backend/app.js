@@ -10,6 +10,7 @@ const authRoutes = require("./route/authRoutes");
 const venueRoutes = require("./route/venueRoutes");
 const venueBookingRoutes = require("./route/venueBookingRoutes");
 const uploadRoutes = require("./route/uploadRoutes");
+const chatRoutes = require("./route/chatRoutes");
 
 const { seedInitialEvents } = require("./controlers/eventController");
 const { seedAdminUser } = require("./controlers/authController");
@@ -67,6 +68,7 @@ app.use("/api/registrations", registrationRoutes);
 app.use("/api/venues", venueRoutes);
 app.use("/api/venue-bookings", venueBookingRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/chat", chatRoutes);
 
 // Return JSON 404 for unhandled /api requests (Prevents returning HTML to API callers)
 app.use((req, res, next) => {
