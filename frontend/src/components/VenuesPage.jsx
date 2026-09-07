@@ -216,7 +216,7 @@ export default function VenuesPage({ showToast }) {
 
   const [bookingConfirmation, setBookingConfirmation] = useState(null);
 
-  const handleOpenInquiryModal = (venue, initialTab = 'booking') => {
+  const handleOpenInquiryModal = (venue, initialTab = 'details') => {
     setActiveVenueModal(venue);
     setModalActivePhotoIndex(0);
     setModalActiveTab(initialTab);
@@ -513,22 +513,12 @@ export default function VenuesPage({ showToast }) {
                     )}
 
                     {/* Card Footer Actions */}
-                    <div className="venue-card-actions" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <div className="venue-card-actions">
                       <button
-                        type="button"
-                        className="btn-venue-secondary"
-                        onClick={() => handleOpenInquiryModal(v, 'details')}
-                        style={{ flex: 1, padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#f8fafc', color: '#475569', fontWeight: '700', fontSize: '0.82rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
-                      >
-                        <i className="fa-solid fa-images"></i> Details & Photos
-                      </button>
-                      <button
-                        type="button"
                         className="btn-venue-inquire"
-                        onClick={() => handleOpenInquiryModal(v, 'booking')}
-                        style={{ flex: 1, padding: '0.6rem 0.75rem', borderRadius: '8px', background: 'var(--primary-blue, #0052cc)', color: '#ffffff', border: 'none', fontWeight: '700', fontSize: '0.82rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
+                        onClick={() => handleOpenInquiryModal(v, 'details')}
                       >
-                        <i className="fa-regular fa-paper-plane"></i> Book Inquiry
+                        <i className="fa-regular fa-paper-plane"></i> Inquire / Book Space
                       </button>
                     </div>
                   </div>
