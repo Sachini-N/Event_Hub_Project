@@ -9124,13 +9124,112 @@ body.dark-mode .meta-value {
   overflow: hidden;
 }
 
+/* Venue Split Grid Form & Specs 2-Column Responsive Helpers */
+.venue-inquiry-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 0.85rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+  background-color: #ffffff;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  touch-action: manipulation;
+}
+
+.venue-inquiry-input:focus {
+  border-color: #0052cc;
+  box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.15);
+}
+
+textarea.venue-inquiry-input {
+  height: auto;
+  padding: 0.65rem 0.85rem;
+}
+
+.venue-form-row-2col,
+.venue-specs-grid,
+.venue-receipt-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.venue-specs-grid {
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  background: #f8fafc;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.venue-receipt-grid {
+  gap: 0.85rem;
+  font-size: 0.88rem;
+  margin-bottom: 0;
+}
+
 @media (max-width: 768px) {
-  .venue-split-modal-card {
-    width: 95vw !important;
-    max-width: 95vw !important;
-    max-height: 92vh !important;
-    border-radius: 16px !important;
+  .modal-overlay {
+    align-items: flex-start !important;
+    padding: 0.5rem 0.5rem 2rem 0.5rem !important;
     overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .venue-split-modal-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0.25rem auto 2rem auto !important;
+    max-height: none !important;
+    height: auto !important;
+    border-radius: 16px !important;
+    overflow: visible !important;
+  }
+
+  .venue-inquiry-input {
+    font-size: 16px !important; /* Prevents auto-zoom tap lock on iOS/Android */
+    height: 48px !important;
+  }
+
+  .venue-modal-header-bar {
+    padding: 0.85rem 1rem !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+  }
+
+  .venue-modal-header-title-container {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+  }
+
+  .venue-modal-tabs-container {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    gap: 0.5rem !important;
+  }
+
+  .venue-modal-tabs {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .venue-modal-tab-btn {
+    flex: 1 !important;
+    justify-content: center !important;
+    padding: 0.5rem 0.4rem !important;
+    font-size: 0.78rem !important;
+    text-align: center !important;
   }
 
   .venue-split-grid {
@@ -9154,6 +9253,40 @@ body.dark-mode .meta-value {
     max-height: none !important;
     overflow-y: visible !important;
     width: 100% !important;
+  }
+
+  /* Booking Split Grid & Reservation Form Mobile Responsiveness */
+  .venue-booking-split-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .venue-booking-sidebar {
+    width: 100% !important;
+    padding: 1rem !important;
+    border-right: none !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .venue-booking-sidebar-img-box {
+    height: 140px !important;
+  }
+
+  .venue-booking-form-content {
+    width: 100% !important;
+    padding: 1.25rem 1rem !important;
+    overflow-y: visible !important;
+    box-sizing: border-box !important;
+  }
+
+  .venue-form-row-2col,
+  .venue-specs-grid,
+  .venue-receipt-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
   }
 }
 

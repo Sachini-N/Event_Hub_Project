@@ -216,10 +216,10 @@ export default function VenuesPage({ showToast }) {
 
   const [bookingConfirmation, setBookingConfirmation] = useState(null);
 
-  const handleOpenInquiryModal = (venue) => {
+  const handleOpenInquiryModal = (venue, initialTab = 'booking') => {
     setActiveVenueModal(venue);
     setModalActivePhotoIndex(0);
-    setModalActiveTab('details');
+    setModalActiveTab(initialTab);
     setInquiryForm({
       name: '',
       email: '',
@@ -513,12 +513,22 @@ export default function VenuesPage({ showToast }) {
                     )}
 
                     {/* Card Footer Actions */}
-                    <div className="venue-card-actions">
+                    <div className="venue-card-actions" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <button
-                        className="btn-venue-inquire"
-                        onClick={() => handleOpenInquiryModal(v)}
+                        type="button"
+                        className="btn-venue-secondary"
+                        onClick={() => handleOpenInquiryModal(v, 'details')}
+                        style={{ flex: 1, padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#f8fafc', color: '#475569', fontWeight: '700', fontSize: '0.82rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
                       >
-                        <i className="fa-regular fa-paper-plane"></i> Inquire / Book Space
+                        <i className="fa-solid fa-images"></i> Details & Photos
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-venue-inquire"
+                        onClick={() => handleOpenInquiryModal(v, 'booking')}
+                        style={{ flex: 1, padding: '0.6rem 0.75rem', borderRadius: '8px', background: 'var(--primary-blue, #0052cc)', color: '#ffffff', border: 'none', fontWeight: '700', fontSize: '0.82rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
+                      >
+                        <i className="fa-regular fa-paper-plane"></i> Book Inquiry
                       </button>
                     </div>
                   </div>
@@ -542,7 +552,7 @@ export default function VenuesPage({ showToast }) {
           >
             {/* Top Navigation Bar: Space Name, Price, and Modern Tab Switcher */}
             <div className="venue-modal-header-bar">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+              <div className="venue-modal-header-title-container" style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
                 <h2 style={{ fontSize: '1.65rem', fontWeight: '800', color: '#0f172a', margin: 0, lineHeight: 1.25, letterSpacing: '-0.02em' }}>
                   {activeVenueModal.name}
                 </h2>
@@ -560,7 +570,7 @@ export default function VenuesPage({ showToast }) {
               </div>
 
               {/* Modern Segmented Navigation Tabs */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div className="venue-modal-tabs-container" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <div className="venue-modal-tabs">
                   <button
                     type="button"
@@ -593,6 +603,7 @@ export default function VenuesPage({ showToast }) {
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
+                    flexShrink: 0,
                   }}
                   title="Close modal"
                 >
@@ -618,7 +629,7 @@ export default function VenuesPage({ showToast }) {
                     </div>
 
                     {/* Specs Cards Grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.25rem', background: '#f8fafc', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                    <div className="venue-specs-grid">
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#eff6ff', color: '#0052cc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>
                           <i className="fa-solid fa-users"></i>
@@ -887,7 +898,7 @@ export default function VenuesPage({ showToast }) {
                       const modalImages = getModalImages(activeVenueModal);
                       const currentImg = modalImages[modalActivePhotoIndex] || modalImages[0];
                       return (
-                        <div style={{ borderRadius: '12px', overflow: 'hidden', height: '180px', position: 'relative', marginBottom: '1.25rem', background: '#0f172a' }}>
+                        <div className="venue-booking-sidebar-img-box" style={{ borderRadius: '12px', overflow: 'hidden', height: '180px', position: 'relative', marginBottom: '1.25rem', background: '#0f172a' }}>
                           <img
                             src={currentImg}
                             alt={activeVenueModal.name}
@@ -975,7 +986,7 @@ export default function VenuesPage({ showToast }) {
                   </div>
 
                   <form onSubmit={handleInquirySubmit}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                    <div className="venue-form-row-2col">
                       <div>
                         <label htmlFor="inquiry-name" style={{ fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
                           Your Full Name *
@@ -983,11 +994,11 @@ export default function VenuesPage({ showToast }) {
                         <input
                           type="text"
                           id="inquiry-name"
+                          className="venue-inquiry-input"
                           required
                           placeholder="e.g. Kasun Perera"
                           value={inquiryForm.name}
                           onChange={(e) => setInquiryForm({ ...inquiryForm, name: e.target.value })}
-                          style={{ width: '100%', height: '42px', padding: '0 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', boxSizing: 'border-box' }}
                         />
                       </div>
 
@@ -998,16 +1009,16 @@ export default function VenuesPage({ showToast }) {
                         <input
                           type="email"
                           id="inquiry-email"
+                          className="venue-inquiry-input"
                           required
                           placeholder="kasun@techstartup.lk"
                           value={inquiryForm.email}
                           onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })}
-                          style={{ width: '100%', height: '42px', padding: '0 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', boxSizing: 'border-box' }}
                         />
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                    <div className="venue-form-row-2col">
                       <div>
                         <label htmlFor="inquiry-phone" style={{ fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
                           Phone Number *
@@ -1015,11 +1026,11 @@ export default function VenuesPage({ showToast }) {
                         <input
                           type="tel"
                           id="inquiry-phone"
+                          className="venue-inquiry-input"
                           required
                           placeholder="+94 77 123 4567"
                           value={inquiryForm.phone}
                           onChange={(e) => setInquiryForm({ ...inquiryForm, phone: e.target.value })}
-                          style={{ width: '100%', height: '42px', padding: '0 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', boxSizing: 'border-box' }}
                         />
                       </div>
 
@@ -1030,10 +1041,10 @@ export default function VenuesPage({ showToast }) {
                         <input
                           type="date"
                           id="inquiry-date"
+                          className="venue-inquiry-input"
                           required
                           value={inquiryForm.eventDate}
                           onChange={(e) => setInquiryForm({ ...inquiryForm, eventDate: e.target.value })}
-                          style={{ width: '100%', height: '42px', padding: '0 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', boxSizing: 'border-box' }}
                         />
                       </div>
                     </div>
@@ -1045,15 +1056,15 @@ export default function VenuesPage({ showToast }) {
                       <input
                         type="text"
                         id="inquiry-title"
+                        className="venue-inquiry-input"
                         required
                         placeholder="e.g. Annual Developer Summit 2026 / AI Hackathon"
                         value={inquiryForm.eventTitle}
                         onChange={(e) => setInquiryForm({ ...inquiryForm, eventTitle: e.target.value })}
-                        style={{ width: '100%', height: '42px', padding: '0 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', boxSizing: 'border-box' }}
                       />
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+                    <div className="venue-form-row-2col">
                       <div>
                         <label htmlFor="inquiry-hours" style={{ fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
                           Duration (Hours) *
@@ -1061,12 +1072,12 @@ export default function VenuesPage({ showToast }) {
                         <input
                           type="number"
                           id="inquiry-hours"
+                          className="venue-inquiry-input"
                           required
                           min="1"
                           max="24"
                           value={inquiryForm.durationHours}
                           onChange={(e) => setInquiryForm({ ...inquiryForm, durationHours: e.target.value })}
-                          style={{ width: '100%', height: '42px', padding: '0 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', boxSizing: 'border-box' }}
                         />
                       </div>
 
@@ -1077,10 +1088,10 @@ export default function VenuesPage({ showToast }) {
                         <input
                           type="number"
                           id="inquiry-guests"
+                          className="venue-inquiry-input"
                           placeholder="35"
                           value={inquiryForm.guests}
                           onChange={(e) => setInquiryForm({ ...inquiryForm, guests: e.target.value })}
-                          style={{ width: '100%', height: '42px', padding: '0 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', boxSizing: 'border-box' }}
                         />
                       </div>
                     </div>
@@ -1104,11 +1115,11 @@ export default function VenuesPage({ showToast }) {
                       </label>
                       <textarea
                         id="inquiry-notes"
+                        className="venue-inquiry-input"
                         rows="2"
                         placeholder="e.g. Need live streaming cameras, dual microphone setup, stage backdrop..."
                         value={inquiryForm.notes}
                         onChange={(e) => setInquiryForm({ ...inquiryForm, notes: e.target.value })}
-                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.86rem', boxSizing: 'border-box' }}
                       ></textarea>
                     </div>
 
@@ -1186,7 +1197,7 @@ export default function VenuesPage({ showToast }) {
                 </span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', fontSize: '0.88rem' }}>
+              <div className="venue-receipt-grid">
                 <div>
                   <span style={{ color: '#64748b', fontSize: '0.78rem', display: 'block', fontWeight: '600' }}>VENUE NAME</span>
                   <strong style={{ color: '#0f172a' }}>{bookingConfirmation.venueName}</strong>
