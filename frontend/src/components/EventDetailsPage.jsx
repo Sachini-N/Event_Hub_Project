@@ -448,7 +448,7 @@ export default function EventDetailsPage({
                 <div className="registration-card-box">
                   <h2 className="registration-card-title">Register for this Event</h2>
                   <p className="registration-card-subtitle">
-                    Reserve your place by providing your details below.
+                    Secure your spot by providing your details below.
                   </p>
 
                   <form onSubmit={handleSubmit} className="registration-form">

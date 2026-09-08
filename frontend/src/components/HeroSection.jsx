@@ -1,31 +1,33 @@
 import React, { useState, useEffect } from 'react';
+import homeImg from '../assets/home.jpeg';
+import home2Img from '../assets/home2.jpeg';
 
 const HERO_SLIDES = [
   {
-    image: '/hero-bg-1.jpg',
+    image: 'https://tracesrilanka.lk/api/media/file/trace-home-1200x630.webp',
     badge: 'TRACE Expert City Sri Lanka',
-    title: "Discover What's Happening at TRACE",
-    subtitle: 'Join our vibrant community. Participate in free events, meet industry experts, and connect with peers to foster innovation and professional growth.',
+    title: "Discover & Experience Tech Events at TRACE",
+    subtitle: 'Join our vibrant community. Participate in tech events, showcase innovations, and connect with peers to foster professional growth.',
     primaryBtn: 'Explore Upcoming Events',
     primaryTab: 'upcoming',
     secondaryBtn: 'View Past Events',
     secondaryTab: 'past',
   },
   {
-    image: '/hero-bg-2.jpg',
-    badge: 'Tech Talks & Workshops',
-    title: 'Learn & Innovate with Industry Leaders',
-    subtitle: 'Attend expert keynotes, hands-on workshops, and developer meetups hosted at TRACE Expert City Colombo.',
+    image: homeImg,
+    badge: 'Tech Talks & Workshops Showcase',
+    title: 'Innovate & Learn with Industry Leaders',
+    subtitle: 'Feature expert keynotes, hands-on workshops, and developer meetups hosted at TRACE Expert City Colombo.',
     primaryBtn: 'Explore Upcoming Events',
     primaryTab: 'upcoming',
     secondaryBtn: 'Explore Spaces & Hub',
     secondaryTab: 'venues-page',
   },
   {
-    image: 'https://tracesrilanka.lk/api/media/file/trace-home-1200x630.webp',
+    image: home2Img,
     badge: 'Premier Hub Venues & Facilities',
-    title: 'Book World-Class Event Spaces',
-    subtitle: 'Reserve auditorium halls, high-tech meeting rooms, and collaborative spaces tailored for technology events.',
+    title: 'Explore & Showcase World-Class Event Spaces',
+    subtitle: 'Discover auditorium halls, high-tech meeting rooms, and collaborative spaces tailored for technology events.',
     primaryBtn: 'Browse Spaces & Venues',
     primaryTab: 'venues-page',
     secondaryBtn: 'View Past Events',

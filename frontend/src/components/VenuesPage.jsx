@@ -105,17 +105,24 @@ export default function VenuesPage({ showToast }) {
   });
   const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
 
-  // Helper to ensure every space has high-resolution multiple photos that show and change
+  // Helper to get database uploaded images ONLY for the venue space
   const getModalImages = (venue) => {
     if (!venue) return [];
+    
+    // 1. Array of images uploaded to database
     if (Array.isArray(venue.images) && venue.images.length > 0) {
-      return venue.images;
+      const validDbImages = venue.images.filter(img => typeof img === 'string' && img.trim().length > 0);
+      if (validDbImages.length > 0) return validDbImages;
     }
+
+    // 2. Single cover image uploaded to database
+    if (venue.coverImage && typeof venue.coverImage === 'string' && venue.coverImage.trim().length > 0) {
+      return [venue.coverImage.trim()];
+    }
+
+    // 3. Single fallback image if database has no photos uploaded
     return [
-      venue.coverImage || 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=1200&q=80',
-      'https://tracesrilanka.lk/api/media/file/trace-home-1200x630.webp',
-      'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=1200&q=80',
     ];
   };
 
@@ -389,7 +396,7 @@ export default function VenuesPage({ showToast }) {
             <button
               type="button"
               className="btn-filter-submit"
-              onClick={() => {}}
+              onClick={() => { }}
             >
               Filter
             </button>
@@ -459,13 +466,12 @@ export default function VenuesPage({ showToast }) {
                     <div className="venue-card-overlay-badges">
                       {/* Availability Tag */}
                       <span
-                        className={`venue-status-pill ${
-                          v.status === 'Available'
+                        className={`venue-status-pill ${v.status === 'Available'
                             ? 'status-available'
                             : v.status === 'Reserved'
-                            ? 'status-reserved'
-                            : 'status-maintenance'
-                        }`}
+                              ? 'status-reserved'
+                              : 'status-maintenance'
+                          }`}
                       >
                         <i className="fa-solid fa-circle" style={{ fontSize: '0.55rem' }}></i>{' '}
                         {v.status || 'Available'}
@@ -528,7 +534,7 @@ export default function VenuesPage({ showToast }) {
                         className="btn-venue-inquire"
                         onClick={() => handleOpenInquiryModal(v, 'details')}
                       >
-                        <i className="fa-regular fa-paper-plane"></i> Inquire / Book Space
+                        <i className="fa-solid fa-eye"></i> View Space Details & Photos
                       </button>
                     </div>
                   </div>
@@ -549,311 +555,155 @@ export default function VenuesPage({ showToast }) {
           <div
             className="modal-card venue-split-modal-card"
             onClick={(e) => e.stopPropagation()}
+            style={{ position: 'relative', overflow: 'hidden' }}
           >
-            {/* Top Navigation Bar: Space Name, Price, and Modern Tab Switcher */}
-            <div className="venue-modal-header-bar">
-              <div className="venue-modal-header-title-container" style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                <h2 style={{ fontSize: '1.65rem', fontWeight: '800', color: '#0f172a', margin: 0, lineHeight: 1.25, letterSpacing: '-0.02em' }}>
-                  {activeVenueModal.name}
-                </h2>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-                  <span style={{ background: '#eef2ff', color: '#5d4df6', fontWeight: '700', padding: '0.25rem 0.65rem', borderRadius: '20px', fontSize: '0.76rem', border: '1px solid #c7d2fe', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                    <i className="fa-solid fa-building"></i> {activeVenueModal.branch || 'TRACE Expert City'}
-                  </span>
-                  <span style={{ fontSize: '0.76rem', fontWeight: '700', color: activeVenueModal.status === 'Available' ? '#059669' : '#d97706', background: activeVenueModal.status === 'Available' ? '#dcfce7' : '#fef3c7', padding: '0.25rem 0.65rem', borderRadius: '20px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    ● {activeVenueModal.status || 'Available'}
-                  </span>
-                  <span style={{ fontSize: '0.82rem', fontWeight: '800', color: '#059669', background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '0.25rem 0.65rem', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                    <i className="fa-solid fa-tag"></i> {activeVenueModal.rentalPrice || (activeVenueModal.pricePerHour ? `Rs. ${activeVenueModal.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr')}
-                  </span>
-                </div>
-              </div>
+            {/* Floating Close Button */}
+            <button
+              className="modal-close"
+              onClick={() => setActiveVenueModal(null)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'rgba(241, 245, 249, 0.95)',
+                backdropFilter: 'blur(4px)',
+                color: '#0f172a',
+                border: '1px solid #cbd5e1',
+                borderRadius: '50%',
+                width: '36px',
+                height: '36px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                flexShrink: 0,
+                fontSize: '1.1rem',
+                transition: 'all 0.2s ease',
+                zIndex: 20,
+              }}
+              title="Close modal"
+            >
+              <i className="fa-solid fa-xmark"></i>
+            </button>
 
-              {/* Modern Segmented Navigation Tabs */}
-              <div className="venue-modal-tabs-container" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <div className="venue-modal-tabs">
-                  <button
-                    type="button"
-                    className={`venue-modal-tab-btn ${modalActiveTab === 'details' ? 'active' : ''}`}
-                    onClick={() => handleSwitchTab('details')}
-                  >
-                    <i className="fa-solid fa-images"></i> Space & Photos
-                  </button>
-                  <button
-                    type="button"
-                    className={`venue-modal-tab-btn ${modalActiveTab === 'booking' ? 'active' : ''}`}
-                    onClick={() => handleSwitchTab('booking')}
-                  >
-                    <i className="fa-solid fa-calendar-check"></i> Reserve Space
-                  </button>
-                </div>
+            {/* SPACE DETAILS & DATABASE PHOTO GALLERY (SIDE-BY-SIDE 2-COLUMN SPLIT) */}
+            <div className="venue-split-grid" style={{ gridTemplateColumns: '1fr 1fr', maxHeight: '88vh' }}>
+              
+              {/* LEFT SIDE: DATABASE UPLOADED PHOTO GALLERY SHOWCASE */}
+              <div className="venue-split-left-gallery" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderRight: '1px solid #e2e8f0', overflowY: 'auto' }}>
+                {(() => {
+                  const modalImages = getModalImages(activeVenueModal);
+                  const currentImg = modalImages[modalActivePhotoIndex] || modalImages[0];
 
-                <button
-                  className="modal-close"
-                  onClick={() => setActiveVenueModal(null)}
-                  style={{
-                    position: 'static',
-                    background: '#f1f5f9',
-                    color: '#0f172a',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '34px',
-                    height: '34px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                  }}
-                  title="Close modal"
-                >
-                  <i className="fa-solid fa-xmark"></i>
-                </button>
-              </div>
-            </div>
-
-            {/* TAB 1: SPACE DETAILS & INTERACTIVE PHOTO GALLERY */}
-            {modalActiveTab === 'details' && (
-              <div className="venue-split-grid">
-                {/* LEFT SIDE: Specifications, Amenities, Contact & Proceed CTA */}
-                <div className="venue-split-left-details">
-                  <div>
-                    {/* Location and Province */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.85rem', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '0.78rem', fontWeight: '700', color: '#5d4df6', background: '#eff6ff', border: '1px solid #dbeafe', padding: '0.3rem 0.75rem', borderRadius: '20px' }}>
-                        📍 {getSpaceProvince(activeVenueModal)}
-                      </span>
-                      <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
-                        {activeVenueModal.address}
-                      </span>
-                    </div>
-
-                    {/* Specs Cards Grid */}
-                    <div className="venue-specs-grid">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#eff6ff', color: '#0052cc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>
-                          <i className="fa-solid fa-users"></i>
-                        </div>
-                        <div>
-                          <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', fontWeight: '700', textTransform: 'uppercase' }}>Capacity</span>
-                          <strong style={{ fontSize: '0.88rem', color: '#0f172a' }}>{activeVenueModal.capacity} Guests</strong>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>
-                          <i className="fa-solid fa-tag"></i>
-                        </div>
-                        <div>
-                          <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', fontWeight: '700', textTransform: 'uppercase' }}>Rental Rate</span>
-                          <strong style={{ fontSize: '0.88rem', color: '#0f172a' }}>
-                            {activeVenueModal.rentalPrice || (activeVenueModal.pricePerHour ? `Rs. ${activeVenueModal.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr')}
-                          </strong>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Formatted Description */}
-                    <div style={{ marginBottom: '1.25rem' }}>
-                      <h4 style={{ fontSize: '0.82rem', fontWeight: '800', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.45rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <i className="fa-solid fa-circle-info" style={{ color: '#0052cc' }}></i> Space Overview
-                      </h4>
-                      {activeVenueModal.description ? (
-                        <div style={{ fontSize: '0.88rem', color: '#475569', lineHeight: 1.6 }}>
-                          <FormattedText content={activeVenueModal.description} className="space-modal-description-text" />
-                        </div>
-                      ) : (
-                        <p style={{ fontSize: '0.88rem', color: '#475569', lineHeight: 1.6 }}>
-                          Enterprise auditorium & event venue equipped with modern AV, air conditioning, stage lighting, and high-speed fiber internet.
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Included Amenities */}
-                    {activeVenueModal.amenities && activeVenueModal.amenities.length > 0 && (
-                      <div style={{ marginBottom: '1.25rem' }}>
-                        <h4 style={{ fontSize: '0.82rem', fontWeight: '800', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <i className="fa-solid fa-sliders" style={{ color: '#0052cc' }}></i> Included Facilities
-                        </h4>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                          {activeVenueModal.amenities.map((am, i) => (
-                            <span key={i} style={{ fontSize: '0.76rem', fontWeight: '700', color: '#334155', background: '#f1f5f9', padding: '4px 9px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
-                              ✓ {am}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Contact Person Details */}
-                    <div style={{ background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid #e2e8f0', marginBottom: '0.5rem' }}>
-                      <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>Venue Coordinator</span>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.2rem' }}>
-                        <strong style={{ fontSize: '0.86rem', color: '#0f172a' }}>Senal (TRACE Facilities)</strong>
-                        <a href="tel:+94766433975" style={{ fontSize: '0.82rem', color: '#0052cc', textDecoration: 'none', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <i className="fa-solid fa-phone"></i> +94 76 643 3975
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Proceed to Booking Tab CTA */}
-                  <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #eaecf0' }}>
-                    <button
-                      type="button"
-                      className="btn-proceed-booking"
-                      onClick={() => handleSwitchTab('booking')}
-                    >
-                      <i className="fa-regular fa-paper-plane"></i> Book Space Inquiry Now <i className="fa-solid fa-arrow-right"></i>
-                    </button>
-                  </div>
-                </div>
-
-                {/* RIGHT SIDE: Interactive Multi-Photo Gallery Showcase (Displays & Changes Photos) */}
-                <div className="venue-split-right-gallery">
-                  {(() => {
-                    const modalImages = getModalImages(activeVenueModal);
-                    const currentImg = modalImages[modalActivePhotoIndex] || modalImages[0];
-
-                    return (
-                      <>
-                        {/* Main Active Photo View */}
-                        <div style={{ flex: 1, position: 'relative', overflow: 'hidden', width: '100%', background: '#020617', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <img
-                            key={modalActivePhotoIndex}
-                            src={currentImg}
-                            alt={`${activeVenueModal.name} view ${modalActivePhotoIndex + 1}`}
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                              transition: 'opacity 0.4s ease-in-out',
-                            }}
-                          />
-
-                          {/* Left Navigation Arrow */}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setModalActivePhotoIndex((prev) =>
-                                prev === 0 ? modalImages.length - 1 : prev - 1
-                              )
-                            }
-                            style={{
-                              position: 'absolute',
-                              left: '14px',
-                              top: '50%',
-                              transform: 'translateY(-50%)',
-                              background: 'rgba(15, 23, 42, 0.75)',
-                              backdropFilter: 'blur(6px)',
-                              color: '#ffffff',
-                              border: '1px solid rgba(255, 255, 255, 0.25)',
-                              borderRadius: '50%',
-                              width: '40px',
-                              height: '40px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '1rem',
-                              zIndex: 5,
-                              transition: 'all 0.2s ease',
-                            }}
-                            title="Previous Photo"
-                            aria-label="Previous Photo"
-                          >
-                            <i className="fa-solid fa-chevron-left"></i>
-                          </button>
-
-                          {/* Right Navigation Arrow */}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setModalActivePhotoIndex((prev) =>
-                                prev === modalImages.length - 1 ? 0 : prev + 1
-                              )
-                            }
-                            style={{
-                              position: 'absolute',
-                              right: '14px',
-                              top: '50%',
-                              transform: 'translateY(-50%)',
-                              background: 'rgba(15, 23, 42, 0.75)',
-                              backdropFilter: 'blur(6px)',
-                              color: '#ffffff',
-                              border: '1px solid rgba(255, 255, 255, 0.25)',
-                              borderRadius: '50%',
-                              width: '40px',
-                              height: '40px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '1rem',
-                              zIndex: 5,
-                              transition: 'all 0.2s ease',
-                            }}
-                            title="Next Photo"
-                            aria-label="Next Photo"
-                          >
-                            <i className="fa-solid fa-chevron-right"></i>
-                          </button>
-
-                          {/* Photo Counter Badge */}
-                          <div
-                            style={{
-                              position: 'absolute',
-                              top: '14px',
-                              right: '14px',
-                              background: 'rgba(15, 23, 42, 0.85)',
-                              backdropFilter: 'blur(6px)',
-                              color: '#ffffff',
-                              padding: '5px 14px',
-                              borderRadius: '20px',
-                              fontSize: '0.78rem',
-                              fontWeight: '700',
-                              border: '1px solid rgba(255, 255, 255, 0.2)',
-                              zIndex: 5,
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                            }}
-                          >
-                            <i className="fa-solid fa-camera"></i> {modalActivePhotoIndex + 1} / {modalImages.length}
-                          </div>
-
-                          {/* Auto-Slide Indicator Pill */}
-                          <div
-                            style={{
-                              position: 'absolute',
-                              bottom: '12px',
-                              left: '14px',
-                              background: 'rgba(15, 23, 42, 0.75)',
-                              backdropFilter: 'blur(4px)',
-                              color: '#94a3b8',
-                              padding: '3px 10px',
-                              borderRadius: '12px',
-                              fontSize: '0.7rem',
-                              fontWeight: '600',
-                              zIndex: 5,
-                            }}
-                          >
-                            <i className="fa-solid fa-arrows-rotate"></i> Auto-rotating photos
-                          </div>
-                        </div>
-
-                        {/* Interactive Clickable Thumbnail Bar to change photos */}
-                        <div
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                      {/* Main Active Photo View */}
+                      <div style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '480px', borderRadius: '16px', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 20px rgba(0,0,0,0.12)' }}>
+                        <img
+                          key={modalActivePhotoIndex}
+                          src={currentImg}
+                          alt={`${activeVenueModal.name} view ${modalActivePhotoIndex + 1}`}
                           style={{
-                            background: 'rgba(15, 23, 42, 0.96)',
-                            padding: '0.75rem 1.25rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.75rem',
-                            overflowX: 'auto',
-                            borderTop: '1px solid #1e293b',
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            transition: 'opacity 0.3s ease',
                           }}
-                        >
+                        />
+
+                        {/* Navigation Arrows (Only shown if multiple DB images exist) */}
+                        {modalImages.length > 1 && (
+                          <>
+                            {/* Left Arrow */}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setModalActivePhotoIndex((prev) =>
+                                  prev === 0 ? modalImages.length - 1 : prev - 1
+                                )
+                              }
+                              style={{
+                                position: 'absolute',
+                                left: '12px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                background: 'rgba(15, 23, 42, 0.75)',
+                                backdropFilter: 'blur(4px)',
+                                color: '#ffffff',
+                                border: '1px solid rgba(255, 255, 255, 0.25)',
+                                borderRadius: '50%',
+                                width: '36px',
+                                height: '36px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '0.9rem',
+                                zIndex: 5,
+                              }}
+                              title="Previous Photo"
+                            >
+                              <i className="fa-solid fa-chevron-left"></i>
+                            </button>
+
+                            {/* Right Arrow */}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setModalActivePhotoIndex((prev) =>
+                                  prev === modalImages.length - 1 ? 0 : prev + 1
+                                )
+                              }
+                              style={{
+                                position: 'absolute',
+                                right: '12px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                background: 'rgba(15, 23, 42, 0.75)',
+                                backdropFilter: 'blur(4px)',
+                                color: '#ffffff',
+                                border: '1px solid rgba(255, 255, 255, 0.25)',
+                                borderRadius: '50%',
+                                width: '36px',
+                                height: '36px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '0.9rem',
+                                zIndex: 5,
+                              }}
+                              title="Next Photo"
+                            >
+                              <i className="fa-solid fa-chevron-right"></i>
+                            </button>
+
+                            {/* Counter Badge */}
+                            <div
+                              style={{
+                                position: 'absolute',
+                                top: '12px',
+                                right: '12px',
+                                background: 'rgba(15, 23, 42, 0.85)',
+                                backdropFilter: 'blur(6px)',
+                                color: '#ffffff',
+                                padding: '4px 12px',
+                                borderRadius: '20px',
+                                fontSize: '0.75rem',
+                                fontWeight: '700',
+                                border: '1px solid rgba(255, 255, 255, 0.2)',
+                                zIndex: 5,
+                              }}
+                            >
+                              📷 {modalActivePhotoIndex + 1} / {modalImages.length}
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Clickable Photo Thumbnails Row (Only rendered if multiple DB images exist) */}
+                      {modalImages.length > 1 && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', overflowX: 'auto', paddingBottom: '4px' }}>
                           {modalImages.map((imgUrl, idx) => (
                             <div
                               key={idx}
@@ -864,14 +714,12 @@ export default function VenuesPage({ showToast }) {
                                 borderRadius: '8px',
                                 overflow: 'hidden',
                                 cursor: 'pointer',
-                                border: modalActivePhotoIndex === idx ? '2.5px solid #3b82f6' : '2px solid transparent',
-                                opacity: modalActivePhotoIndex === idx ? 1 : 0.55,
-                                transform: modalActivePhotoIndex === idx ? 'scale(1.05)' : 'scale(1)',
+                                border: modalActivePhotoIndex === idx ? '2.5px solid #5d4df6' : '1px solid #cbd5e1',
+                                opacity: modalActivePhotoIndex === idx ? 1 : 0.65,
                                 transition: 'all 0.2s ease',
                                 flexShrink: 0,
                                 background: '#0f172a',
                               }}
-                              title={`View photo ${idx + 1}`}
                             >
                               <img
                                 src={imgUrl}
@@ -881,360 +729,92 @@ export default function VenuesPage({ showToast }) {
                             </div>
                           ))}
                         </div>
-                      </>
-                    );
-                  })()}
-                </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
-            )}
 
-            {/* TAB 2: MODERN INLINE RESERVATION & INQUIRY FORM */}
-            {modalActiveTab === 'booking' && (
-              <div className="venue-booking-split-grid">
-                {/* Left Sidebar: Space Summary & Current Photo */}
-                <div className="venue-booking-sidebar">
-                  <div>
-                    {(() => {
-                      const modalImages = getModalImages(activeVenueModal);
-                      const currentImg = modalImages[modalActivePhotoIndex] || modalImages[0];
-                      return (
-                        <div className="venue-booking-sidebar-img-box" style={{ borderRadius: '12px', overflow: 'hidden', height: '180px', position: 'relative', marginBottom: '1.25rem', background: '#0f172a' }}>
-                          <img
-                            src={currentImg}
-                            alt={activeVenueModal.name}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                          />
-                          <div style={{ position: 'absolute', bottom: '8px', right: '8px', display: 'flex', gap: '4px' }}>
-                            <button
-                              type="button"
-                              onClick={() => setModalActivePhotoIndex((prev) => (prev === 0 ? modalImages.length - 1 : prev - 1))}
-                              style={{ background: 'rgba(15, 23, 42, 0.8)', color: '#ffffff', border: 'none', borderRadius: '4px', width: '26px', height: '26px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            >
-                              ‹
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setModalActivePhotoIndex((prev) => (prev === modalImages.length - 1 ? 0 : prev + 1))}
-                              style={{ background: 'rgba(15, 23, 42, 0.8)', color: '#ffffff', border: 'none', borderRadius: '4px', width: '26px', height: '26px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            >
-                              ›
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })()}
+              {/* RIGHT SIDE: VENUE NAME, SPECIFICATIONS & DETAILS DISPLAY */}
+              <div className="venue-split-right-details" style={{ padding: '1.75rem 2rem 1.75rem 1.75rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', overflowY: 'auto', background: '#ffffff' }}>
+                
+                {/* 1. SPACE NAME & TOP BADGES */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', paddingRight: '2.5rem' }}>
+                  <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#0f172a', margin: 0, lineHeight: 1.2, letterSpacing: '-0.02em' }}>
+                    {activeVenueModal.name}
+                  </h2>
 
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#0f172a', margin: '0 0 0.4rem 0' }}>
-                      {activeVenueModal.name}
-                    </h3>
-                    <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '0 0 0.85rem 0' }}>
-                      <i className="fa-solid fa-location-dot" style={{ color: '#0052cc', marginRight: '4px' }}></i>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <span style={{ background: '#eef2ff', color: '#5d4df6', fontWeight: '700', padding: '0.25rem 0.65rem', borderRadius: '20px', fontSize: '0.76rem', border: '1px solid #c7d2fe', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <i className="fa-solid fa-building"></i> {activeVenueModal.branch || 'TRACE Expert City'}
+                    </span>
+                    <span style={{ fontSize: '0.76rem', fontWeight: '700', color: activeVenueModal.status === 'Available' ? '#059669' : '#d97706', background: activeVenueModal.status === 'Available' ? '#dcfce7' : '#fef3c7', padding: '0.25rem 0.65rem', borderRadius: '20px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      ● {activeVenueModal.status || 'Available'}
+                    </span>
+                    <span style={{ fontSize: '0.82rem', fontWeight: '800', color: '#059669', background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '0.25rem 0.65rem', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <i className="fa-solid fa-tag"></i> {activeVenueModal.rentalPrice || (activeVenueModal.pricePerHour ? `Rs. ${activeVenueModal.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr')}
+                    </span>
+                  </div>
+
+                  {/* Province, Capacity & Location Address */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.2rem' }}>
+                    <span style={{ fontSize: '0.76rem', fontWeight: '700', color: '#5d4df6', background: '#eff6ff', border: '1px solid #dbeafe', padding: '0.25rem 0.65rem', borderRadius: '20px' }}>
+                      📍 {getSpaceProvince(activeVenueModal)}
+                    </span>
+                    <span style={{ fontSize: '0.76rem', fontWeight: '700', color: '#0052cc', background: '#e0f2fe', border: '1px solid #bae6fd', padding: '0.25rem 0.65rem', borderRadius: '20px' }}>
+                      👥 Capacity: {activeVenueModal.capacity} Guests
+                    </span>
+                    <span style={{ fontSize: '0.82rem', color: '#475569', fontWeight: '600' }}>
+                      <i className="fa-solid fa-location-dot" style={{ color: '#64748b', marginRight: '4px' }}></i>
                       {activeVenueModal.address}
-                    </p>
-
-                    <div style={{ background: '#ffffff', borderRadius: '10px', padding: '0.85rem', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
-                        <span style={{ color: '#64748b' }}>Rate per Hour:</span>
-                        <strong style={{ color: '#0f172a' }}>
-                          {activeVenueModal.rentalPrice || `Rs. ${(activeVenueModal.pricePerHour || 25000).toLocaleString()}`}
-                        </strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
-                        <span style={{ color: '#64748b' }}>Capacity:</span>
-                        <strong style={{ color: '#0f172a' }}>{activeVenueModal.capacity} Seats</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
-                        <span style={{ color: '#64748b' }}>Branch:</span>
-                        <strong style={{ color: '#0052cc' }}>{activeVenueModal.branch || 'TRACE Colombo'}</strong>
-                      </div>
-                    </div>
+                    </span>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handleSwitchTab('details')}
-                    style={{
-                      background: 'none',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '8px',
-                      padding: '0.65rem 1rem',
-                      fontSize: '0.84rem',
-                      fontWeight: '700',
-                      color: '#475569',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    <i className="fa-solid fa-arrow-left"></i> View Full Space Details
-                  </button>
                 </div>
 
-                {/* Right Side: Reservation Form */}
-                <div className="venue-booking-form-content">
-                  <div style={{ marginBottom: '1.25rem' }}>
-                    <h2 style={{ fontSize: '1.35rem', fontWeight: '800', color: '#0f172a', margin: '0 0 0.35rem 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <i className="fa-solid fa-calendar-check" style={{ color: '#0052cc' }}></i>
-                      Space Reservation Inquiry
-                    </h2>
-                    <p style={{ fontSize: '0.88rem', color: '#64748b', margin: 0 }}>
-                      Submit your reservation request for <strong>{activeVenueModal.name}</strong>. Our TRACE team will confirm availability.
+                {/* 2. SPACE OVERVIEW DESCRIPTION */}
+                <div>
+                  <h4 style={{ fontSize: '0.82rem', fontWeight: '800', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <i className="fa-solid fa-circle-info" style={{ color: '#0052cc' }}></i> Space Overview
+                  </h4>
+                  {activeVenueModal.description ? (
+                    <div style={{ fontSize: '0.86rem', color: '#475569', lineHeight: 1.55 }}>
+                      <FormattedText content={activeVenueModal.description} className="space-modal-description-text" />
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: '0.86rem', color: '#475569', lineHeight: 1.55, margin: 0 }}>
+                      Enterprise auditorium & event venue equipped with modern AV, air conditioning, stage lighting, and high-speed fiber internet.
                     </p>
-                  </div>
+                  )}
+                </div>
 
-                  <form onSubmit={handleInquirySubmit}>
-                    <div className="venue-form-row-2col">
-                      <div>
-                        <label htmlFor="inquiry-name" style={{ fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
-                          Your Full Name *
-                        </label>
-                        <input
-                          type="text"
-                          id="inquiry-name"
-                          className="venue-inquiry-input"
-                          required
-                          placeholder="e.g. Kasun Perera"
-                          value={inquiryForm.name}
-                          onChange={(e) => setInquiryForm({ ...inquiryForm, name: e.target.value })}
-                        />
-                      </div>
-
-                      <div>
-                        <label htmlFor="inquiry-email" style={{ fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
-                          Email Address *
-                        </label>
-                        <input
-                          type="email"
-                          id="inquiry-email"
-                          className="venue-inquiry-input"
-                          required
-                          placeholder="kasun@techstartup.lk"
-                          value={inquiryForm.email}
-                          onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="venue-form-row-2col">
-                      <div>
-                        <label htmlFor="inquiry-phone" style={{ fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
-                          Phone Number *
-                        </label>
-                        <input
-                          type="tel"
-                          id="inquiry-phone"
-                          className="venue-inquiry-input"
-                          required
-                          placeholder="+94 77 123 4567"
-                          value={inquiryForm.phone}
-                          onChange={(e) => setInquiryForm({ ...inquiryForm, phone: e.target.value })}
-                        />
-                      </div>
-
-                      <div>
-                        <label htmlFor="inquiry-date" style={{ fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
-                          Target Event Date *
-                        </label>
-                        <input
-                          type="date"
-                          id="inquiry-date"
-                          className="venue-inquiry-input"
-                          required
-                          value={inquiryForm.eventDate}
-                          onChange={(e) => setInquiryForm({ ...inquiryForm, eventDate: e.target.value })}
-                        />
-                      </div>
-                    </div>
-
-                    <div style={{ marginBottom: '1rem' }}>
-                      <label htmlFor="inquiry-title" style={{ fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
-                        Event Title / Purpose *
-                      </label>
-                      <input
-                        type="text"
-                        id="inquiry-title"
-                        className="venue-inquiry-input"
-                        required
-                        placeholder="e.g. Annual Developer Summit 2026 / AI Hackathon"
-                        value={inquiryForm.eventTitle}
-                        onChange={(e) => setInquiryForm({ ...inquiryForm, eventTitle: e.target.value })}
-                      />
-                    </div>
-
-                    <div className="venue-form-row-2col">
-                      <div>
-                        <label htmlFor="inquiry-hours" style={{ fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
-                          Duration (Hours) *
-                        </label>
-                        <input
-                          type="number"
-                          id="inquiry-hours"
-                          className="venue-inquiry-input"
-                          required
-                          min="1"
-                          max="24"
-                          value={inquiryForm.durationHours}
-                          onChange={(e) => setInquiryForm({ ...inquiryForm, durationHours: e.target.value })}
-                        />
-                      </div>
-
-                      <div>
-                        <label htmlFor="inquiry-guests" style={{ fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
-                          Expected Attendees
-                        </label>
-                        <input
-                          type="number"
-                          id="inquiry-guests"
-                          className="venue-inquiry-input"
-                          placeholder="35"
-                          value={inquiryForm.guests}
-                          onChange={(e) => setInquiryForm({ ...inquiryForm, guests: e.target.value })}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Live Dynamic Cost Preview Badge */}
-                    <div style={{ background: '#f0fdf4', border: '1.5px solid #bbf7d0', padding: '0.85rem 1.25rem', borderRadius: '10px', marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                      <span style={{ fontSize: '0.84rem', color: '#166534', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <i className="fa-solid fa-calculator"></i> Estimated Rental Cost:
-                      </span>
-                      <strong style={{ fontSize: '1.05rem', color: '#15803d' }}>
-                        Rs. {((activeVenueModal?.pricePerHour || 25000) * (Number(inquiryForm.durationHours) || 4)).toLocaleString()}
-                        <span style={{ fontSize: '0.78rem', color: '#166534', fontWeight: '600', marginLeft: '6px' }}>
-                          ({inquiryForm.durationHours || 4} hrs @ Rs. {(activeVenueModal?.pricePerHour || 25000).toLocaleString()}/hr)
+                {/* 3. INCLUDED FACILITIES & AMENITIES */}
+                {activeVenueModal.amenities && activeVenueModal.amenities.length > 0 && (
+                  <div>
+                    <h4 style={{ fontSize: '0.82rem', fontWeight: '800', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <i className="fa-solid fa-sliders" style={{ color: '#0052cc' }}></i> Included Facilities
+                    </h4>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                      {activeVenueModal.amenities.map((am, i) => (
+                        <span key={i} style={{ fontSize: '0.76rem', fontWeight: '700', color: '#334155', background: '#f1f5f9', padding: '4px 9px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
+                          ✓ {am}
                         </span>
-                      </strong>
+                      ))}
                     </div>
+                  </div>
+                )}
 
-                    <div style={{ marginBottom: '1.5rem' }}>
-                      <label htmlFor="inquiry-notes" style={{ fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
-                        Special Notes or Equipment Requirements (Optional)
-                      </label>
-                      <textarea
-                        id="inquiry-notes"
-                        className="venue-inquiry-input"
-                        rows="2"
-                        placeholder="e.g. Need live streaming cameras, dual microphone setup, stage backdrop..."
-                        value={inquiryForm.notes}
-                        onChange={(e) => setInquiryForm({ ...inquiryForm, notes: e.target.value })}
-                      ></textarea>
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.85rem', alignItems: 'center' }}>
-                      <button
-                        type="button"
-                        onClick={() => handleSwitchTab('details')}
-                        style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: '700', fontSize: '0.88rem', cursor: 'pointer', padding: '0.6rem 1rem' }}
-                      >
-                        Back to Details
-                      </button>
-                      <button
-                        type="submit"
-                        className="btn btn-primary"
-                        style={{
-                          backgroundColor: 'var(--primary-blue, #0052cc)',
-                          color: '#ffffff',
-                          fontWeight: '800',
-                          fontSize: '0.95rem',
-                          padding: '0.75rem 1.75rem',
-                          borderRadius: '10px',
-                          border: 'none',
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          boxShadow: '0 4px 14px rgba(0, 82, 204, 0.25)',
-                        }}
-                        disabled={isSubmittingInquiry}
-                      >
-                        {isSubmittingInquiry ? (
-                          <>
-                            <i className="fa-solid fa-spinner fa-spin"></i> Submitting...
-                          </>
-                        ) : (
-                          <>
-                            <i className="fa-solid fa-paper-plane"></i> Send Booking Inquiry
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </form>
+                {/* 4. VENUE COORDINATOR CONTACT */}
+                <div style={{ background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid #e2e8f0', marginTop: 'auto' }}>
+                  <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Venue Coordinator</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.2rem' }}>
+                    <strong style={{ fontSize: '0.86rem', color: '#0f172a' }}>Senal (TRACE Facilities)</strong>
+                    <a href="tel:+94766433975" style={{ fontSize: '0.82rem', color: '#0052cc', textDecoration: 'none', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <i className="fa-solid fa-phone"></i> +94 76 643 3975
+                    </a>
+                  </div>
                 </div>
+
               </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Booking Confirmation Receipt Modal */}
-      {bookingConfirmation && (
-        <div className="modal-overlay" onClick={() => setBookingConfirmation(null)}>
-          <div className="modal-card" style={{ maxWidth: '580px', borderRadius: '20px', padding: '2rem' }} onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setBookingConfirmation(null)}>
-              <i className="fa-solid fa-xmark"></i>
-            </button>
-
-            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-              <div style={{ width: '64px', height: '64px', background: '#dcfce7', color: '#16a34a', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', margin: '0 auto 1rem' }}>
-                <i className="fa-solid fa-circle-check"></i>
-              </div>
-              <h2 style={{ fontSize: '1.6rem', fontWeight: '800', color: '#0f172a', margin: '0 0 0.3rem 0' }}>
-                Space Inquiry Submitted!
-              </h2>
-              <p style={{ fontSize: '0.9rem', color: '#64748b', margin: 0 }}>
-                Your venue booking request has been received by TRACE venue management.
-              </p>
-            </div>
-
-            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.85rem', borderBottom: '1px dashed #cbd5e1', marginBottom: '0.85rem' }}>
-                <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: '700' }}>BOOKING REFERENCE</span>
-                <span style={{ fontSize: '1rem', fontWeight: '800', color: '#5d4df6', background: '#eff6ff', padding: '0.2rem 0.6rem', borderRadius: '6px' }}>
-                  {bookingConfirmation.bookingRef}
-                </span>
-              </div>
-
-              <div className="venue-receipt-grid">
-                <div>
-                  <span style={{ color: '#64748b', fontSize: '0.78rem', display: 'block', fontWeight: '600' }}>VENUE NAME</span>
-                  <strong style={{ color: '#0f172a' }}>{bookingConfirmation.venueName}</strong>
-                </div>
-                <div>
-                  <span style={{ color: '#64748b', fontSize: '0.78rem', display: 'block', fontWeight: '600' }}>BRANCH</span>
-                  <strong style={{ color: '#0f172a' }}>{bookingConfirmation.branch}</strong>
-                </div>
-                <div>
-                  <span style={{ color: '#64748b', fontSize: '0.78rem', display: 'block', fontWeight: '600' }}>EVENT TITLE</span>
-                  <strong style={{ color: '#0f172a' }}>{bookingConfirmation.eventTitle}</strong>
-                </div>
-                <div>
-                  <span style={{ color: '#64748b', fontSize: '0.78rem', display: 'block', fontWeight: '600' }}>TARGET DATE & DURATION</span>
-                  <strong style={{ color: '#0f172a' }}>{bookingConfirmation.eventDate} ({bookingConfirmation.durationHours || 4} Hours)</strong>
-                </div>
-                <div>
-                  <span style={{ color: '#64748b', fontSize: '0.78rem', display: 'block', fontWeight: '600' }}>APPLICANT</span>
-                  <strong style={{ color: '#0f172a' }}>{bookingConfirmation.name}</strong>
-                </div>
-                <div>
-                  <span style={{ color: '#64748b', fontSize: '0.78rem', display: 'block', fontWeight: '600' }}>STATUS</span>
-                  <span style={{ color: '#d97706', fontWeight: '700', background: '#fef3c7', padding: '0.15rem 0.5rem', borderRadius: '4px', fontSize: '0.78rem', display: 'inline-block' }}>
-                    ● {bookingConfirmation.status || 'Pending Review'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ textAlign: 'center' }}>
-              <button
-                className="btn btn-primary"
-                style={{ width: '100%', padding: '0.8rem' }}
-                onClick={() => setBookingConfirmation(null)}
-              >
-                Done
-              </button>
             </div>
           </div>
         </div>
