@@ -707,13 +707,6 @@ export default function AdminDashboardPage({
           </span>
         </div>
 
-        <button
-          className="btn-sidebar-create"
-          onClick={() => setActiveMenu('create-event')}
-        >
-          <i className="fa-solid fa-plus"></i> Create New Event
-        </button>
-
         <nav className="admin-nav-menu" style={{ marginTop: '1.25rem' }}>
           <button
             className={`admin-nav-item ${activeMenu === 'dashboard' ? 'active' : ''}`}
