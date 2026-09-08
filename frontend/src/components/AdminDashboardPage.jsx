@@ -672,128 +672,155 @@ export default function AdminDashboardPage({
   };
 
   return (
-    <div className={`admin-dashboard-layout ${sidebarHidden ? 'sidebar-hidden' : ''}`}>
-      {/* Left Sidebar */}
-      <aside className={`admin-sidebar ${sidebarHidden ? 'hidden' : ''}`}>
-        <div className="admin-brand">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <button
-              type="button"
-              className="btn-sidebar-toggle-brand"
-              onClick={() => setSidebarHidden(!sidebarHidden)}
-              title="Toggle Sidebar Menu"
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '10px',
-                border: '1px solid #cbd5e1',
-                background: '#f8fafc',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#0f172a',
-                cursor: 'pointer',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-                flexShrink: 0,
-                transition: 'all 0.2s ease',
-              }}
-            >
-              <i className="fa-solid fa-bars" style={{ fontSize: '1.1rem' }}></i>
-            </button>
-            <span className="brand-title" style={{ margin: 0, lineHeight: '1' }}>EventPro Admin</span>
+    <div className={`admin-dashboard-layout ${sidebarHidden ? 'sidebar-collapsed' : ''}`}>
+      {/* Left Sidebar (Untitled UI Inspired Design) */}
+      <aside className={`admin-sidebar ${sidebarHidden ? 'collapsed' : ''}`}>
+        {/* Brand Header */}
+        <div className="admin-brand-container">
+          <div
+            className="brand-logo-box"
+            onClick={() => setSidebarHidden(!sidebarHidden)}
+            title={sidebarHidden ? "Expand Sidebar Menu" : "Collapse Sidebar Menu"}
+          >
+            <i className="fa-solid fa-layer-group"></i>
           </div>
-          <span className="brand-subtitle" style={{ paddingLeft: 'calc(36px + 0.65rem)', marginTop: '0.2rem', display: 'block' }}>
-            Enterprise Suite
-          </span>
+          {!sidebarHidden && (
+            <div className="brand-text-block">
+              <span className="brand-title">EventPro Admin</span>
+              <span className="brand-subtitle">Enterprise Suite</span>
+            </div>
+          )}
+          <button
+            type="button"
+            className="btn-sidebar-collapse-toggle"
+            onClick={() => setSidebarHidden(!sidebarHidden)}
+            title={sidebarHidden ? "Expand Sidebar" : "Collapse Sidebar"}
+          >
+            <i className={`fa-solid ${sidebarHidden ? 'fa-chevron-right' : 'fa-chevron-left'}`}></i>
+          </button>
         </div>
 
-        <nav className="admin-nav-menu" style={{ marginTop: '1.25rem' }}>
+        {/* Search Bar inside Sidebar */}
+        <div className="sidebar-search-wrapper">
+          {sidebarHidden ? (
+            <button
+              type="button"
+              className="sidebar-search-icon-btn"
+              title="Quick Search"
+              onClick={() => setSidebarHidden(false)}
+            >
+              <i className="fa-solid fa-magnifying-glass"></i>
+            </button>
+          ) : (
+            <div className="sidebar-search-input-box">
+              <i className="fa-solid fa-magnifying-glass"></i>
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Sidebar Nav Items */}
+        <nav className="admin-nav-menu">
           <button
             className={`admin-nav-item ${activeMenu === 'dashboard' ? 'active' : ''}`}
             onClick={() => setActiveMenu('dashboard')}
+            title="Dashboard"
           >
-            <i className="fa-solid fa-table-columns"></i> Dashboard
+            <i className="fa-solid fa-chart-pie"></i>
+            {!sidebarHidden && <span>Dashboard</span>}
+            {!sidebarHidden && (
+              <i className={`fa-solid ${activeMenu === 'dashboard' ? 'fa-chevron-up' : 'fa-chevron-down'} nav-arrow`}></i>
+            )}
           </button>
+          {!sidebarHidden && activeMenu === 'dashboard' && (
+            <div className="nav-sub-menu">
+              <span className="nav-sub-item active">Overview</span>
+              <span className="nav-sub-item" onClick={() => setActiveMenu('events')}>Events ({events.length})</span>
+              <span className="nav-sub-item" onClick={() => setActiveMenu('registrations')}>Registrations ({registrations.length})</span>
+            </div>
+          )}
+
           <button
             className={`admin-nav-item ${isEventsView ? 'active' : ''}`}
             onClick={() => {
               setActiveMenu('events');
               setEventTab('all');
             }}
+            title="Events"
           >
-            <i className="fa-regular fa-calendar-days"></i> Events
+            <i className="fa-regular fa-calendar-days"></i>
+            {!sidebarHidden && <span>Events</span>}
+            {!sidebarHidden && (
+              <i className={`fa-solid ${isEventsView ? 'fa-chevron-up' : 'fa-chevron-down'} nav-arrow`}></i>
+            )}
           </button>
+          {!sidebarHidden && isEventsView && (
+            <div className="nav-sub-menu">
+              <span className={`nav-sub-item ${eventTab === 'all' ? 'active' : ''}`} onClick={() => setEventTab('all')}>
+                All Events ({events.length})
+              </span>
+              <span className={`nav-sub-item ${eventTab === 'upcoming' ? 'active' : ''}`} onClick={() => setEventTab('upcoming')}>
+                Upcoming ({upcomingEvents.length})
+              </span>
+              <span className={`nav-sub-item ${eventTab === 'past' ? 'active' : ''}`} onClick={() => setEventTab('past')}>
+                Past ({pastEvents.length})
+              </span>
+            </div>
+          )}
+
           <button
             className={`admin-nav-item ${activeMenu === 'registrations' ? 'active' : ''}`}
             onClick={() => setActiveMenu('registrations')}
+            title="Event Registrations"
           >
-            <i className="fa-solid fa-users-gear"></i> Event Registrations
+            <i className="fa-solid fa-users-gear"></i>
+            {!sidebarHidden && <span>Registrations</span>}
+            {!sidebarHidden && (
+              <i className={`fa-solid ${activeMenu === 'registrations' ? 'fa-chevron-up' : 'fa-chevron-down'} nav-arrow`}></i>
+            )}
           </button>
+
           <button
             className={`admin-nav-item ${activeMenu === 'users' ? 'active' : ''}`}
             onClick={() => setActiveMenu('users')}
+            title="Members & Access"
           >
-            <i className="fa-solid fa-users"></i> Registered Members
+            <i className="fa-solid fa-user-check"></i>
+            {!sidebarHidden && <span>Members & Access</span>}
+            {!sidebarHidden && (
+              <i className={`fa-solid ${activeMenu === 'users' ? 'fa-chevron-up' : 'fa-chevron-down'} nav-arrow`}></i>
+            )}
           </button>
+
           <button
             className={`admin-nav-item ${activeMenu === 'venues' ? 'active' : ''}`}
             onClick={() => setActiveMenu('venues')}
+            title="Spaces & Facilities"
           >
-            <i className="fa-solid fa-building"></i> Spaces & Facilities
+            <i className="fa-solid fa-building"></i>
+            {!sidebarHidden && <span>Spaces & Facilities</span>}
+            {!sidebarHidden && (
+              <i className={`fa-solid ${activeMenu === 'venues' ? 'fa-chevron-up' : 'fa-chevron-down'} nav-arrow`}></i>
+            )}
           </button>
-
         </nav>
 
+        {/* Sidebar Footer */}
         <div className="admin-sidebar-bottom">
-          <button className="admin-logout-btn" onClick={logout}>
-            <i className="fa-solid fa-arrow-right-from-bracket"></i> Logout
+          <button className="admin-logout-btn" onClick={logout} title="Logout">
+            <i className="fa-solid fa-arrow-right-from-bracket"></i>
+            {!sidebarHidden && <span>Logout</span>}
           </button>
         </div>
       </aside>
 
       {/* Main Content Area */}
       <div className="admin-main-container">
-        {/* Top Header Bar */}
-        <header className="admin-top-bar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {sidebarHidden && (
-              <button
-                className="btn-hamburger-toggle"
-                onClick={() => setSidebarHidden(false)}
-                title="Open Sidebar Menu"
-                style={{
-                  width: '38px',
-                  height: '38px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
-                  background: '#ffffff',
-                  color: '#1e293b',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-                }}
-              >
-                <i className="fa-solid fa-bars" style={{ fontSize: '1.15rem' }}></i>
-              </button>
-            )}
-          </div>
-
-          <div className="admin-search-box">
-            <i className="fa-solid fa-magnifying-glass search-icon"></i>
-            <input
-              type="text"
-              placeholder="Search registrations..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-
-
-        </header>
-
         {/* Body Content */}
         <main className="admin-body-content">
           {activeMenu === 'registrations' ? (
@@ -1845,42 +1872,44 @@ export default function AdminDashboardPage({
                       <i className="fa-solid fa-arrow-trend-up"></i> +5% this month
                     </div>
                   </div>
-                  <div className="stat-icon-wrapper">
+                  <div className="stat-icon-wrapper" style={{ background: '#eff6ff', color: '#2563eb', borderColor: '#bfdbfe' }}>
                     <i className="fa-regular fa-calendar"></i>
                   </div>
                 </div>
 
-                <div className="stat-card">
+                <div className="stat-card stat-purple">
                   <div className="stat-info">
                     <span className="stat-label">Upcoming Events</span>
-                    <div className="stat-value">{upcomingCount}</div>
+                    <div className="stat-value" style={{ color: '#7c3aed' }}>{upcomingCount}</div>
                     <div className="stat-trend neutral">Next event in 3 days</div>
                   </div>
-                  <div className="stat-icon-wrapper">
+                  <div className="stat-icon-wrapper" style={{ background: '#f3e8ff', color: '#7c3aed', borderColor: '#ddd6fe' }}>
                     <i className="fa-regular fa-calendar-check"></i>
                   </div>
                 </div>
 
-                <div className="stat-card">
+                <div className="stat-card stat-emerald">
                   <div className="stat-info">
                     <span className="stat-label">Past Events</span>
-                    <div className="stat-value">{pastCount}</div>
-                    <div className="stat-trend neutral">All completed successfully</div>
+                    <div className="stat-value" style={{ color: '#059669' }}>{pastCount}</div>
+                    <div className="stat-trend positive">
+                      <i className="fa-solid fa-check-double"></i> Completed
+                    </div>
                   </div>
-                  <div className="stat-icon-wrapper">
+                  <div className="stat-icon-wrapper" style={{ background: '#ecfdf5', color: '#059669', borderColor: '#a7f3d0' }}>
                     <i className="fa-solid fa-clock-rotate-left"></i>
                   </div>
                 </div>
 
-                <div className="stat-card">
+                <div className="stat-card stat-amber">
                   <div className="stat-info">
                     <span className="stat-label">Total Registrations</span>
-                    <div className="stat-value">{totalRegsCount.toLocaleString()}</div>
+                    <div className="stat-value" style={{ color: '#d97706' }}>{totalRegsCount.toLocaleString()}</div>
                     <div className="stat-trend positive">
                       <i className="fa-solid fa-arrow-trend-up"></i> +12% this month
                     </div>
                   </div>
-                  <div className="stat-icon-wrapper">
+                  <div className="stat-icon-wrapper" style={{ background: '#fffbeb', color: '#d97706', borderColor: '#fde68a' }}>
                     <i className="fa-solid fa-user-group"></i>
                   </div>
                 </div>

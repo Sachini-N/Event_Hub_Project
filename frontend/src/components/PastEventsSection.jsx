@@ -332,35 +332,6 @@ export default function PastEventsSection({
   // HOME PAGE FEATURED SHOWCASE SECTION VIEW
   // ----------------------------------------------------
   const homePastEvents = useMemo(() => {
-    const fallbackList = [
-      {
-        _id: 'sample-past-1',
-        title: 'Guest Talk - 03: We Can Never Do Merely One Thing',
-        category: 'Workshop',
-        date: '2026-08-17T09:00:00.000Z',
-        location: 'Bay 07 - TRACE Main Auditorium, Colombo',
-        coverImage: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
-        description:
-          'Focusing on second-order effects, uncertainty, and the challenge of thinking beyond immediate solutions.',
-      },
-      {
-        _id: 'sample-past-2',
-        title: 'Midweek Boost at Third Place',
-        category: 'Meetup',
-        date: '2026-08-25T17:30:00.000Z',
-        location: 'TRACE Expert City, Colombo',
-        coverImage: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80',
-        description:
-          'A casual evening gathering at TRACE Expert City, created for anyone who wants to step away from their busy routine and connect.',
-      },
-    ];
-
-    if (dbPastEvents.length === 0) {
-      return fallbackList;
-    }
-    if (dbPastEvents.length === 1) {
-      return [dbPastEvents[0], fallbackList[1]];
-    }
     return dbPastEvents.slice(0, 3);
   }, [dbPastEvents]);
 
@@ -370,6 +341,10 @@ export default function PastEventsSection({
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
+
+  if (!isFullView && homePastEvents.length === 0) {
+    return null;
+  }
 
   return (
     <section className="past-events-section" id="past-showcase">
