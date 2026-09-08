@@ -16,12 +16,8 @@ export default function AddVenueModal({
   const [capacity, setCapacity] = useState('150');
   const [pricePerHour, setPricePerHour] = useState('25000');
   const [status, setStatus] = useState('Available');
-  const [coverImage, setCoverImage] = useState('https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80');
-  const [imageList, setImageList] = useState([
-    'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1431540015161-0bf868a2d407?auto=format&fit=crop&w=800&q=80'
-  ]);
+  const [coverImage, setCoverImage] = useState('');
+  const [imageList, setImageList] = useState([]);
   const [amenities, setAmenities] = useState('High-Speed WiFi, 4K Projectors, Air Conditioned, Sound System');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -58,7 +54,7 @@ export default function AddVenueModal({
         ? editingVenue.images
         : (editingVenue.coverImage ? [editingVenue.coverImage] : []);
       setImageList(existingImgs);
-      setCoverImage(editingVenue.coverImage || existingImgs[0] || 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80');
+      setCoverImage(editingVenue.coverImage || existingImgs[0] || '');
       setAmenities(Array.isArray(editingVenue.amenities) ? editingVenue.amenities.join(', ') : (editingVenue.amenities || ''));
       setDescription(editingVenue.description || '');
     } else {
@@ -69,13 +65,8 @@ export default function AddVenueModal({
       setCapacity('150');
       setPricePerHour('25000');
       setStatus('Available');
-      const defaultImgs = [
-        'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1431540015161-0bf868a2d407?auto=format&fit=crop&w=800&q=80'
-      ];
-      setCoverImage(defaultImgs[0]);
-      setImageList(defaultImgs);
+      setCoverImage('');
+      setImageList([]);
       setAmenities('High-Speed WiFi, 4K Projectors, Air Conditioned, Sound System');
       setDescription('');
     }

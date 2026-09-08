@@ -3452,11 +3452,17 @@ input:checked+.slider:before {
 
 .admin-brand {
   margin-bottom: 2.25rem;
-  padding-left: 0.35rem;
+  padding-left: 0.2rem;
+}
+
+.btn-sidebar-toggle-brand:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #2563eb !important;
 }
 
 .admin-brand .brand-title {
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   font-weight: 800;
   color: var(--primary-blue);
   display: block;
@@ -8252,6 +8258,66 @@ input:checked+.slider:before {
 .notion-tool-btn:hover {
   background: #f1f5f9;
   color: #0f172a;
+}
+
+.font-size-select-btn {
+  width: auto !important;
+  padding: 0 0.45rem;
+  font-size: 0.8rem !important;
+  font-weight: 600;
+  color: #475569;
+  gap: 2px;
+}
+
+.font-size-dropdown-menu {
+  position: absolute;
+  bottom: 3.2rem;
+  left: 8.5rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  padding: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  max-height: 200px;
+  overflow-y: auto;
+  min-width: 110px;
+  animation: fadeInSlash 0.15s ease-out forwards;
+}
+
+.font-size-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.6rem;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.font-size-item:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.font-size-item.active {
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.font-size-default-badge {
+  font-size: 0.65rem;
+  background: #e2e8f0;
+  color: #64748b;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
 }
 
 /* Slash Menu Dropdown */

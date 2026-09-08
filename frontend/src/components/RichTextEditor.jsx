@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 
 const EMOJI_LIST = ['😀', '😂', '😍', '🎉', '🚀', '🔥', '💡', '✨', '🎯', '📌', '📅', '👍', '❤️', '💼', '🏆', '⭐'];
+const FONT_SIZES = [12, 14, 16, 18, 20, 24, 28, 32, 36, 48];
 
 export default function RichTextEditor({
   value = '',
@@ -15,6 +16,8 @@ export default function RichTextEditor({
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
+  const [showFontSizeDropdown, setShowFontSizeDropdown] = useState(false);
+  const [currentFontSize, setCurrentFontSize] = useState(16);
   const [linkUrl, setLinkUrl] = useState('');
 
   // Sync value from props to editor innerHTML
@@ -48,8 +51,58 @@ export default function RichTextEditor({
     }
   };
 
+  const getCurrentSelectedFontSize = () => {
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      let parentNode = selection.anchorNode;
+      if (parentNode && parentNode.nodeType === 3) {
+        parentNode = parentNode.parentElement;
+      }
+      if (parentNode && editorRef.current?.contains(parentNode)) {
+        const computed = window.getComputedStyle(parentNode);
+        const parsed = parseInt(computed.fontSize, 10);
+        if (!isNaN(parsed)) return parsed;
+      }
+    }
+    return currentFontSize;
+  };
+
+  const changeFontSize = (newSize, e) => {
+    if (e) e.preventDefault();
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      document.execCommand('fontSize', false, '7');
+      const fontEls = editorRef.current.querySelectorAll('font[size="7"]');
+      fontEls.forEach((el) => {
+        el.removeAttribute('size');
+        el.style.fontSize = `${newSize}px`;
+      });
+    }
+
+    setCurrentFontSize(newSize);
+    setShowFontSizeDropdown(false);
+    handleInput();
+  };
+
+  const handleIncreaseFontSize = (e) => {
+    if (e) e.preventDefault();
+    const activeSize = getCurrentSelectedFontSize();
+    const nextSize = FONT_SIZES.find((s) => s > activeSize) || activeSize + 2;
+    changeFontSize(nextSize);
+  };
+
+  const handleDecreaseFontSize = (e) => {
+    if (e) e.preventDefault();
+    const activeSize = getCurrentSelectedFontSize();
+    const prevSizes = FONT_SIZES.filter((s) => s < activeSize);
+    const prevSize = prevSizes.length > 0 ? prevSizes[prevSizes.length - 1] : Math.max(10, activeSize - 2);
+    changeFontSize(prevSize);
+  };
+
   const handleKeyDown = (e) => {
-    // Check if user types '/' at beginning or empty line to open menu
     if (e.key === '/') {
       const sel = window.getSelection();
       if (sel && sel.rangeCount > 0) {
@@ -62,6 +115,7 @@ export default function RichTextEditor({
       setShowSlashMenu(false);
       setShowEmojiPicker(false);
       setShowLinkModal(false);
+      setShowFontSizeDropdown(false);
     }
   };
 
@@ -83,7 +137,6 @@ export default function RichTextEditor({
     if (e) e.preventDefault();
     setShowSlashMenu(false);
 
-    // Remove slash character if recently typed
     const sel = window.getSelection();
     if (sel && sel.rangeCount > 0) {
       const range = sel.getRangeAt(0);
@@ -168,6 +221,23 @@ export default function RichTextEditor({
         </div>
       )}
 
+      {/* Font Size Dropdown Popover */}
+      {showFontSizeDropdown && (
+        <div className="font-size-dropdown-menu">
+          {FONT_SIZES.map((size) => (
+            <button
+              key={size}
+              type="button"
+              className={`font-size-item ${currentFontSize === size ? 'active' : ''}`}
+              onMouseDown={(e) => changeFontSize(size, e)}
+            >
+              <span>{size}px</span>
+              {size === 16 && <span className="font-size-default-badge">Default</span>}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Emoji Picker Popover */}
       {showEmojiPicker && (
         <div className="emoji-picker-dropdown">
@@ -203,7 +273,7 @@ export default function RichTextEditor({
         </div>
       )}
 
-      {/* Bottom Floating Action Toolbar (Matching Reference Screenshot) */}
+      {/* Bottom Floating Action Toolbar */}
       <div className="notion-bottom-toolbar">
         {/* Plus Button for Menu */}
         <button
@@ -256,6 +326,46 @@ export default function RichTextEditor({
         >
           <span style={{ textDecoration: 'line-through' }}>S</span>
         </button>
+
+        <div className="notion-toolbar-divider"></div>
+
+        {/* Font Size Controls: Decrease, Dropdown, Increase */}
+        <button
+          type="button"
+          className="notion-tool-btn"
+          onMouseDown={handleDecreaseFontSize}
+          title="Decrease Font Size (A-)"
+        >
+          <span style={{ fontWeight: '700', fontSize: '0.82rem' }}>
+            A<sub style={{ fontSize: '0.65rem', fontWeight: '800', bottom: '0' }}>-</sub>
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className="notion-tool-btn font-size-select-btn"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setShowFontSizeDropdown((prev) => !prev);
+          }}
+          title="Select Font Size"
+        >
+          <span>{currentFontSize}px</span>
+          <i className="fa-solid fa-chevron-down" style={{ fontSize: '0.6rem', marginLeft: '3px' }}></i>
+        </button>
+
+        <button
+          type="button"
+          className="notion-tool-btn"
+          onMouseDown={handleIncreaseFontSize}
+          title="Increase Font Size (A+)"
+        >
+          <span style={{ fontWeight: '700', fontSize: '0.82rem' }}>
+            A<sup style={{ fontSize: '0.65rem', fontWeight: '800', top: '-0.3em' }}>+</sup>
+          </span>
+        </button>
+
+        <div className="notion-toolbar-divider"></div>
 
         <button
           type="button"

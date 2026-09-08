@@ -676,8 +676,35 @@ export default function AdminDashboardPage({
       {/* Left Sidebar */}
       <aside className={`admin-sidebar ${sidebarHidden ? 'hidden' : ''}`}>
         <div className="admin-brand">
-          <span className="brand-title">EventPro Admin</span>
-          <span className="brand-subtitle">Enterprise Suite</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <button
+              type="button"
+              className="btn-sidebar-toggle-brand"
+              onClick={() => setSidebarHidden(!sidebarHidden)}
+              title="Toggle Sidebar Menu"
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                border: '1px solid #cbd5e1',
+                background: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#0f172a',
+                cursor: 'pointer',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+                flexShrink: 0,
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <i className="fa-solid fa-bars" style={{ fontSize: '1.1rem' }}></i>
+            </button>
+            <span className="brand-title" style={{ margin: 0, lineHeight: '1' }}>EventPro Admin</span>
+          </div>
+          <span className="brand-subtitle" style={{ paddingLeft: 'calc(36px + 0.65rem)', marginTop: '0.2rem', display: 'block' }}>
+            Enterprise Suite
+          </span>
         </div>
 
         <button
@@ -736,31 +763,29 @@ export default function AdminDashboardPage({
         {/* Top Header Bar */}
         <header className="admin-top-bar">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <button
-              className="btn-hamburger-toggle"
-              onClick={() => setSidebarHidden(!sidebarHidden)}
-              title={sidebarHidden ? "Open Sidebar Menu" : "Close Sidebar Menu"}
-              style={{
-                width: '38px',
-                height: '38px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '8px',
-                border: '1px solid #cbd5e1',
-                background: '#ffffff',
-                color: '#1e293b',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-              }}
-            >
-              <i className="fa-solid fa-bars" style={{ fontSize: '1.15rem' }}></i>
-            </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <img src="/trace-logo.png" alt="TRACE" className="trace-logo-img" />
-              <span className="logo-tracker-sub">Spaces Tracker</span>
-            </div>
+            {sidebarHidden && (
+              <button
+                className="btn-hamburger-toggle"
+                onClick={() => setSidebarHidden(false)}
+                title="Open Sidebar Menu"
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#1e293b',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+                }}
+              >
+                <i className="fa-solid fa-bars" style={{ fontSize: '1.15rem' }}></i>
+              </button>
+            )}
           </div>
 
           <div className="admin-search-box">
