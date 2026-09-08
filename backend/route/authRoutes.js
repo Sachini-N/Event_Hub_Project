@@ -1,13 +1,23 @@
 const express = require("express");
 const router = express.Router();
+const rateLimit = require("express-rate-limit");
 const { signupUser, loginUser, getMe, updateUserProfile, getAllUsers, deleteUser, updateUserAdminDetails, createBranchAdmin, sendEmailCredentials } = require("../controlers/authController");
 const { protect, authorize } = require("../middleware/authMiddleware");
 
+// Rate limiting for auth endpoints (prevents brute-force attacks)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30, // Limit each IP to 30 requests per window
+  message: { success: false, message: "Too many login attempts from this IP, please try again after 15 minutes." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // POST /api/auth/signup
-router.post("/signup", signupUser);
+router.post("/signup", authLimiter, signupUser);
 
 // POST /api/auth/login
-router.post("/login", loginUser);
+router.post("/login", authLimiter, loginUser);
 
 // POST /api/auth/create-branch-admin (Admin only)
 router.post("/create-branch-admin", protect, authorize("admin", "super_admin"), createBranchAdmin);

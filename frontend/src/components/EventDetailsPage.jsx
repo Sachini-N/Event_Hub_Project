@@ -105,6 +105,12 @@ export default function EventDetailsPage({
       return;
     }
 
+    const phoneRegex = /^\+?[0-9\s-]{9,15}$/;
+    if (!phoneRegex.test(phone.trim())) {
+      showToast('Please enter a valid contact phone number (e.g., +94 77 123 4567).', 'error');
+      return;
+    }
+
     setSubmitting(true);
 
     try {

@@ -150,18 +150,18 @@ export default function EditEventModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="edit-event-modal-title">
       <div
         className="modal-card admin-card edit-event-modal"
         onClick={(e) => e.stopPropagation()}
         style={{ maxWidth: '720px', maxHeight: '90vh', overflowY: 'auto' }}
       >
-        <button className="modal-close" onClick={onClose}>
-          <i className="fa-solid fa-xmark"></i>
+        <button className="modal-close" onClick={onClose} aria-label="Close edit modal">
+          <i className="fa-solid fa-xmark" aria-hidden="true"></i>
         </button>
 
         <div className="modal-header">
-          <h2>
+          <h2 id="edit-event-modal-title">
             <i className="fa-regular fa-pen-to-square" style={{ color: '#5d4df6' }}></i> Edit Event
           </h2>
           <p className="modal-sub">Update event details, status, and photo gallery in database.</p>

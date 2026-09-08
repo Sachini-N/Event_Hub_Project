@@ -89,10 +89,10 @@ export default function ConfirmationModal({ isOpen, onClose, registrationData, s
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
       <div className="modal-card ticket-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="success-icon"><i className="fa-solid fa-circle-check"></i></div>
-        <h2>Registration Successful!</h2>
+        <div className="success-icon"><i className="fa-solid fa-circle-check" aria-hidden="true"></i></div>
+        <h2 id="confirm-modal-title">Registration Successful!</h2>
         <p className="success-sub">You are registered! Here is your official TRACE Event Pass.</p>
 
         <div className="ticket-card">
