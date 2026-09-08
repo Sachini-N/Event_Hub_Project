@@ -136,9 +136,17 @@ export default function AddVenueModal({
     const finalImages = imageList.length > 0 ? imageList : [coverImage].filter(Boolean);
 
     try {
+      const token = localStorage.getItem('eventhub_token');
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           name,
           branch,
@@ -150,7 +158,7 @@ export default function AddVenueModal({
           status,
           coverImage: finalImages[0] || coverImage,
           images: finalImages,
-          amenities: amenities.split(',').map((a) => a.trim()).filter(Boolean),
+          amenities: typeof amenities === 'string' ? amenities.split(',').map((a) => a.trim()).filter(Boolean) : amenities,
           description,
         }),
       });

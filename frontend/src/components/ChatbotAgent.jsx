@@ -74,7 +74,7 @@ export default function ChatbotAgent({ currentUser, setActiveTab, events = [] })
   const getClientFallbackReply = (userQuery) => {
     const q = userQuery.toLowerCase().trim();
 
-    // 1. Greetings
+    // 1. Greetings (English, Sinhala & Singlish)
     if (
       q === 'hi trace' ||
       q === 'hello trace' ||
@@ -82,30 +82,48 @@ export default function ChatbotAgent({ currentUser, setActiveTab, events = [] })
       q === 'hi' ||
       q === 'hello' ||
       q === 'hey' ||
-      q === 'trace'
+      q === 'trace' ||
+      q.includes('kohomada') ||
+      q.includes('ayubowan')
     ) {
       return {
-        reply: `Hi, thank you for reaching out. You are currently being assisted by our AI assistant.\n\nHello! How can I help you today with information about TRACE and its innovation ecosystem?`,
+        reply: `Hi! Welcome to TRACE Sri Lanka.\n\nI am your Welcome Agent! How can I assist you today with information about events, spaces, or the TRACE innovation ecosystem?`,
         quickPrompts: ['What is next event?', '📅 Upcoming Events', '🏢 Explore Venues'],
       };
     }
 
     // 2. How are you
-    if (q.includes('how are you') || q.includes('how r u')) {
+    if (q.includes('how are you') || q.includes('how r u') || q.includes('fine')) {
       return {
-        reply: `I'm doing well, thank you for asking! 😊 I am ready to assist you with TRACE events, venue bookings, and member registrations. How can I help you today?`,
+        reply: `I'm doing great, thank you for asking! 😊 I am ready to assist you with TRACE events, spaces, and registrations. How can I help you today?`,
         quickPrompts: ['What is next event?', '📅 Upcoming Events', '🏢 Explore Venues'],
+      };
+    }
+
+    // 3. Location / Address / Contact
+    if (q.includes('location') || q.includes('address') || q.includes('where') || q.includes('kohedha') || q.includes('koheda')) {
+      return {
+        reply: `📍 **TRACE Expert City Location:**\n\n🏢 **Address:** Bay 1, TRACE Expert City, Maradana Road, Colombo 01000, Sri Lanka.\n🌐 **Website:** https://tracesrilanka.lk\n📧 **Email:** info@trace.lk`,
+        quickPrompts: ['What is next event?', '🏢 Explore Venues'],
       };
     }
 
     // Filter non-draft events from real DB state
     const validEvents = (events || []).filter((e) => e.status !== 'draft');
 
-    // 3. Next event query (REAL DB DATA ONLY)
-    if (q.includes('next event') || q.includes('what is next') || q.includes('whats next') || q.includes('first event')) {
+    // 4. Next event query (REAL DB DATA ONLY)
+    if (
+      q.includes('next event') ||
+      q.includes('what is next') ||
+      q.includes('whats next') ||
+      q.includes('first event') ||
+      q.includes('next') ||
+      q.includes('ilanga') ||
+      q.includes('mokadda')
+    ) {
       if (!validEvents || validEvents.length === 0) {
         return {
-          reply: `📅 Currently, there are no events in the database.`,
+          reply: `📅 Currently, there are no upcoming events in the database.`,
           quickPrompts: ['🏢 Explore Venues'],
         };
       }
@@ -115,21 +133,22 @@ export default function ChatbotAgent({ currentUser, setActiveTab, events = [] })
       const speakerInfo = nextEvt.speaker && nextEvt.speaker.name ? `\n🎤 **Speaker:** ${nextEvt.speaker.name} (${nextEvt.speaker.role || 'Guest'})` : '';
 
       return {
-        reply: `🚀 **Next Event in Database:**\n\n📌 **${nextEvt.title}**\n📅 **Date:** ${evtDateStr}\n⏰ **Time:** ${nextEvt.time || 'TBA'}\n📍 **Location:** ${nextEvt.location}\n🏷️ **Category:** ${nextEvt.category || 'General'}${speakerInfo}\n👥 **Registered:** ${nextEvt.registeredCount || 0}/${nextEvt.capacity || 100} Seats\n\n📝 *Description:* ${nextEvt.description}\n\n💡 *Tip: Click **Upcoming Events** in navigation to view details!*`,
-        quickPrompts: ['📅 All Upcoming Events', '🏢 Explore Venues'],
+        reply: `🚀 **Next Event in Database:**\n\n📌 **${nextEvt.title}**\n📅 **Date:** ${evtDateStr}\n⏰ **Time:** ${nextEvt.time || 'TBA'}\n📍 **Location:** ${nextEvt.location}\n🏷️ **Category:** ${nextEvt.category || 'General'}${speakerInfo}\n👥 **Seats:** ${nextEvt.registeredCount || 0}/${nextEvt.capacity || 100} Registered\n\n📝 *Description:* ${nextEvt.description}\n\n💡 *Tip: Click **Upcoming Events** to view all events!*`,
+        quickPrompts: ['📅 Upcoming Events', '🏢 Explore Venues'],
       };
     }
 
-    // 4. Upcoming events (REAL DB DATA ONLY)
-    if (q.includes('upcoming') || q.includes('events') || q.includes('schedule')) {
+    // 5. Upcoming events (REAL DB DATA ONLY)
+    if (q.includes('upcoming') || q.includes('events') || q.includes('schedule') || q.includes('monawada')) {
       if (!validEvents || validEvents.length === 0) {
         return {
-          reply: `📅 Currently, there are no events in the database.`,
+          reply: `📅 Currently, there are no upcoming events in the database.`,
           quickPrompts: ['🏢 Explore Venues'],
         };
       }
 
       const eventListStr = validEvents
+        .slice(0, 5)
         .map(
           (e, i) =>
             `**${i + 1}. ${e.title}**\n📍 *${e.location}* | 📅 ${new Date(e.date).toLocaleDateString()} | ⏰ ${e.time}\n👥 ${e.registeredCount || 0}/${e.capacity || 100} Registered`
@@ -137,12 +156,20 @@ export default function ChatbotAgent({ currentUser, setActiveTab, events = [] })
         .join('\n\n');
 
       return {
-        reply: `🎉 **Events in Database (${validEvents.length}):**\n\n${eventListStr}\n\n💡 *Ask me "what is next event" for details!*`,
+        reply: `🎉 **Upcoming Events in Database (${validEvents.length}):**\n\n${eventListStr}\n\n💡 *Ask me "what is next event" for details!*`,
         quickPrompts: ['What is next event?', '🏢 Explore Venues'],
       };
     }
 
-    // 5. Search events by keyword in real DB events array
+    // 6. Venues & spaces
+    if (q.includes('venue') || q.includes('space') || q.includes('hall') || q.includes('room')) {
+      return {
+        reply: `🏢 **TRACE Event Spaces & Facilities:**\n\nTRACE features auditorium halls, high-tech meeting rooms, and collaborative hubs across TRACE Expert City Colombo and branches.\n\n💡 *Click **Explore Venues** below to browse spaces!*`,
+        quickPrompts: ['🏢 Explore Venues', 'What is next event?'],
+      };
+    }
+
+    // 7. Search events by keyword in real DB events array
     const searchMatches = validEvents.filter(
       (e) =>
         (e.title && e.title.toLowerCase().includes(q)) ||
@@ -153,18 +180,19 @@ export default function ChatbotAgent({ currentUser, setActiveTab, events = [] })
 
     if (searchMatches.length > 0) {
       const matchStr = searchMatches
+        .slice(0, 3)
         .map((e) => `📌 **${e.title}**\n📍 ${e.location} | 📅 ${new Date(e.date).toLocaleDateString()} @ ${e.time}`)
         .join('\n\n');
 
       return {
-        reply: `🔍 **Database search results for "${userQuery}":**\n\n${matchStr}`,
+        reply: `🔍 **Search results for "${userQuery}":**\n\n${matchStr}`,
         quickPrompts: ['What is next event?', '📅 Upcoming Events'],
       };
     }
 
     // Default response if no DB event match found
     return {
-      reply: `Hi, thank you for reaching out. You are currently being assisted by our AI assistant.\n\nNo matching events were found in the database for "${userQuery}". Try asking about *"next event"* or *"upcoming events"*!`,
+      reply: `Hi! I couldn't find exact matches for "${userQuery}". Try asking about *"next event"*, *"upcoming events"*, or *"venues"*!`,
       quickPrompts: ['What is next event?', '📅 Upcoming Events', '🏢 Explore Venues'],
     };
   };
@@ -341,8 +369,10 @@ export default function ChatbotAgent({ currentUser, setActiveTab, events = [] })
                           onClick={() => {
                             if ((promptText.includes('Upcoming Events') || promptText.includes('next event')) && setActiveTab) {
                               setActiveTab('upcoming');
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
                             } else if (promptText.includes('Venues') && setActiveTab) {
                               setActiveTab('venues-page');
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
                             }
                             sendMessage(promptText);
                           }}
