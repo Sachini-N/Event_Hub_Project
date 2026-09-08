@@ -417,12 +417,10 @@ body {
   position: absolute;
   inset: 0;
   /* Lighter overlay so photo details & colors shine through brightly */
-  background: linear-gradient(
-    180deg,
-    rgba(15, 23, 42, 0.32) 0%,
-    rgba(15, 23, 42, 0.48) 50%,
-    rgba(15, 23, 42, 0.60) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(15, 23, 42, 0.32) 0%,
+      rgba(15, 23, 42, 0.48) 50%,
+      rgba(15, 23, 42, 0.60) 100%);
   backdrop-filter: brightness(0.95);
   z-index: 2;
   pointer-events: none;
@@ -3526,7 +3524,7 @@ input:checked+.slider:before {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   transition: all 0.2s ease;
   z-index: 60;
 }
@@ -6453,10 +6451,12 @@ input:checked+.slider:before {
     transform: scale(0.95);
     box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7);
   }
+
   70% {
     transform: scale(1);
     box-shadow: 0 0 0 6px rgba(56, 189, 248, 0);
   }
+
   100% {
     transform: scale(0.95);
     box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
@@ -10464,11 +10464,13 @@ textarea.venue-inquiry-input {
 
 /* Small screen modal buttons stack polish */
 @media (max-width: 400px) {
+
   .modal-actions,
   .ticket-actions {
     flex-direction: column !important;
     gap: 0.5rem !important;
   }
+
   .modal-actions .btn,
   .ticket-actions .btn {
     width: 100% !important;

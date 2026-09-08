@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import hero1Img from '../assets/hero 1.jpeg';
 import homeImg from '../assets/home.jpeg';
-import home2Img from '../assets/home2.jpeg';
 
 const HERO_SLIDES = [
   {
-    image: 'https://tracesrilanka.lk/api/media/file/trace-home-1200x630.webp',
+    image: hero1Img,
     badge: 'TRACE Expert City Sri Lanka',
     title: "Discover & Experience Tech Events at TRACE",
     subtitle: 'Join our vibrant community. Participate in tech events, showcase innovations, and connect with peers to foster professional growth.',
@@ -24,7 +24,7 @@ const HERO_SLIDES = [
     secondaryTab: 'venues-page',
   },
   {
-    image: home2Img,
+    image: 'https://tracesrilanka.lk/api/media/file/trace-home-1200x630.webp',
     badge: 'Premier Hub Venues & Facilities',
     title: 'Explore & Showcase World-Class Event Spaces',
     subtitle: 'Discover auditorium halls, high-tech meeting rooms, and collaborative spaces tailored for technology events.',
@@ -103,7 +103,6 @@ export default function HeroSection({ scrollToEvents }) {
         </div>
       </div>
 
-
       {/* Slide Indicators */}
       <div className="hero-indicators">
         {HERO_SLIDES.map((_, idx) => (
@@ -119,3 +118,5 @@ export default function HeroSection({ scrollToEvents }) {
     </section>
   );
 }
+
+
