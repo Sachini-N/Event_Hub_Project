@@ -63,8 +63,8 @@ export default function PastEventDetailsPage({
       <div className="past-event-details-page" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem', padding: '4rem 1rem', textAlign: 'center' }}>
         <i className="fa-regular fa-calendar-xmark" style={{ fontSize: '3rem', color: '#94a3b8' }}></i>
         <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: '0.5rem 0' }}>Past Event Not Found</h2>
-        <p style={{ color: '#64748b', maxWidth: '400px', marginBottom: '1rem' }}>The requested past event could not be found.</p>
-        <button className="btn btn-primary" onClick={onBack}>
+        <p style={{ color: '#64748b', maxWidth: '400px', marginBottom: '1rem' }}>The requested past event could not be found in the system archives.</p>
+        <button className="btn-back-link" onClick={onBack}>
           <i className="fa-solid fa-arrow-left"></i> Back to Past Events
         </button>
       </div>
@@ -77,16 +77,44 @@ export default function PastEventDetailsPage({
     ? pastEvent.gallery
     : (pastEvent.coverImage ? [pastEvent.coverImage] : []);
 
-  const handleDownloadResource = (resourceName) => {
-    if (showToast) showToast(`Downloading ${resourceName}...`, 'info');
-    setTimeout(() => {
-      if (showToast) showToast(`Downloaded ${resourceName}`, 'success');
-    }, 1000);
-  };
-
   const handleCopyShareLink = () => {
     navigator.clipboard.writeText(window.location.href);
-    if (showToast) showToast('Event link copied to clipboard!', 'success');
+    if (showToast) showToast('Event archive link copied to clipboard!', 'success');
+  };
+
+  const handleSocialShare = (platform) => {
+    const customLinks = pastEvent.socialLinks || {};
+
+    if (platform === 'facebook' && customLinks.facebook && customLinks.facebook.trim()) {
+      window.open(customLinks.facebook, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    if (platform === 'instagram' && customLinks.instagram && customLinks.instagram.trim()) {
+      window.open(customLinks.instagram, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    if (platform === 'twitter' && customLinks.twitter && customLinks.twitter.trim()) {
+      window.open(customLinks.twitter, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    if (platform === 'linkedin' && customLinks.linkedin && customLinks.linkedin.trim()) {
+      window.open(customLinks.linkedin, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    const url = encodeURIComponent(window.location.href);
+    const title = encodeURIComponent(`Check out ${pastEvent.title} at TRACE!`);
+    let shareUrl = '';
+
+    if (platform === 'twitter') shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${title}`;
+    else if (platform === 'facebook') shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+    else if (platform === 'linkedin') shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`;
+    else if (platform === 'instagram') {
+      window.open('https://www.instagram.com', '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    if (shareUrl) window.open(shareUrl, '_blank', 'width=600,height=400');
   };
 
   return (
@@ -105,6 +133,7 @@ export default function PastEventDetailsPage({
             <img src={pastEvent.coverImage} alt={pastEvent.title} />
             <div className="past-hero-overlay"></div>
             <span className="past-status-badge">
+              <span className="badge-pulse-dot"></span>
               <i className="fa-solid fa-clock-rotate-left"></i> COMPLETED ARCHIVE
             </span>
           </div>
@@ -134,9 +163,9 @@ export default function PastEventDetailsPage({
                 title="Click to view location pin on Google Maps"
                 style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
               >
-                <i className="fa-solid fa-location-dot" style={{ color: '#5d4df6' }}></i>
-                <span style={{ textDecoration: 'underline', color: '#5d4df6', fontWeight: '600' }}>{pastEvent.location || 'TRACE Expert City'}</span>
-                <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.68rem', color: '#5d4df6', marginLeft: '2px' }}></i>
+                <i className="fa-solid fa-location-dot" style={{ color: '#2563eb' }}></i>
+                <span style={{ textDecoration: 'underline', color: '#2563eb', fontWeight: '600' }}>{pastEvent.location || 'TRACE Expert City'}</span>
+                <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.68rem', color: '#2563eb', marginLeft: '2px' }}></i>
               </a>
 
               <div className="past-meta-pill">
@@ -180,6 +209,31 @@ export default function PastEventDetailsPage({
                 </div>
               )}
             </div>
+
+            {/* Keynote Speaker Section (If Available) */}
+            {pastEvent.speaker && pastEvent.speaker.name && (
+              <div className="past-content-card">
+                <h2 className="past-card-heading">
+                  <i className="fa-solid fa-user-tie"></i> Keynote Speaker & Guest
+                </h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                  <img
+                    src={pastEvent.speaker.avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80'}
+                    alt={pastEvent.speaker.name}
+                    style={{ width: '70px', height: '70px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #2563eb' }}
+                  />
+                  <div>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>{pastEvent.speaker.name}</h3>
+                    <span style={{ fontSize: '0.85rem', color: '#2563eb', fontWeight: 700, display: 'block', margin: '2px 0 4px 0' }}>
+                      {pastEvent.speaker.role || 'Guest Keynote Speaker'}
+                    </span>
+                    {pastEvent.speaker.bio && (
+                      <p style={{ fontSize: '0.88rem', color: '#475569', margin: 0, lineHeight: 1.5 }}>{pastEvent.speaker.bio}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Keynote Video Recording Card (Only displayed if YouTube video link exists) */}
             {hasVideoUrl && (
@@ -231,7 +285,7 @@ export default function PastEventDetailsPage({
               <div className="past-content-card">
                 <h2 className="past-card-heading" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span>
-                    <i className="fa-solid fa-images" style={{ color: '#5d4df6' }}></i> Event Gallery & Moments
+                    <i className="fa-solid fa-images" style={{ color: '#2563eb' }}></i> Event Gallery & Moments
                   </span>
                   <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '700', background: '#f1f5f9', padding: '4px 12px', borderRadius: '14px' }}>
                     {galleryList.length} Photos
@@ -279,23 +333,41 @@ export default function PastEventDetailsPage({
                 </div>
                 <div className="stat-item">
                   <span className="stat-label">Status</span>
-                  <span className="stat-value status-completed">Completed</span>
+                  <span className="stat-value status-completed">
+                    <i className="fa-solid fa-circle-check"></i> Completed
+                  </span>
                 </div>
-                <div className="stat-item">
-                  <span className="stat-label">Location</span>
+                <div className="stat-item" style={{ alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.2rem' }}>
+                  <span className="stat-label" style={{ minWidth: '80px' }}>Location</span>
                   {(() => {
                     const rawLoc = pastEvent.location || 'TRACE Expert City, Colombo';
-                    const cleanLoc = Array.from(new Set(rawLoc.split(',').map((s) => s.trim()).filter(Boolean))).join(', ');
+                    const cleanParts = Array.from(new Set(rawLoc.split(',').map((s) => s.trim()).filter(Boolean)));
+                    let displayLoc = cleanParts.join(', ');
+                    if (displayLoc.length > 35) {
+                      displayLoc = cleanParts.length > 2
+                        ? `${cleanParts[0]}, ${cleanParts[cleanParts.length - 1]}`
+                        : cleanParts[0];
+                    }
                     return (
                       <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanLoc)}`}
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pastEvent.location || 'TRACE Expert City')}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="stat-value"
                         title="Click to view location pin on Google Maps"
-                        style={{ color: '#5d4df6', textDecoration: 'underline', fontWeight: '600', cursor: 'pointer' }}
+                        style={{
+                          color: '#2563eb',
+                          textDecoration: 'underline',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          textAlign: 'right',
+                          wordBreak: 'break-word',
+                          lineHeight: '1.4',
+                          fontSize: '0.84rem',
+                          flex: 1,
+                        }}
                       >
-                        {cleanLoc} <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.68rem', marginLeft: '3px' }}></i>
+                        {displayLoc} <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.65rem', marginLeft: '3px' }}></i>
                       </a>
                     );
                   })()}
@@ -306,9 +378,42 @@ export default function PastEventDetailsPage({
             {/* Share Panel */}
             <div className="past-sidebar-card">
               <h3 className="sidebar-card-title">Share Event Archive</h3>
-              <div className="share-buttons-row">
-                <button className="btn-share-icon" onClick={handleCopyShareLink} title="Copy Link">
-                  <i className="fa-solid fa-link"></i> Copy Link
+              <div className="share-buttons-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.65rem' }}>
+                <button
+                  className="btn-share-icon"
+                  onClick={() => handleSocialShare('facebook')}
+                  title="Share on Facebook"
+                  style={{ color: '#1877f2', borderColor: '#bfdbfe', background: '#eff6ff' }}
+                >
+                  <i className="fa-brands fa-facebook" style={{ fontSize: '0.95rem' }}></i>
+                  <span>Facebook</span>
+                </button>
+                <button
+                  className="btn-share-icon"
+                  onClick={() => handleSocialShare('instagram')}
+                  title="Share on Instagram"
+                  style={{ color: '#e1306c', borderColor: '#fbcfe8', background: '#fdf2f8' }}
+                >
+                  <i className="fa-brands fa-instagram" style={{ fontSize: '0.95rem' }}></i>
+                  <span>Instagram</span>
+                </button>
+                <button
+                  className="btn-share-icon"
+                  onClick={() => handleSocialShare('twitter')}
+                  title="Share on Twitter"
+                  style={{ color: '#0f172a', borderColor: '#cbd5e1', background: '#f8fafc' }}
+                >
+                  <i className="fa-brands fa-x-twitter" style={{ fontSize: '0.95rem' }}></i>
+                  <span>Twitter</span>
+                </button>
+                <button
+                  className="btn-share-icon"
+                  onClick={() => handleSocialShare('linkedin')}
+                  title="Share on LinkedIn"
+                  style={{ color: '#0a66c2', borderColor: '#c7d2fe', background: '#eef2ff' }}
+                >
+                  <i className="fa-brands fa-linkedin" style={{ fontSize: '0.95rem' }}></i>
+                  <span>LinkedIn</span>
                 </button>
               </div>
             </div>
@@ -318,7 +423,7 @@ export default function PastEventDetailsPage({
               <div className="past-sidebar-card past-gallery-sidebar-card">
                 <h3 className="sidebar-card-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.15rem' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <i className="fa-solid fa-images" style={{ color: '#5d4df6' }}></i> Event Gallery & Moments
+                    <i className="fa-solid fa-images" style={{ color: '#2563eb' }}></i> Event Gallery & Moments
                   </span>
                   <span style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: '700', background: '#f1f5f9', padding: '3px 9px', borderRadius: '12px' }}>
                     {galleryList.length} Photos

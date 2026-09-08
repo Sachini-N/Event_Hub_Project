@@ -64,6 +64,12 @@ const eventSchema = new mongoose.Schema(
       role: String,
       avatar: String,
     },
+    socialLinks: {
+      facebook: { type: String, default: "" },
+      instagram: { type: String, default: "" },
+      twitter: { type: String, default: "" },
+      linkedin: { type: String, default: "" },
+    },
   },
   { timestamps: true }
 );

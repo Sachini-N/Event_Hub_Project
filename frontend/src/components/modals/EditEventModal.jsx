@@ -18,6 +18,10 @@ export default function EditEventModal({
   const [description, setDescription] = useState('');
   const [coverImage, setCoverImage] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
+  const [facebookLink, setFacebookLink] = useState('');
+  const [instagramLink, setInstagramLink] = useState('');
+  const [twitterLink, setTwitterLink] = useState('');
+  const [linkedinLink, setLinkedinLink] = useState('');
   const [gallery, setGallery] = useState([]);
   const [newPhotoCaption, setNewPhotoCaption] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -38,6 +42,10 @@ export default function EditEventModal({
       setDescription(event.description || '');
       setCoverImage(event.coverImage || '');
       setVideoUrl(event.videoUrl || '');
+      setFacebookLink(event.socialLinks?.facebook || '');
+      setInstagramLink(event.socialLinks?.instagram || '');
+      setTwitterLink(event.socialLinks?.twitter || '');
+      setLinkedinLink(event.socialLinks?.linkedin || '');
       setGallery(event.gallery || []);
     }
   }, [event, isOpen]);
@@ -114,6 +122,12 @@ export default function EditEventModal({
           description,
           coverImage,
           videoUrl: videoUrl.trim(),
+          socialLinks: {
+            facebook: facebookLink.trim(),
+            instagram: instagramLink.trim(),
+            twitter: twitterLink.trim(),
+            linkedin: linkedinLink.trim(),
+          },
           gallery,
         }),
       });
@@ -315,6 +329,64 @@ export default function EditEventModal({
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
             />
+          </div>
+
+          {/* Social Media Links (Facebook, Instagram, Twitter, LinkedIn) */}
+          <div style={{ marginBottom: '1.5rem', background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700', fontSize: '0.9rem', color: '#1e293b', marginBottom: '0.75rem' }}>
+              <i className="fa-solid fa-share-nodes" style={{ color: '#3b82f6' }}></i>
+              Social Media Links (Facebook, Instagram, Twitter, LinkedIn)
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label style={{ fontSize: '0.8rem', color: '#1877f2', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <i className="fa-brands fa-facebook"></i> Facebook Link
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://facebook.com/..."
+                  value={facebookLink}
+                  onChange={(e) => setFacebookLink(e.target.value)}
+                  style={{ fontSize: '0.85rem' }}
+                />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label style={{ fontSize: '0.8rem', color: '#e1306c', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <i className="fa-brands fa-instagram"></i> Instagram Link
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://instagram.com/..."
+                  value={instagramLink}
+                  onChange={(e) => setInstagramLink(e.target.value)}
+                  style={{ fontSize: '0.85rem' }}
+                />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label style={{ fontSize: '0.8rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <i className="fa-brands fa-x-twitter"></i> Twitter / X Link
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://x.com/..."
+                  value={twitterLink}
+                  onChange={(e) => setTwitterLink(e.target.value)}
+                  style={{ fontSize: '0.85rem' }}
+                />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label style={{ fontSize: '0.8rem', color: '#0a66c2', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <i className="fa-brands fa-linkedin"></i> LinkedIn Link
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://linkedin.com/in/..."
+                  value={linkedinLink}
+                  onChange={(e) => setLinkedinLink(e.target.value)}
+                  style={{ fontSize: '0.85rem' }}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Past Event Photo Gallery Section */}

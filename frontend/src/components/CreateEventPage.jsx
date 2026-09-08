@@ -35,6 +35,10 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
   const [coverImage, setCoverImage] = useState('');
   const [coverFileName, setCoverFileName] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
+  const [facebookLink, setFacebookLink] = useState('');
+  const [instagramLink, setInstagramLink] = useState('');
+  const [twitterLink, setTwitterLink] = useState('');
+  const [linkedinLink, setLinkedinLink] = useState('');
   const [enableRegistration, setEnableRegistration] = useState(true);
   const [capacity, setCapacity] = useState(100);
   const [deadline, setDeadline] = useState('');
@@ -189,6 +193,12 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
         coverImage ||
         'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
       videoUrl: videoUrl.trim(),
+      socialLinks: {
+        facebook: facebookLink.trim(),
+        instagram: instagramLink.trim(),
+        twitter: twitterLink.trim(),
+        linkedin: linkedinLink.trim(),
+      },
       speaker: speakerName.trim()
         ? {
           name: speakerName.trim(),
@@ -463,6 +473,68 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
                 </div>
               </div>
             </div>
+
+            {/* Block 4: Social Media Links (Archive & Promotion) */}
+            <div className="create-card-block" style={{ marginTop: '1.75rem' }}>
+              <div className="block-title-row">
+                <div className="section-icon-badge badge-blue">
+                  <i className="fa-solid fa-share-nodes"></i>
+                </div>
+                <h3>Social Media Links</h3>
+              </div>
+
+              <div style={{ background: '#f8fafc', padding: '1.15rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <p style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: '1rem', marginTop: 0 }}>
+                  Add direct links to social media posts or event announcements to feature on the event archive.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.9rem' }}>
+                  <div className="profile-form-group" style={{ marginBottom: 0 }}>
+                    <label style={{ fontSize: '0.82rem', color: '#1877f2', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700' }}>
+                      <i className="fa-brands fa-facebook"></i> Facebook Link
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://facebook.com/..."
+                      value={facebookLink}
+                      onChange={(e) => setFacebookLink(e.target.value)}
+                    />
+                  </div>
+                  <div className="profile-form-group" style={{ marginBottom: 0 }}>
+                    <label style={{ fontSize: '0.82rem', color: '#e1306c', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700' }}>
+                      <i className="fa-brands fa-instagram"></i> Instagram Link
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://instagram.com/..."
+                      value={instagramLink}
+                      onChange={(e) => setInstagramLink(e.target.value)}
+                    />
+                  </div>
+                  <div className="profile-form-group" style={{ marginBottom: 0 }}>
+                    <label style={{ fontSize: '0.82rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700' }}>
+                      <i className="fa-brands fa-x-twitter"></i> Twitter / X Link
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://x.com/..."
+                      value={twitterLink}
+                      onChange={(e) => setTwitterLink(e.target.value)}
+                    />
+                  </div>
+                  <div className="profile-form-group" style={{ marginBottom: 0 }}>
+                    <label style={{ fontSize: '0.82rem', color: '#0a66c2', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700' }}>
+                      <i className="fa-brands fa-linkedin"></i> LinkedIn Link
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://linkedin.com/in/..."
+                      value={linkedinLink}
+                      onChange={(e) => setLinkedinLink(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* RIGHT COLUMN */}
@@ -564,7 +636,7 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
                 />
               </div>
 
-              <div className="profile-form-group" style={{ marginBottom: '1.25rem' }}>
+              <div className="profile-form-group">
                 <label>
                   <i className="fa-solid fa-location-dot" style={{ color: '#059669' }}></i>
                   Full Address
@@ -575,28 +647,6 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
                   value={fullAddress}
                   onChange={(e) => setFullAddress(e.target.value)}
                 />
-              </div>
-
-              {/* Quick Venue Chips */}
-              <div>
-                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Quick Location Presets:
-                </span>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.4rem' }}>
-                  {TRACE_VENUE_PRESETS.slice(0, 6).map((preset, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      className="btn-location-chip"
-                      onClick={() => {
-                        setVenueName(preset.venue);
-                        setFullAddress(preset.address);
-                      }}
-                    >
-                      📍 {preset.venue.replace(' - TRACE', '').replace(' (Bay 01-04)', '')}
-                    </button>
-                  ))}
-                </div>
               </div>
             </div>
 
