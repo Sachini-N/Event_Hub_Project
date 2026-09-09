@@ -1,8 +1,33 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
+import traceVideo from '../assets/Trace Vedio.mp4';
 
 export default function HeroSection({ scrollToEvents }) {
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(() => {});
+    }
+  }, []);
+
   return (
     <section className="hero-custom-section" id="hero-section">
+      {/* Background Video Layer */}
+      <div className="hero-video-wrapper">
+        <video
+          ref={videoRef}
+          className="hero-video-element"
+          autoPlay
+          loop
+          muted
+          playsInline
+        >
+          <source src={traceVideo} type="video/mp4" />
+          <source src="/trace-video.mp4" type="video/mp4" />
+        </video>
+        <div className="hero-video-overlay" />
+      </div>
+
       <div className="section-container hero-custom-container">
         
         {/* Hero Content Area */}
