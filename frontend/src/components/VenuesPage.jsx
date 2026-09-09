@@ -58,8 +58,23 @@ const TRACE_BRANCHES_META = [
 ];
 
 export default function VenuesPage({ showToast }) {
-  const [venues, setVenues] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [venues, setVenues] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem('eventhub_cached_venues');
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem('eventhub_cached_venues');
+      const parsed = cached ? JSON.parse(cached) : [];
+      return !(Array.isArray(parsed) && parsed.length > 0);
+    } catch (e) {
+      return true;
+    }
+  });
   const [selectedBranch, setSelectedBranch] = useState('All');
   const [provinceFilter, setProvinceFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -140,16 +155,21 @@ export default function VenuesPage({ showToast }) {
   }, [activeVenueModal]);
 
   const fetchVenues = async () => {
-    setLoading(true);
+    if (venues.length === 0) {
+      setLoading(true);
+    }
     try {
       const res = await fetch('/api/venues');
       const data = await res.json();
-      if (data.success && data.data) {
+      if (data.success && Array.isArray(data.data)) {
         setVenues(data.data);
+        try {
+          sessionStorage.setItem('eventhub_cached_venues', JSON.stringify(data.data));
+        } catch (e) {}
       }
     } catch (err) {
       console.error('Error fetching venues:', err);
-      if (showToast) showToast('Failed to load venue listings', 'error');
+      if (showToast && venues.length === 0) showToast('Failed to load venue listings', 'error');
     } finally {
       setLoading(false);
     }

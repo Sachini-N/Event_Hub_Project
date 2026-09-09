@@ -5,32 +5,32 @@ import homeImg from '../assets/home.jpeg';
 const HERO_SLIDES = [
   {
     image: hero1Img,
-    badge: 'TRACE Expert City Sri Lanka',
-    title: "Discover & Experience Tech Events at TRACE",
-    subtitle: 'Join our vibrant community. Participate in tech events, showcase innovations, and connect with peers to foster professional growth.',
+    badge: '🎉 TRACE Community Hub Sri Lanka',
+    title: 'Where Innovation Meets Community & Culture',
+    subtitle: 'From energetic community gatherings like Dust Off to creative meetups, discover and experience unforgettable events powered by TRACE Community.',
     primaryBtn: 'Explore Upcoming Events',
     primaryTab: 'upcoming',
-    secondaryBtn: 'View Past Events',
+    secondaryBtn: 'View Past Highlights',
     secondaryTab: 'past',
   },
   {
     image: homeImg,
-    badge: 'Tech Talks & Workshops Showcase',
-    title: 'Innovate & Learn with Industry Leaders',
-    subtitle: 'Feature expert keynotes, hands-on workshops, and developer meetups hosted at TRACE Expert City Colombo.',
+    badge: '🔥 The Shed Series & Sessions',
+    title: 'Ignite Ideas, Connect & Share Stories',
+    subtitle: 'Be part of engaging Shed discussions, creative workshops, open-mic sessions, and community gatherings designed to connect passionate minds.',
     primaryBtn: 'Explore Upcoming Events',
     primaryTab: 'upcoming',
-    secondaryBtn: 'Explore Spaces & Hub',
-    secondaryTab: 'venues-page',
+    secondaryBtn: 'View Past Archives',
+    secondaryTab: 'past',
   },
   {
     image: 'https://tracesrilanka.lk/api/media/file/trace-home-1200x630.webp',
-    badge: 'Premier Hub Venues & Facilities',
-    title: 'Explore & Showcase World-Class Event Spaces',
-    subtitle: 'Discover auditorium halls, high-tech meeting rooms, and collaborative spaces tailored for technology events.',
-    primaryBtn: 'Browse Spaces & Venues',
-    primaryTab: 'venues-page',
-    secondaryBtn: 'View Past Events',
+    badge: '🚀 Community Gatherings & Celebrations',
+    title: 'Celebrate Creativity, Music & Tech at TRACE',
+    subtitle: 'Experience landmark community initiatives like Mid Week, live music evenings, collaborative workshops, and vibrant multi-disciplinary showcases.',
+    primaryBtn: 'Explore Upcoming Events',
+    primaryTab: 'upcoming',
+    secondaryBtn: 'Past Event Gallery',
     secondaryTab: 'past',
   },
 ];
@@ -118,5 +118,3 @@ export default function HeroSection({ scrollToEvents }) {
     </section>
   );
 }
-
-

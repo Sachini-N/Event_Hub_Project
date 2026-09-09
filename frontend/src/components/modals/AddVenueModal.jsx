@@ -21,6 +21,7 @@ export default function AddVenueModal({
   const [amenities, setAmenities] = useState('High-Speed WiFi, 4K Projectors, Air Conditioned, Sound System');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
 
   const getProvinceForBranch = (bName) => {
     if (!bName) return 'Western Province';
@@ -74,22 +75,47 @@ export default function AddVenueModal({
 
   if (!isOpen) return null;
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const files = Array.from(e.target.files || []);
-    if (files.length > 0) {
-      files.forEach((file) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setImageList((prev) => {
-            const next = [...prev, reader.result];
-            setCoverImage(next[0]);
-            return next;
-          });
-        };
-        reader.readAsDataURL(file);
-      });
-      if (showToast) showToast(`${files.length} image(s) uploaded successfully!`, 'info');
+    if (files.length === 0) return;
+
+    setIsUploadingFiles(true);
+    const token = localStorage.getItem('eventhub_token');
+    const uploadedUrls = [];
+
+    for (const file of files) {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: formData,
+        });
+        const data = await res.json();
+        if (data.success && data.data?.url) {
+          uploadedUrls.push(data.data.url);
+        }
+      } catch (err) {
+        console.error('File upload error:', err);
+      }
     }
+
+    setIsUploadingFiles(false);
+
+    if (uploadedUrls.length > 0) {
+      setImageList((prev) => {
+        const next = [...prev, ...uploadedUrls];
+        return next;
+      });
+      setCoverImage((prev) => (prev && prev.trim() ? prev : uploadedUrls[0]));
+      if (showToast) showToast(`${uploadedUrls.length} image(s) uploaded successfully!`, 'success');
+    } else {
+      if (showToast) showToast('Failed to upload image(s)', 'error');
+    }
+    e.target.value = '';
   };
 
   const handleAddUrl = () => {
@@ -386,15 +412,16 @@ export default function AddVenueModal({
                 <label
                   htmlFor="venue-file-upload"
                   className="btn-create-publish"
-                  style={{ cursor: 'pointer', whiteSpace: 'nowrap', padding: '0.65rem 0.9rem', fontSize: '0.85rem' }}
+                  style={{ cursor: isUploadingFiles ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', padding: '0.65rem 0.9rem', fontSize: '0.85rem', opacity: isUploadingFiles ? 0.7 : 1 }}
                 >
-                  <i className="fa-solid fa-cloud-arrow-up"></i> Upload Photos
+                  <i className={`fa-solid ${isUploadingFiles ? 'fa-spinner fa-spin' : 'fa-cloud-arrow-up'}`}></i> {isUploadingFiles ? 'Uploading...' : 'Upload Photos'}
                 </label>
                 <input
                   type="file"
                   id="venue-file-upload"
                   accept="image/*"
                   multiple
+                  disabled={isUploadingFiles}
                   style={{ display: 'none' }}
                   onChange={handleFileChange}
                 />
