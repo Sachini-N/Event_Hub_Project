@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import traceLogo from '../assets/trace-logo.png';
 
 export default function Navbar({
   activeTab,
@@ -39,11 +40,8 @@ export default function Navbar({
   return (
     <header className={`navbar ${isTransparent ? 'navbar-transparent' : 'navbar-solid'} ${isScrolled ? 'navbar-scrolled' : ''}`}>
       <div className="nav-container">
-        <div className="brand" onClick={() => { scrollToHero(); closeMobile(); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-          <span className="logo-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            <img src="/trace-logo.png" alt="TRACE" className="trace-logo-img" />
-            <span className="logo-tracker-sub">Spaces Tracker</span>
-          </span>
+        <div className="brand" onClick={() => { scrollToHero(); closeMobile(); }} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+          <img src={traceLogo} alt="TRACE SPACES" className="trace-logo-img" />
         </div>
 
         {/* Mobile Hamburger Button */}

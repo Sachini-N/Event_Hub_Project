@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import traceLogo from '../assets/trace-logo.png';
 import Footer from './Footer';
 import FormattedText from './FormattedText';
 
@@ -217,9 +218,8 @@ export default function EventDetailsPage({
       {/* Top Bar Header matching screenshot */}
       <header className="details-header">
         <div className="details-header-container">
-          <div className="brand-logo" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <img src="/trace-logo.png" alt="TRACE" className="trace-logo-img" />
-            <span className="logo-tracker-sub">Spaces Tracker</span>
+          <div className="brand-logo" style={{ display: 'flex', alignItems: 'center' }}>
+            <img src={traceLogo} alt="TRACE SPACES" className="trace-logo-img" />
           </div>
           <button className="btn-back-link" onClick={onBack}>
             <i className="fa-solid fa-arrow-left"></i> Back to Events

@@ -1,4 +1,5 @@
 import React from 'react';
+import traceLogo from '../assets/trace-logo.png';
 
 export default function Footer({ setActiveTab }) {
   const handleNavClick = (tabName, e) => {
@@ -14,11 +15,8 @@ export default function Footer({ setActiveTab }) {
       <div className="footer-container">
         {/* Brand & Summary Column */}
         <div className="footer-brand">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.75rem' }}>
-            <h3 className="footer-logo" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <img src="/trace-logo.png" alt="TRACE" className="trace-logo-img" />
-              <span className="logo-tracker-sub">Spaces Tracker</span>
-            </h3>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+            <img src={traceLogo} alt="TRACE SPACES" className="trace-logo-img" />
           </div>
           <p className="footer-desc">
             Sri Lanka’s premier technology & innovation hub. Fostering tech entrepreneurs, innovation events, and world-class developer communities.

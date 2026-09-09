@@ -264,15 +264,21 @@ export default function App() {
 
       <main
         className={`main-content ${activeTab === 'home'
-            ? 'is-home'
-            : hideHeaderFooter
-              ? 'no-nav-offset'
-              : 'has-nav-offset'
+          ? 'is-home'
+          : hideHeaderFooter
+            ? 'no-nav-offset'
+            : 'has-nav-offset'
           }`}
       >
         {activeTab === 'home' && (
           <>
-            <HeroSection scrollToEvents={scrollToEvents} />
+            <HeroSection
+              scrollToEvents={scrollToEvents}
+              onNavigateSpaces={() => {
+                setActiveTab('venues-page');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
             <WhyJoinSection />
             <UpcomingEventsSection
               events={events}

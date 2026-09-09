@@ -6,7 +6,8 @@ export default function WhyJoinSection() {
       <div className="section-container">
         <h2 className="features-title">Why Join TRACE Events?</h2>
         <div className="features-grid">
-          
+
+          {/* Card 1 */}
           <div className="feature-card">
             <div className="feature-icon icon-teal">
               <i className="fa-solid fa-graduation-cap"></i>
@@ -17,6 +18,7 @@ export default function WhyJoinSection() {
             </p>
           </div>
 
+          {/* Card 2 */}
           <div className="feature-card">
             <div className="feature-icon icon-indigo">
               <i className="fa-solid fa-people-group"></i>
@@ -27,6 +29,7 @@ export default function WhyJoinSection() {
             </p>
           </div>
 
+          {/* Card 3 */}
           <div className="feature-card">
             <div className="feature-icon icon-purple">
               <i className="fa-regular fa-lightbulb"></i>
@@ -37,6 +40,7 @@ export default function WhyJoinSection() {
             </p>
           </div>
 
+          {/* Card 4 */}
           <div className="feature-card">
             <div className="feature-icon icon-amber">
               <i className="fa-solid fa-rocket"></i>
@@ -47,6 +51,7 @@ export default function WhyJoinSection() {
             </p>
           </div>
 
+          {/* Card 5 */}
           <div className="feature-card">
             <div className="feature-icon icon-rose">
               <i className="fa-solid fa-laptop-code"></i>
@@ -57,6 +62,7 @@ export default function WhyJoinSection() {
             </p>
           </div>
 
+          {/* Card 6 */}
           <div className="feature-card">
             <div className="feature-icon icon-blue">
               <i className="fa-solid fa-building-circle-check"></i>
