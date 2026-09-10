@@ -9,7 +9,15 @@ export default function FormattedText({ content = '', className = '', style = {}
 
   // If content contains HTML tags, render sanitized HTML via dangerouslySetInnerHTML
   if (/<[a-z][\s\S]*>/i.test(contentStr)) {
-    const cleanHtml = DOMPurify.sanitize(contentStr);
+    const preCleaned = contentStr
+      .replace(/class="[^"]*Mso[^"]*"/gi, '')
+      .replace(/<!--[\s\S]*?-->/gi, '')
+      .replace(/<o:p>[\s\S]*?<\/o:p>/gi, '')
+      .replace(/font-family:[^;"]*;?/gi, '')
+      .replace(/font-size:[^;"]*;?/gi, '')
+      .replace(/line-height:[^;"]*;?/gi, '');
+
+    const cleanHtml = DOMPurify.sanitize(preCleaned);
     return (
       <div
         className={`formatted-text-content ${className}`}

@@ -154,6 +154,36 @@ export default function RichTextEditor({
     else if (type === 'hr') executeCommand('insertHorizontalRule', null);
   };
 
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const clipboardData = e.clipboardData || window.clipboardData;
+    if (!clipboardData) return;
+
+    const htmlData = clipboardData.getData('text/html');
+    const textData = clipboardData.getData('text/plain');
+
+    if (htmlData && (htmlData.includes('MsoNormal') || htmlData.includes('urn:schemas-microsoft-com') || htmlData.includes('class='))) {
+      let cleaned = htmlData
+        .replace(/<!--[\s\S]*?-->/gi, '')
+        .replace(/<style[\s\S]*?<\/style>/gi, '')
+        .replace(/class="[^"]*Mso[^"]*"/gi, '')
+        .replace(/style="[^"]*"/gi, '')
+        .replace(/<o:p>[\s\S]*?<\/o:p>/gi, '')
+        .replace(/<\/?[a-z0-9]+:[\s\S]*?>/gi, '');
+
+      if (cleaned.trim()) {
+        document.execCommand('insertHTML', false, cleaned);
+      } else if (textData) {
+        document.execCommand('insertText', false, textData);
+      }
+    } else if (htmlData && htmlData.trim()) {
+      document.execCommand('insertHTML', false, htmlData);
+    } else if (textData) {
+      document.execCommand('insertText', false, textData);
+    }
+    handleInput();
+  };
+
   const minHeightPx = Math.max(90, rows * 24);
 
   return (
@@ -169,6 +199,7 @@ export default function RichTextEditor({
         onInput={handleInput}
         onBlur={handleInput}
         onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
         suppressContentEditableWarning={true}
       />
 

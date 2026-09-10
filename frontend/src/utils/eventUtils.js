@@ -79,3 +79,50 @@ export function isEventPast(event) {
   const endDateTime = getEventEndDateTime(event.date, event.time);
   return new Date() > endDateTime;
 }
+
+/**
+ * Strips HTML tags and decodes entities to return clean plain text for previews.
+ * @param {string} html - HTML string or plain text
+ * @returns {string} - Clean plain text
+ */
+export function stripHtml(html) {
+  if (!html) return '';
+  const str = String(html);
+  if (!/<[a-z][\s\S]*>/i.test(str)) {
+    return str;
+  }
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(str, 'text/html');
+    return (doc.body.textContent || doc.body.innerText || '').replace(/\s+/g, ' ').trim();
+  } catch (e) {
+    return str.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+}
+
+/**
+ * Broadcasts an event change (update, create, delete) across components and tabs immediately.
+ * @param {Object} detail - The updated/created event or { _id, deleted: true }
+ */
+export function notifyEventUpdated(detail) {
+  if (!detail) return;
+  try {
+    // 1. In-tab custom event
+    window.dispatchEvent(new CustomEvent('eventhub_events_updated', { detail }));
+
+    // 2. Cross-tab BroadcastChannel
+    if (typeof BroadcastChannel !== 'undefined') {
+      const bc = new BroadcastChannel('eventhub_channel');
+      bc.postMessage({ type: 'EVENT_UPDATED', detail });
+      bc.close();
+    }
+
+    // 3. Cross-tab localStorage trigger
+    localStorage.setItem(
+      'eventhub_last_event_update',
+      JSON.stringify({ detail, timestamp: Date.now() })
+    );
+  } catch (err) {
+    console.error('Error dispatching event update broadcast:', err);
+  }
+}

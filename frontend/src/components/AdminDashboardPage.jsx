@@ -3,6 +3,7 @@ import EditEventModal from './modals/EditEventModal';
 import AddVenueModal from './modals/AddVenueModal';
 import CreateEventPage from './CreateEventPage';
 import CloudinaryUploader from './CloudinaryUploader';
+import { notifyEventUpdated } from '../utils/eventUtils';
 
 export default function AdminDashboardPage({
   currentUser,
@@ -12,6 +13,9 @@ export default function AdminDashboardPage({
   logout,
   openCreateEventModal,
   showToast,
+  onEventUpdated,
+  onEventCreated,
+  onEventDeleted,
 }) {
   // Admin Login Form State
   const [adminEmail, setAdminEmail] = useState('');
@@ -344,6 +348,9 @@ export default function AdminDashboardPage({
 
       if (result.success) {
         if (showToast) showToast(`"${eventTitle}" deleted from MongoDB`, 'success');
+        setEvents((prev) => prev.filter((e) => e._id !== eventId));
+        if (onEventDeleted) onEventDeleted(eventId);
+        notifyEventUpdated({ _id: eventId, deleted: true });
         fetchDashboardData();
       } else {
         if (showToast) showToast(result.message || 'Failed to delete event', 'error');
@@ -374,6 +381,11 @@ export default function AdminDashboardPage({
       const result = await response.json();
       if (result.success) {
         if (showToast) showToast(`Duplicated "${evt.title}" successfully!`, 'success');
+        if (result.data) {
+          setEvents((prev) => [result.data, ...prev]);
+          if (onEventCreated) onEventCreated(result.data);
+          notifyEventUpdated(result.data);
+        }
         fetchDashboardData();
       }
     } catch (err) {
@@ -2316,7 +2328,11 @@ export default function AdminDashboardPage({
       {activeMenu === 'create-event' && (
         <CreateEventPage
           onCancel={() => setActiveMenu('events')}
-          onEventCreated={() => {
+          onEventCreated={(newEvent) => {
+            if (newEvent && newEvent._id) {
+              setEvents((prev) => [newEvent, ...prev]);
+            }
+            if (onEventCreated) onEventCreated(newEvent);
             fetchDashboardData();
             setActiveMenu('events');
           }}
@@ -2330,7 +2346,15 @@ export default function AdminDashboardPage({
         isOpen={Boolean(editingEvent)}
         onClose={() => setEditingEvent(null)}
         event={editingEvent}
-        onEventUpdated={fetchDashboardData}
+        onEventUpdated={(updatedEvent) => {
+          if (updatedEvent && updatedEvent._id) {
+            setEvents((prev) =>
+              prev.map((e) => (e._id === updatedEvent._id ? { ...e, ...updatedEvent } : e))
+            );
+          }
+          if (onEventUpdated) onEventUpdated(updatedEvent);
+          fetchDashboardData();
+        }}
         showToast={showToast}
       />
 

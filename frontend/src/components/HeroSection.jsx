@@ -40,12 +40,12 @@ export default function HeroSection({ scrollToEvents }) {
 
           {/* Heading */}
           <h1 className="hero-custom-title">
-            Where innovation meets community and culture.
+            Where Innovation Meets Community and Creativity.
           </h1>
 
           {/* Subtitle */}
           <p className="hero-custom-subtitle">
-            From Shed sessions to Midweek Boost evenings, discover and register for the events shaping TRACE Expert City — then keep every one of them in view.
+            From a gust of communication to the TRACE Community, discover and register for the events shaping the TRACE Community — then keep every one of them in view.
           </p>
 
           {/* Action Buttons */}

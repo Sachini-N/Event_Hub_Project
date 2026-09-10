@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { stripHtml } from '../utils/eventUtils';
 
 export default function CalendarPage({
   currentUser,
@@ -383,7 +384,7 @@ export default function CalendarPage({
                     <span>{selectedEvent.location || 'TRACE Expert City, Colombo'}</span>
                   </div>
 
-                  <p className="side-event-description">{selectedEvent.description}</p>
+                  <p className="side-event-description">{stripHtml(selectedEvent.description)}</p>
 
                   <div className="side-actions-group">
                     <button

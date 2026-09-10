@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { isEventPast } from '../utils/eventUtils';
+import { isEventPast, stripHtml } from '../utils/eventUtils';
 
 export default function PastEventsSection({
   events = [],
@@ -53,7 +53,7 @@ export default function PastEventsSection({
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchesTitle = item.title?.toLowerCase().includes(q);
-        const matchesDesc = (item.description || item.shortDescription)?.toLowerCase().includes(q);
+        const matchesDesc = stripHtml(item.description || item.shortDescription || '').toLowerCase().includes(q);
         const matchesCat = item.category?.toLowerCase().includes(q);
         const matchesLoc = item.location?.toLowerCase().includes(q);
         if (!matchesTitle && !matchesDesc && !matchesCat && !matchesLoc) {
@@ -298,7 +298,7 @@ export default function PastEventsSection({
                       </div>
 
                       <h3 className="event-card-title">{item.title}</h3>
-                      <p className="event-card-description">{item.description || item.shortDescription}</p>
+                      <p className="event-card-description">{stripHtml(item.description || item.shortDescription)}</p>
 
                       <div className="event-location-row">
                         <i className="fa-solid fa-location-dot location-icon"></i>
@@ -399,7 +399,7 @@ export default function PastEventsSection({
                   </div>
 
                   <h3 className="event-card-title">{item.title}</h3>
-                  <p className="event-card-description">{item.description || item.shortDescription}</p>
+                  <p className="event-card-description">{stripHtml(item.description || item.shortDescription)}</p>
 
                   <div className="event-location-row">
                     <i className="fa-solid fa-location-dot location-icon"></i>

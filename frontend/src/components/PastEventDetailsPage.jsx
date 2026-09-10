@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import FormattedText from './FormattedText';
 
 export default function PastEventDetailsPage({
   event: initialEvent,
@@ -10,6 +11,7 @@ export default function PastEventDetailsPage({
   const [loadingEvent, setLoadingEvent] = useState(!initialEvent);
   const [isPlayingVideo, setIsPlayingVideo] = useState(false);
 
+  // Keep activeEvent in sync when initialEvent prop changes
   React.useEffect(() => {
     if (initialEvent) {
       setActiveEvent(initialEvent);
@@ -41,6 +43,59 @@ export default function PastEventDetailsPage({
       setLoadingEvent(false);
     }
   }, [initialEvent]);
+
+  // Listen for instant live updates across tabs and within app
+  React.useEffect(() => {
+    const handleUpdate = (updated) => {
+      if (!updated) return;
+      if (updated.deleted) {
+        if (activeEvent && activeEvent._id === updated._id) {
+          if (showToast) showToast('This event was removed.', 'info');
+          if (onBack) onBack();
+        }
+        return;
+      }
+      if (updated._id) {
+        setActiveEvent((prev) => {
+          if (prev && prev._id === updated._id) {
+            return { ...prev, ...updated };
+          }
+          return prev;
+        });
+      }
+    };
+
+    const handleCustomEvent = (e) => handleUpdate(e.detail);
+    window.addEventListener('eventhub_events_updated', handleCustomEvent);
+
+    let bc = null;
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        bc = new BroadcastChannel('eventhub_channel');
+        bc.onmessage = (msg) => {
+          if (msg.data?.type === 'EVENT_UPDATED') {
+            handleUpdate(msg.data.detail);
+          }
+        };
+      } catch (err) {}
+    }
+
+    const handleStorage = (e) => {
+      if (e.key === 'eventhub_last_event_update' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (parsed?.detail) handleUpdate(parsed.detail);
+        } catch (err) {}
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      window.removeEventListener('eventhub_events_updated', handleCustomEvent);
+      window.removeEventListener('storage', handleStorage);
+      if (bc) bc.close();
+    };
+  }, [activeEvent, onBack, showToast]);
 
   const getYouTubeEmbedUrl = (url) => {
     if (!url) return null;
@@ -192,7 +247,7 @@ export default function PastEventDetailsPage({
               <h2 className="past-card-heading">
                 <i className="fa-solid fa-file-lines"></i> Executive Summary & Event Recap
               </h2>
-              <p className="past-recap-text">{pastEvent.description}</p>
+              <FormattedText content={pastEvent.description} className="past-recap-text" />
 
               {/* Key Highlights List */}
               {pastEvent.highlights && pastEvent.highlights.length > 0 && (

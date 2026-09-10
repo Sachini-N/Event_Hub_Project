@@ -1,5 +1,5 @@
 import React from 'react';
-import { isEventPast } from '../utils/eventUtils';
+import { isEventPast, stripHtml } from '../utils/eventUtils';
 
 export default function UpcomingEventsSection({
   events,
@@ -23,7 +23,7 @@ export default function UpcomingEventsSection({
     const matchesSearch =
       !q ||
       (event.title && event.title.toLowerCase().includes(q)) ||
-      (event.description && event.description.toLowerCase().includes(q)) ||
+      (event.description && stripHtml(event.description).toLowerCase().includes(q)) ||
       (event.category && event.category.toLowerCase().includes(q)) ||
       (event.speaker && event.speaker.name && event.speaker.name.toLowerCase().includes(q));
 
@@ -134,7 +134,7 @@ export default function UpcomingEventsSection({
                       <span>{event.location}</span>
                     </div>
 
-                    <p className="card-desc">{event.description}</p>
+                    <p className="card-desc">{stripHtml(event.description)}</p>
 
                     {/* Gallery Highlights if Past Event */}
                     {!isUpcoming && event.gallery && event.gallery.length > 0 && (

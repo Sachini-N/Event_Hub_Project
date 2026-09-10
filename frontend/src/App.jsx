@@ -95,6 +95,9 @@ export default function App() {
     if (window.location.hash !== targetHash) {
       window.history.pushState({ tab: newTab }, '', targetHash);
     }
+    if (['home', 'upcoming', 'past', 'past-details'].includes(newTab)) {
+      fetchEvents();
+    }
   };
 
   // Synchronize browser URL hash & back/forward history navigation
@@ -114,6 +117,72 @@ export default function App() {
     };
   }, []);
 
+  // Listen for instant event update broadcasts across the app and browser tabs
+  useEffect(() => {
+    const applyLiveEventUpdate = (updated) => {
+      if (!updated) return;
+      if (updated.deleted && updated._id) {
+        setEvents((prev) => prev.filter((evt) => evt._id !== updated._id));
+        setSelectedPastEvent((prev) => (prev?._id === updated._id ? null : prev));
+        setSelectedDetailsEvent((prev) => (prev?._id === updated._id ? null : prev));
+      } else if (updated._id) {
+        setEvents((prev) => {
+          const exists = prev.some((evt) => evt._id === updated._id);
+          if (exists) {
+            return prev.map((evt) => (evt._id === updated._id ? { ...evt, ...updated } : evt));
+          }
+          return [updated, ...prev];
+        });
+        setSelectedPastEvent((prev) =>
+          prev?._id === updated._id ? { ...prev, ...updated } : prev
+        );
+        setSelectedDetailsEvent((prev) =>
+          prev?._id === updated._id ? { ...prev, ...updated } : prev
+        );
+      }
+      fetchEvents(true);
+    };
+
+    const handleCustomEvent = (e) => applyLiveEventUpdate(e.detail);
+    window.addEventListener('eventhub_events_updated', handleCustomEvent);
+
+    let bc = null;
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        bc = new BroadcastChannel('eventhub_channel');
+        bc.onmessage = (msg) => {
+          if (msg.data?.type === 'EVENT_UPDATED') {
+            applyLiveEventUpdate(msg.data.detail);
+          }
+        };
+      } catch (err) {}
+    }
+
+    const handleStorage = (e) => {
+      if (e.key === 'eventhub_last_event_update' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (parsed?.detail) applyLiveEventUpdate(parsed.detail);
+        } catch (err) {}
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchEvents(true);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('eventhub_events_updated', handleCustomEvent);
+      window.removeEventListener('storage', handleStorage);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (bc) bc.close();
+    };
+  }, []);
+
   const showToast = (message, type = 'info') => {
     setToast({ visible: true, message, type });
     setTimeout(() => {
@@ -121,21 +190,25 @@ export default function App() {
     }, 4000);
   };
 
-  const fetchEvents = async () => {
-    setLoading(true);
+  const fetchEvents = async (silent = false) => {
+    if (!silent) {
+      setLoading(true);
+    }
     try {
       const response = await fetch('/api/events');
       const result = await response.json();
       if (result.success) {
         setEvents(result.data || []);
-      } else {
+      } else if (!silent) {
         showToast(result.message || 'Failed to load events', 'error');
       }
     } catch (error) {
       console.error('Error fetching events:', error);
-      showToast('Failed to connect to event server', 'error');
+      if (!silent) showToast('Failed to connect to event server', 'error');
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   };
 
@@ -405,6 +478,32 @@ export default function App() {
               logout={promptLogout}
               openCreateEventModal={() => setShowAdmin(true)}
               showToast={showToast}
+              onEventUpdated={(updatedEvent) => {
+                if (updatedEvent?._id) {
+                  setEvents((prev) =>
+                    prev.map((e) => (e._id === updatedEvent._id ? { ...e, ...updatedEvent } : e))
+                  );
+                  setSelectedPastEvent((prev) =>
+                    prev?._id === updatedEvent._id ? { ...prev, ...updatedEvent } : prev
+                  );
+                  setSelectedDetailsEvent((prev) =>
+                    prev?._id === updatedEvent._id ? { ...prev, ...updatedEvent } : prev
+                  );
+                }
+                fetchEvents();
+              }}
+              onEventCreated={(newEvent) => {
+                if (newEvent?._id) {
+                  setEvents((prev) => [newEvent, ...prev.filter((e) => e._id !== newEvent._id)]);
+                }
+                fetchEvents();
+              }}
+              onEventDeleted={(deletedId) => {
+                if (deletedId) {
+                  setEvents((prev) => prev.filter((e) => e._id !== deletedId));
+                }
+                fetchEvents();
+              }}
             />
           </React.Suspense>
         )}

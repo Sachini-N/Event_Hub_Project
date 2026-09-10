@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { isEventPast } from '../../utils/eventUtils';
+import { isEventPast, notifyEventUpdated } from '../../utils/eventUtils';
 import RichTextEditor from '../RichTextEditor';
 
 export default function AdminModal({ isOpen, onClose, onEventCreated, showToast }) {
@@ -66,7 +66,10 @@ export default function AdminModal({ isOpen, onClose, onEventCreated, showToast 
       if (result.success) {
         onClose();
         showToast('Event created and published successfully!', 'success');
-        onEventCreated();
+        if (result.data) {
+          notifyEventUpdated(result.data);
+        }
+        if (onEventCreated) onEventCreated(result.data);
       } else {
         showToast(result.message || 'Failed to create event', 'error');
       }
@@ -211,11 +214,11 @@ export default function AdminModal({ isOpen, onClose, onEventCreated, showToast 
 
             {/* Live Uploaded Photo Preview Card */}
             {coverImage && (
-              <div style={{ marginTop: '0.75rem', position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '1px solid #cbd5e1', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+              <div style={{ marginTop: '0.75rem', position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '1px solid #cbd5e1', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', width: '100%', aspectRatio: '1 / 1', maxHeight: '340px' }}>
                 <img
                   src={coverImage}
                   alt="Uploaded Cover Preview"
-                  style={{ width: '100%', maxHeight: '180px', objectFit: 'cover', display: 'block' }}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
                 />
                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(180deg, transparent 0%, rgba(15,23,42,0.85) 100%)', padding: '0.5rem 0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ color: '#ffffff', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}>

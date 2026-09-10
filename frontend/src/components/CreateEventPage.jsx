@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { isEventPast } from '../utils/eventUtils';
+import { isEventPast, notifyEventUpdated } from '../utils/eventUtils';
 import RichTextEditor from './RichTextEditor';
 
 const TRACE_VENUE_PRESETS = [
@@ -233,7 +233,10 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
             'success'
           );
         }
-        if (onEventCreated) onEventCreated();
+        if (result.data) {
+          notifyEventUpdated(result.data);
+        }
+        if (onEventCreated) onEventCreated(result.data);
       } else {
         const detailedMsg = result.error ? `${result.message}: ${result.error}` : (result.message || 'Failed to publish event');
         if (showToast) showToast(detailedMsg, 'error');
@@ -511,14 +514,15 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
                     />
                   </div>
                   <div className="profile-form-group" style={{ marginBottom: 0 }}>
-                    <label style={{ fontSize: '0.82rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700' }}>
-                      <i className="fa-brands fa-x-twitter"></i> Twitter / X Link
+                    <label htmlFor="evt-video-url" style={{ fontSize: '0.82rem', color: '#ff0000', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700' }}>
+                      <i className="fa-brands fa-youtube"></i> YouTube Video Link
                     </label>
                     <input
                       type="url"
-                      placeholder="https://x.com/..."
-                      value={twitterLink}
-                      onChange={(e) => setTwitterLink(e.target.value)}
+                      id="evt-video-url"
+                      placeholder="https://youtube.com/watch?v=..."
+                      value={videoUrl}
+                      onChange={(e) => setVideoUrl(e.target.value)}
                     />
                   </div>
                   <div className="profile-form-group" style={{ marginBottom: 0 }}>
@@ -689,24 +693,6 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
                   style={{ display: 'none' }}
                   onChange={handleImageFile}
                 />
-              </div>
-
-              {/* YouTube Video Link Input */}
-              <div className="profile-form-group" style={{ marginBottom: '1.5rem' }}>
-                <label htmlFor="evt-video-url" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <i className="fa-brands fa-youtube" style={{ color: '#ff0000', fontSize: '1.1rem' }}></i>
-                  YouTube Video Link / Keynote Recording
-                </label>
-                <input
-                  type="url"
-                  id="evt-video-url"
-                  placeholder="https://www.youtube.com/watch?v=..."
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                />
-                <span className="char-count" style={{ display: 'block', marginTop: '0.25rem', fontSize: '0.78rem', color: '#64748b' }}>
-                  Paste YouTube video URL to display in Keynote Recording section
-                </span>
               </div>
 
               {/* Enable Registration Toggle Switch */}

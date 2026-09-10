@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import RichTextEditor from '../RichTextEditor';
+import { notifyEventUpdated } from '../../utils/eventUtils';
 
 export default function EditEventModal({
   isOpen,
@@ -137,7 +138,9 @@ export default function EditEventModal({
       if (result.success) {
         onClose();
         if (showToast) showToast('Event updated successfully in MongoDB!', 'success');
-        if (onEventUpdated) onEventUpdated();
+        const updatedData = result.data || { _id: event._id, ...result };
+        notifyEventUpdated(updatedData);
+        if (onEventUpdated) onEventUpdated(updatedData);
       } else {
         if (showToast) showToast(result.message || 'Failed to update event', 'error');
       }
@@ -294,11 +297,11 @@ export default function EditEventModal({
 
             {/* Live Uploaded Photo Preview Card */}
             {coverImage && (
-              <div style={{ marginTop: '0.75rem', position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '1px solid #cbd5e1', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+              <div style={{ marginTop: '0.75rem', position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '1px solid #cbd5e1', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', width: '100%', aspectRatio: '1 / 1', maxHeight: '360px' }}>
                 <img
                   src={coverImage}
                   alt="Uploaded Cover Preview"
-                  style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', display: 'block' }}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
                 />
                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(180deg, transparent 0%, rgba(15,23,42,0.85) 100%)', padding: '0.5rem 0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ color: '#ffffff', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -316,26 +319,11 @@ export default function EditEventModal({
             )}
           </div>
 
-          {/* YouTube Video Link Field */}
-          <div className="form-group">
-            <label htmlFor="edit-video-url" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <i className="fa-brands fa-youtube" style={{ color: '#ff0000', fontSize: '1.1rem' }}></i>
-              YouTube Video Link / Keynote Recording URL
-            </label>
-            <input
-              type="url"
-              id="edit-video-url"
-              placeholder="e.g. https://www.youtube.com/watch?v=..."
-              value={videoUrl}
-              onChange={(e) => setVideoUrl(e.target.value)}
-            />
-          </div>
-
-          {/* Social Media Links (Facebook, Instagram, Twitter, LinkedIn) */}
+          {/* Social & Media Links (Facebook, Instagram, YouTube, LinkedIn) */}
           <div style={{ marginBottom: '1.5rem', background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700', fontSize: '0.9rem', color: '#1e293b', marginBottom: '0.75rem' }}>
               <i className="fa-solid fa-share-nodes" style={{ color: '#3b82f6' }}></i>
-              Social Media Links (Facebook, Instagram, Twitter, LinkedIn)
+              Social & Media Links (Facebook, Instagram, YouTube, LinkedIn)
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
@@ -363,14 +351,15 @@ export default function EditEventModal({
                 />
               </div>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label style={{ fontSize: '0.8rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <i className="fa-brands fa-x-twitter"></i> Twitter / X Link
+                <label htmlFor="edit-video-url" style={{ fontSize: '0.8rem', color: '#ff0000', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <i className="fa-brands fa-youtube"></i> YouTube Video Link
                 </label>
                 <input
                   type="url"
-                  placeholder="https://x.com/..."
-                  value={twitterLink}
-                  onChange={(e) => setTwitterLink(e.target.value)}
+                  id="edit-video-url"
+                  placeholder="https://youtube.com/watch?v=..."
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
                   style={{ fontSize: '0.85rem' }}
                 />
               </div>

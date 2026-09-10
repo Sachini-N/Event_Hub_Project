@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { isEventPast } from '../utils/eventUtils';
+import { isEventPast, stripHtml } from '../utils/eventUtils';
 
 export default function UpcomingEventsPage({
   events,
@@ -72,7 +72,7 @@ export default function UpcomingEventsPage({
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchesTitle = event.title?.toLowerCase().includes(q);
-        const matchesDesc = event.description?.toLowerCase().includes(q);
+        const matchesDesc = stripHtml(event.description || '').toLowerCase().includes(q);
         const matchesCat = event.category?.toLowerCase().includes(q);
         const matchesLoc = event.location?.toLowerCase().includes(q);
         if (!matchesTitle && !matchesDesc && !matchesCat && !matchesLoc) {
@@ -267,7 +267,7 @@ export default function UpcomingEventsPage({
                   <div className="card-content">
                     <div className="event-date-heading">{formattedDate}</div>
                     <h3 className="event-card-title">{event.title}</h3>
-                    <p className="event-card-description">{event.description}</p>
+                    <p className="event-card-description">{stripHtml(event.description)}</p>
 
                     <div className="event-location-row">
                       <i className="fa-solid fa-location-dot location-icon"></i>
