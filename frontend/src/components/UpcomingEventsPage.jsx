@@ -243,8 +243,21 @@ export default function UpcomingEventsPage({
               );
 
               return (
-                <div className="event-card-modern" key={event._id || event.title}>
-                  <div className="card-media">
+                <div
+                  className="event-card-modern"
+                  key={event._id || event.title}
+                  onClick={() => openRegistrationModal(event)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div
+                    className="card-media"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openRegistrationModal(event);
+                    }}
+                    style={{ cursor: 'pointer' }}
+                    title="Click / tap to view event details"
+                  >
                     <img
                       src={
                         event.coverImage ||
@@ -266,7 +279,16 @@ export default function UpcomingEventsPage({
 
                   <div className="card-content">
                     <div className="event-date-heading">{formattedDate}</div>
-                    <h3 className="event-card-title">{event.title}</h3>
+                    <h3
+                      className="event-card-title"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openRegistrationModal(event);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {event.title}
+                    </h3>
                     <p className="event-card-description">{stripHtml(event.description)}</p>
 
                     <div className="event-location-row">
@@ -277,19 +299,29 @@ export default function UpcomingEventsPage({
                     <div className="card-button-group">
                       <button
                         className="btn-details-outline"
-                        onClick={() => openRegistrationModal(event)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openRegistrationModal(event);
+                        }}
                       >
                         View Details
                       </button>
 
                       {isRegistered ? (
-                        <button className="btn-registered-disabled" disabled>
+                        <button
+                          className="btn-registered-disabled"
+                          disabled
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <i className="fa-solid fa-check"></i> Joined
                         </button>
                       ) : (
                         <button
                           className="btn-register-solid"
-                          onClick={() => openRegistrationModal(event)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openRegistrationModal(event);
+                          }}
                         >
                           Register
                         </button>

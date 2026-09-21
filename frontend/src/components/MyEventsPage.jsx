@@ -203,7 +203,12 @@ export default function MyEventsPage({
             {filteredRegistrations.map((item) => (
               <div className="my-event-card" key={item._id}>
                 {/* Banner Media */}
-                <div className="my-card-banner">
+                <div
+                  className="my-card-banner"
+                  onClick={() => onViewEvent && onViewEvent(item)}
+                  style={{ cursor: 'pointer' }}
+                  title="Click / tap to view event details"
+                >
                   <img src={item.coverImage} alt={item.title} />
                   <span className="registered-tag-pill">
                     <i className="fa-solid fa-circle-check"></i> Registered
@@ -212,7 +217,13 @@ export default function MyEventsPage({
 
                 {/* Card Content */}
                 <div className="my-card-content">
-                  <h3 className="my-card-title">{item.title}</h3>
+                  <h3
+                    className="my-card-title"
+                    onClick={() => onViewEvent && onViewEvent(item)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {item.title}
+                  </h3>
 
                   <div className="my-card-meta-line">
                     <i className="fa-regular fa-calendar"></i>

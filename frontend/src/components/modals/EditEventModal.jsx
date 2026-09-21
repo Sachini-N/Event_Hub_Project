@@ -18,6 +18,11 @@ export default function EditEventModal({
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [coverImage, setCoverImage] = useState('');
+  const [speakerName, setSpeakerName] = useState('');
+  const [speakerRole, setSpeakerRole] = useState('');
+  const [speakerBio, setSpeakerBio] = useState('');
+  const [speakerAvatar, setSpeakerAvatar] = useState('');
+  const [uploadingSpeakerAvatar, setUploadingSpeakerAvatar] = useState(false);
   const [videoUrl, setVideoUrl] = useState('');
   const [facebookLink, setFacebookLink] = useState('');
   const [instagramLink, setInstagramLink] = useState('');
@@ -42,6 +47,10 @@ export default function EditEventModal({
       setLocation(event.location || '');
       setDescription(event.description || '');
       setCoverImage(event.coverImage || '');
+      setSpeakerName(event.speaker?.name || '');
+      setSpeakerRole(event.speaker?.role || '');
+      setSpeakerBio(event.speaker?.bio || '');
+      setSpeakerAvatar(event.speaker?.avatar || '');
       setVideoUrl(event.videoUrl || '');
       setFacebookLink(event.socialLinks?.facebook || '');
       setInstagramLink(event.socialLinks?.instagram || '');
@@ -67,6 +76,48 @@ export default function EditEventModal({
     reader.onloadend = () => {
       setCoverImage(reader.result);
       if (showToast) showToast('Cover photo loaded!', 'info');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Handle Speaker Avatar File Upload
+  const handleSpeakerAvatarUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 4 * 1024 * 1024) {
+      if (showToast) showToast('Please select a photo smaller than 4MB', 'error');
+      return;
+    }
+
+    setUploadingSpeakerAvatar(true);
+    const authToken = localStorage.getItem('eventhub_token');
+    if (authToken) {
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${authToken}` },
+          body: formData,
+        });
+        const result = await res.json();
+        if (result.success && result.data?.url) {
+          setSpeakerAvatar(result.data.url);
+          if (showToast) showToast('Speaker photo uploaded successfully!', 'success');
+          setUploadingSpeakerAvatar(false);
+          return;
+        }
+      } catch (uploadErr) {
+        console.warn('Upload fallback to base64 triggered:', uploadErr);
+      }
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setSpeakerAvatar(reader.result);
+      if (showToast) showToast('Speaker photo loaded!', 'success');
+      setUploadingSpeakerAvatar(false);
     };
     reader.readAsDataURL(file);
   };
@@ -122,6 +173,14 @@ export default function EditEventModal({
           location,
           description,
           coverImage,
+          speaker: speakerName.trim()
+            ? {
+                name: speakerName.trim(),
+                role: speakerRole.trim() || 'Keynote Speaker',
+                bio: speakerBio.trim() || '',
+                avatar: speakerAvatar || '',
+              }
+            : null,
           videoUrl: videoUrl.trim(),
           socialLinks: {
             facebook: facebookLink.trim(),
@@ -317,6 +376,128 @@ export default function EditEventModal({
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Speaker Information Section */}
+          <div style={{ marginBottom: '1.5rem', background: '#f8fafc', padding: '1.1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.9rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700', fontSize: '0.9rem', color: '#1e293b', margin: 0 }}>
+                <i className="fa-solid fa-user-tie" style={{ color: '#7c3aed' }}></i>
+                Keynote Speaker / Guest Details
+              </label>
+              {(speakerName || speakerRole || speakerBio || speakerAvatar) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSpeakerName('');
+                    setSpeakerRole('');
+                    setSpeakerBio('');
+                    setSpeakerAvatar('');
+                  }}
+                  style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.78rem', cursor: 'pointer', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <i className="fa-solid fa-trash-can"></i> Clear Speaker
+                </button>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', marginBottom: '0.85rem' }}>
+              {/* Speaker Avatar Upload Circle */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem' }}>
+                <label
+                  htmlFor="edit-speaker-avatar"
+                  style={{
+                    width: '68px',
+                    height: '68px',
+                    borderRadius: '50%',
+                    border: '2px dashed #cbd5e1',
+                    background: '#ffffff',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    overflow: 'hidden',
+                    position: 'relative',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                  }}
+                  title="Click to upload speaker photo"
+                >
+                  {speakerAvatar ? (
+                    <img
+                      src={speakerAvatar}
+                      alt="Speaker"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <>
+                      <i className="fa-solid fa-camera" style={{ color: '#94a3b8', fontSize: '1.1rem' }}></i>
+                      <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: '600', marginTop: '2px' }}>
+                        {uploadingSpeakerAvatar ? '...' : 'Avatar'}
+                      </span>
+                    </>
+                  )}
+                </label>
+                <input
+                  type="file"
+                  id="edit-speaker-avatar"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleSpeakerAvatarUpload}
+                />
+                {speakerAvatar && (
+                  <button
+                    type="button"
+                    onClick={() => setSpeakerAvatar('')}
+                    style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: '0.7rem', cursor: 'pointer', padding: 0 }}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+
+              {/* Name & Role Inputs */}
+              <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label style={{ fontSize: '0.8rem', color: '#475569', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <i className="fa-solid fa-user" style={{ color: '#7c3aed' }}></i> Speaker Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Dr. Jane Doe"
+                    value={speakerName}
+                    onChange={(e) => setSpeakerName(e.target.value)}
+                    style={{ fontSize: '0.85rem' }}
+                  />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label style={{ fontSize: '0.8rem', color: '#475569', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <i className="fa-solid fa-briefcase" style={{ color: '#7c3aed' }}></i> Role / Title
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Keynote Speaker / CTO"
+                    value={speakerRole}
+                    onChange={(e) => setSpeakerRole(e.target.value)}
+                    style={{ fontSize: '0.85rem' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Speaker Bio */}
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label style={{ fontSize: '0.8rem', color: '#475569', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <i className="fa-solid fa-id-card" style={{ color: '#7c3aed' }}></i> Speaker Biography (Optional)
+              </label>
+              <textarea
+                rows="2"
+                placeholder="Brief biography or background of the speaker..."
+                value={speakerBio}
+                onChange={(e) => setSpeakerBio(e.target.value)}
+                style={{ fontSize: '0.85rem', width: '100%', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0.5rem', resize: 'vertical' }}
+              ></textarea>
+            </div>
           </div>
 
           {/* Social & Media Links (Facebook, Instagram, YouTube, LinkedIn) */}

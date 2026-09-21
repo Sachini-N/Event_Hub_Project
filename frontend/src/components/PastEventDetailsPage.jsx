@@ -148,8 +148,13 @@ export default function PastEventDetailsPage({
       window.open(customLinks.instagram, '_blank', 'noopener,noreferrer');
       return;
     }
-    if (platform === 'twitter' && customLinks.twitter && customLinks.twitter.trim()) {
-      window.open(customLinks.twitter, '_blank', 'noopener,noreferrer');
+    if (platform === 'youtube') {
+      const ytUrl = pastEvent.videoUrl || customLinks.youtube;
+      if (ytUrl && ytUrl.trim()) {
+        window.open(ytUrl.trim(), '_blank', 'noopener,noreferrer');
+      } else {
+        window.open('https://www.youtube.com', '_blank', 'noopener,noreferrer');
+      }
       return;
     }
     if (platform === 'linkedin' && customLinks.linkedin && customLinks.linkedin.trim()) {
@@ -185,7 +190,8 @@ export default function PastEventDetailsPage({
         {/* Hero Header Banner */}
         <div className="past-details-hero-card">
           <div className="past-hero-image-box">
-            <img src={pastEvent.coverImage} alt={pastEvent.title} />
+            <div className="past-hero-backdrop" style={{ backgroundImage: `url(${pastEvent.coverImage})` }} />
+            <img className="past-hero-img" src={pastEvent.coverImage} alt={pastEvent.title} />
             <div className="past-hero-overlay"></div>
             <span className="past-status-badge">
               <span className="badge-pulse-dot"></span>
@@ -454,12 +460,12 @@ export default function PastEventDetailsPage({
                 </button>
                 <button
                   className="btn-share-icon"
-                  onClick={() => handleSocialShare('twitter')}
-                  title="Share on Twitter"
-                  style={{ color: '#0f172a', borderColor: '#cbd5e1', background: '#f8fafc' }}
+                  onClick={() => handleSocialShare('youtube')}
+                  title="Watch on YouTube"
+                  style={{ color: '#ff0000', borderColor: '#fecaca', background: '#fef2f2' }}
                 >
-                  <i className="fa-brands fa-x-twitter" style={{ fontSize: '0.95rem' }}></i>
-                  <span>Twitter</span>
+                  <i className="fa-brands fa-youtube" style={{ fontSize: '0.95rem' }}></i>
+                  <span>YouTube</span>
                 </button>
                 <button
                   className="btn-share-icon"

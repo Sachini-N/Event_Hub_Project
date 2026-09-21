@@ -355,7 +355,8 @@ export default function EventDetailsPage({
               <div className="details-left-column">
                 <div className={`media-collage-grid ${uploadedPhotos.length === 1 ? 'single-photo-mode' : ''}`}>
                   <div className="collage-main-photo">
-                    <img src={imgMain} alt={event.title} />
+                    <div className="collage-photo-backdrop" style={{ backgroundImage: `url(${imgMain})` }} />
+                    <img className="collage-main-img" src={imgMain} alt={event.title} />
                     <span className="free-event-badge">FREE EVENT</span>
                   </div>
                   {uploadedPhotos.length > 1 && (

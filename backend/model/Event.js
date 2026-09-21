@@ -62,6 +62,7 @@ const eventSchema = new mongoose.Schema(
     speaker: {
       name: String,
       role: String,
+      bio: String,
       avatar: String,
     },
     socialLinks: {

@@ -113,8 +113,29 @@ export default function UpcomingEventsSection({
               const formattedDate = formatEventDate(event.date, event.time);
 
               return (
-                <div className="event-card" key={event._id}>
-                  <div className="card-banner">
+                <div
+                  className="event-card"
+                  key={event._id}
+                  onClick={() => {
+                    if (isUpcoming) {
+                      openRegistrationModal(event);
+                    }
+                  }}
+                  style={{ cursor: isUpcoming ? 'pointer' : 'default' }}
+                >
+                  <div
+                    className="card-banner"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isUpcoming) {
+                        openRegistrationModal(event);
+                      } else {
+                        openGalleryLightbox(event, 0);
+                      }
+                    }}
+                    style={{ cursor: 'pointer' }}
+                    title="Click / tap to view event details"
+                  >
                     <img
                       src={
                         event.coverImage ||
@@ -127,7 +148,16 @@ export default function UpcomingEventsSection({
 
                   <div className="card-body">
                     <div className="event-datetime">{formattedDate}</div>
-                    <h3 className="card-title">{event.title}</h3>
+                    <h3
+                      className="card-title"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isUpcoming) openRegistrationModal(event);
+                      }}
+                      style={{ cursor: isUpcoming ? 'pointer' : 'default' }}
+                    >
+                      {event.title}
+                    </h3>
 
                     <div className="card-location">
                       <i className="fa-solid fa-location-dot" style={{ color: 'var(--teal-accent)' }}></i>
@@ -164,7 +194,10 @@ export default function UpcomingEventsSection({
                               <div
                                 key={idx}
                                 className="gallery-thumb"
-                                onClick={() => openGalleryLightbox(event, idx)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openGalleryLightbox(event, idx);
+                                }}
                                 style={{
                                   height: '50px',
                                   borderRadius: '6px',
@@ -187,14 +220,20 @@ export default function UpcomingEventsSection({
                     {isUpcoming ? (
                       <button
                         className="btn-card-action"
-                        onClick={() => openRegistrationModal(event)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openRegistrationModal(event);
+                        }}
                       >
                         View Details / Register
                       </button>
                     ) : (
                       <button
                         className="btn-card-secondary"
-                        onClick={() => openGalleryLightbox(event, 0)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openGalleryLightbox(event, 0);
+                        }}
                       >
                         <i className="fa-solid fa-images"></i> View Event Showcase
                       </button>
