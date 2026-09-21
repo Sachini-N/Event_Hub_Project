@@ -341,8 +341,12 @@ export default function AdminDashboardPage({
     }
 
     try {
+      const authToken = localStorage.getItem('eventhub_token') || token;
       const response = await fetch(`/api/events/${eventId}`, {
         method: 'DELETE',
+        headers: {
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
       });
       const result = await response.json();
 
@@ -372,9 +376,13 @@ export default function AdminDashboardPage({
         createdAt: undefined,
       };
 
+      const authToken = localStorage.getItem('eventhub_token') || token;
       const response = await fetch('/api/events', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
         body: JSON.stringify(cloned),
       });
 
@@ -399,9 +407,13 @@ export default function AdminDashboardPage({
     setSavingReg(true);
 
     try {
+      const authToken = localStorage.getItem('eventhub_token') || token;
       const response = await fetch(`/api/registrations/${selectedReg._id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
         body: JSON.stringify({
           status: editingRegStatus,
           notes: editingRegNotes,
@@ -442,9 +454,13 @@ export default function AdminDashboardPage({
   // Direct Inline Status Change Handler for Registration Tables
   const handleDirectStatusChange = async (regId, newStatus) => {
     try {
+      const authToken = localStorage.getItem('eventhub_token') || token;
       const response = await fetch(`/api/registrations/${regId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
         body: JSON.stringify({ status: newStatus }),
       });
 
@@ -1314,7 +1330,13 @@ export default function AdminDashboardPage({
                                         )
                                       ) {
                                         try {
-                                          const res = await fetch(`/api/auth/users/${u._id}`, { method: 'DELETE' });
+                                          const authToken = localStorage.getItem('eventhub_token') || token;
+                                          const res = await fetch(`/api/auth/users/${u._id}`, {
+                                            method: 'DELETE',
+                                            headers: {
+                                              ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+                                            },
+                                          });
                                           const data = await res.json();
                                           if (data.success) {
                                             setRegisteredUsers((prev) => prev.filter((item) => item._id !== u._id));
@@ -1558,7 +1580,13 @@ export default function AdminDashboardPage({
                               if (!venueId) return;
                               if (window.confirm(`Are you sure you want to delete venue "${v.name}"?`)) {
                                 try {
-                                  const res = await fetch(`/api/venues/${venueId}`, { method: 'DELETE' });
+                                  const authToken = localStorage.getItem('eventhub_token') || token;
+                                  const res = await fetch(`/api/venues/${venueId}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+                                    },
+                                  });
                                   const data = await res.json();
                                   if (data.success) {
                                     setVenues((prev) => prev.filter((item) => (item._id || item.id) !== venueId));
