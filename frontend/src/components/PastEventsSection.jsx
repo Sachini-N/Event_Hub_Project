@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { isEventPast, stripHtml } from '../utils/eventUtils';
+import { isEventPast, stripHtml, optimizeImageUrl } from '../utils/eventUtils';
 
 export default function PastEventsSection({
   events = [],
@@ -263,11 +263,14 @@ export default function PastEventsSection({
                   >
                     <div className="card-media">
                       <img
-                        src={
+                        src={optimizeImageUrl(
                           item.coverImage ||
-                          'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80'
-                        }
+                          'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=75',
+                          800
+                        )}
                         alt={item.title}
+                        loading="lazy"
+                        decoding="async"
                       />
                       <span className={`cat-pill ${catClass}`}>
                         {(item.category || 'PAST EVENT').toUpperCase()}
@@ -378,11 +381,14 @@ export default function PastEventsSection({
               >
                 <div className="card-media">
                   <img
-                    src={
+                    src={optimizeImageUrl(
                       item.coverImage ||
-                      'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80'
-                    }
+                      'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=75',
+                      800
+                    )}
                     alt={item.title}
+                    loading="lazy"
+                    decoding="async"
                   />
                   <span className={`cat-pill ${catClass}`}>
                     {(item.category || 'PAST EVENT').toUpperCase()}

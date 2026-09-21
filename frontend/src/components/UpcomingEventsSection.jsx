@@ -1,5 +1,5 @@
 import React from 'react';
-import { isEventPast, stripHtml } from '../utils/eventUtils';
+import { isEventPast, stripHtml, optimizeImageUrl } from '../utils/eventUtils';
 
 export default function UpcomingEventsSection({
   events,
@@ -137,11 +137,14 @@ export default function UpcomingEventsSection({
                     title="Click / tap to view event details"
                   >
                     <img
-                      src={
+                      src={optimizeImageUrl(
                         event.coverImage ||
-                        'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80'
-                      }
+                        'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=75',
+                        800
+                      )}
                       alt={event.title}
+                      loading="lazy"
+                      decoding="async"
                     />
                     <span className={`category-tag-pill ${catClass}`}>{event.category}</span>
                   </div>
@@ -206,8 +209,10 @@ export default function UpcomingEventsSection({
                                 }}
                               >
                                 <img
-                                  src={imgUrl}
+                                  src={optimizeImageUrl(imgUrl, 200)}
                                   alt="Gallery photo"
+                                  loading="lazy"
+                                  decoding="async"
                                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                 />
                               </div>

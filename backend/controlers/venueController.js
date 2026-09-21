@@ -3,7 +3,8 @@ const Venue = require("../model/Venue");
 // GET /api/venues (Fetch all venues)
 const getVenues = async (req, res) => {
   try {
-    const venues = await Venue.find().sort({ createdAt: -1 });
+    const venues = await Venue.find().sort({ createdAt: -1 }).lean();
+    res.setHeader("Cache-Control", "public, max-age=5, stale-while-revalidate=30");
     res.json({ success: true, count: venues.length, data: venues });
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to fetch venues", error: error.message });

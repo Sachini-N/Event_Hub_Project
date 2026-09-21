@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import FormattedText from './FormattedText';
 import ImageCarouselSlider from './ImageCarouselSlider';
+import { optimizeImageUrl } from '../utils/eventUtils';
 
 // TRACE Branch metadata definition for rich display & badges
 const TRACE_BRANCHES_META = [
@@ -476,12 +477,15 @@ export default function VenuesPage({ showToast }) {
                   {/* Card Banner Image */}
                   <div className="venue-banner-wrapper">
                     <img
-                      src={
+                      src={optimizeImageUrl(
                         v.coverImage ||
-                        'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80'
-                      }
+                        'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=75',
+                        800
+                      )}
                       alt={v.name}
                       className="venue-card-image"
+                      loading="lazy"
+                      decoding="async"
                     />
                     <div className="venue-card-overlay-badges">
                       {/* Availability Tag */}
@@ -621,8 +625,10 @@ export default function VenuesPage({ showToast }) {
                       <div style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '480px', borderRadius: '16px', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 20px rgba(0,0,0,0.12)' }}>
                         <img
                           key={modalActivePhotoIndex}
-                          src={currentImg}
+                          src={optimizeImageUrl(currentImg, 1200)}
                           alt={`${activeVenueModal.name} view ${modalActivePhotoIndex + 1}`}
+                          loading="lazy"
+                          decoding="async"
                           style={{
                             width: '100%',
                             height: '100%',
@@ -742,8 +748,10 @@ export default function VenuesPage({ showToast }) {
                               }}
                             >
                               <img
-                                src={imgUrl}
+                                src={optimizeImageUrl(imgUrl, 200)}
                                 alt={`Thumbnail ${idx + 1}`}
+                                loading="lazy"
+                                decoding="async"
                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                               />
                             </div>

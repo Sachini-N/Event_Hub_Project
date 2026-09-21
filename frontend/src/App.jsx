@@ -55,14 +55,29 @@ const HASH_TO_TAB_MAP = {
 };
 
 export default function App() {
-  const [events, setEvents] = useState([]);
+  const [events, setEvents] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem('eventhub_cached_events');
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [activeTab, setActiveTabState] = useState(() => {
     const rawHash = window.location.hash || '#home';
     const cleanHash = rawHash.split('?')[0];
     return HASH_TO_TAB_MAP[cleanHash] || 'home';
   });
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem('eventhub_cached_events');
+      const parsed = cached ? JSON.parse(cached) : [];
+      return !(Array.isArray(parsed) && parsed.length > 0);
+    } catch (e) {
+      return true;
+    }
+  });
 
   // Selected event for full page details
   const [selectedDetailsEvent, setSelectedDetailsEvent] = useState(null);
@@ -96,7 +111,7 @@ export default function App() {
       window.history.pushState({ tab: newTab }, '', targetHash);
     }
     if (['home', 'upcoming', 'past', 'past-details'].includes(newTab)) {
-      fetchEvents();
+      fetchEvents(true); // Silent background refresh, keeps UI fast and instant
     }
   };
 
@@ -191,25 +206,36 @@ export default function App() {
   };
 
   const fetchEvents = async (silent = false) => {
-    if (!silent) {
+    if (!silent && events.length === 0) {
       setLoading(true);
     }
     try {
       const response = await fetch('/api/events');
       const result = await response.json();
-      if (result.success) {
-        setEvents(result.data || []);
-      } else if (!silent) {
+      if (result.success && Array.isArray(result.data)) {
+        setEvents(result.data);
+        try {
+          sessionStorage.setItem('eventhub_cached_events', JSON.stringify(result.data));
+        } catch (e) {}
+      } else if (!silent && events.length === 0) {
         showToast(result.message || 'Failed to load events', 'error');
       }
     } catch (error) {
       console.error('Error fetching events:', error);
-      if (!silent) showToast('Failed to connect to event server', 'error');
+      if (!silent && events.length === 0) showToast('Failed to connect to event server', 'error');
     } finally {
-      if (!silent) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
+  };
+
+  const prefetchVenues = async () => {
+    try {
+      const res = await fetch('/api/venues');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        sessionStorage.setItem('eventhub_cached_venues', JSON.stringify(data.data));
+      }
+    } catch (e) {}
   };
 
   const checkAuthStatus = async (authToken) => {
@@ -238,7 +264,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetchEvents();
+    fetchEvents(events.length > 0);
+    prefetchVenues();
     checkAuthStatus(token);
   }, []);
 

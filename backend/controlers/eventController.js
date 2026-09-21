@@ -90,6 +90,7 @@ const getEvents = async (req, res) => {
       };
     });
 
+    res.setHeader("Cache-Control", "public, max-age=5, stale-while-revalidate=30");
     res.json({ success: true, count: processedEvents.length, data: processedEvents });
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to fetch events", error: error.message });

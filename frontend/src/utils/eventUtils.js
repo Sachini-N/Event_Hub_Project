@@ -126,3 +126,37 @@ export function notifyEventUpdated(detail) {
     console.error('Error dispatching event update broadcast:', err);
   }
 }
+
+/**
+ * Optimizes image URLs for fast web delivery (Cloudinary WebP/AVIF auto-format and Unsplash width/quality).
+ * @param {string} url - Original image URL
+ * @param {number} width - Maximum display width
+ * @returns {string} - Optimized URL
+ */
+export function optimizeImageUrl(url, width = 800) {
+  if (!url || typeof url !== 'string') return url;
+
+  // Cloudinary image auto format & compression
+  if (url.includes('cloudinary.com') && url.includes('/upload/')) {
+    if (!url.includes('/f_auto,q_auto')) {
+      return url.replace('/upload/', `/upload/f_auto,q_auto,w_${width},c_limit/`);
+    }
+  }
+
+  // Unsplash CDN dynamic optimization
+  if (url.includes('images.unsplash.com')) {
+    try {
+      const u = new URL(url);
+      u.searchParams.set('auto', 'format');
+      u.searchParams.set('fit', 'crop');
+      u.searchParams.set('w', String(width));
+      u.searchParams.set('q', '75');
+      return u.toString();
+    } catch (e) {
+      return url;
+    }
+  }
+
+  return url;
+}
+

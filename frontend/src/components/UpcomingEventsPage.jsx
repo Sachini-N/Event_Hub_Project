@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { isEventPast, stripHtml } from '../utils/eventUtils';
+import { isEventPast, stripHtml, optimizeImageUrl } from '../utils/eventUtils';
 
 export default function UpcomingEventsPage({
   events,
@@ -22,7 +22,12 @@ export default function UpcomingEventsPage({
         return;
       }
       try {
-        const res = await fetch(`/api/registrations/user/${encodeURIComponent(currentUser.email.trim())}`);
+        const token = localStorage.getItem('eventhub_token');
+        const res = await fetch(`/api/registrations/user/${encodeURIComponent(currentUser.email.trim())}`, {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
         const data = await res.json();
         if (data.success && data.data) {
           const registeredSet = new Set();
@@ -259,11 +264,14 @@ export default function UpcomingEventsPage({
                     title="Click / tap to view event details"
                   >
                     <img
-                      src={
+                      src={optimizeImageUrl(
                         event.coverImage ||
-                        'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80'
-                      }
+                        'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=75',
+                        800
+                      )}
                       alt={event.title}
+                      loading="lazy"
+                      decoding="async"
                     />
                     <span className={`cat-pill ${catClass}`}>
                       {(event.category || 'EVENT').toUpperCase()}
