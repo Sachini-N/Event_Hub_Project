@@ -1429,11 +1429,17 @@ export default function AdminDashboardPage({
                       style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', background: '#ffffff', color: '#0f172a' }}
                     >
                       <option value="all">All TRACE Hubs</option>
-                      <option value="TRACE Expert City">TRACE Expert City (Colombo)</option>
-                      <option value="Kandy">TRACE Innovation Hub (Kandy)</option>
-                      <option value="Jaffna">TRACE Tech Park (Jaffna)</option>
-                      <option value="Galle">TRACE Hub (Galle)</option>
-                      <option value="Kurunegala">TRACE Tech Bay (Kurunegala)</option>
+                      <option value="TRACE Expert City Colombo 10">TRACE Expert City Colombo 10</option>
+                      <option value="HomeTree Coworking, Colombo 04">HomeTree Coworking, Colombo 04</option>
+                      <option value="TRACE Coworking Colombo 02">TRACE Coworking Colombo 02</option>
+                      <option value="TRACE Coworking Jaffna City">TRACE Coworking Jaffna City</option>
+                      <option value="TRACE BREAD Center, Makandura">TRACE BREAD Center, Makandura</option>
+                      <option value="TRACE - JRDC Incubator, Kandy">TRACE - JRDC Incubator, Kandy</option>
+                      <option value="TRACE Creators Space, Rathnapura">TRACE Creators Space, Rathnapura</option>
+                      <option value="TRACE Batticaloa">TRACE Batticaloa</option>
+                      <option value="Southern Innovation Hub">Southern Innovation Hub</option>
+                      <option value="UOK Innovation Hub">UOK Innovation Hub</option>
+                      <option value="UWU Innovation Hub">UWU Innovation Hub</option>
                     </select>
                   </div>
 
@@ -2472,13 +2478,17 @@ export default function AdminDashboardPage({
                   onChange={(e) => setBranchAdminForm({ ...branchAdminForm, branch: e.target.value })}
                   style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontWeight: '600' }}
                 >
-                  <option value="TRACE Expert City (Colombo)">TRACE Expert City (Colombo Hub)</option>
-                  <option value="CodeGen Branch (Bay 01-04)">CodeGen Branch (Bay 01-04)</option>
-                  <option value="LSEG Sri Lanka Branch (Bay 11-12)">LSEG Branch (Bay 11-12)</option>
-                  <option value="TRACE Innovation Hub (Kandy)">TRACE Innovation Hub (Kandy)</option>
-                  <option value="TRACE Coastal Hub (Galle)">TRACE Coastal Hub (Galle)</option>
-                  <option value="TRACE Tech Park (Jaffna)">TRACE Tech Park (Jaffna)</option>
-                  <option value="TRACE Wayamba Incubator (Kurunegala)">TRACE Wayamba Incubator</option>
+                  <option value="TRACE Expert City Colombo 10">TRACE Expert City Colombo 10</option>
+                  <option value="HomeTree Coworking, Colombo 04">HomeTree Coworking, Colombo 04</option>
+                  <option value="TRACE Coworking Colombo 02">TRACE Coworking Colombo 02</option>
+                  <option value="TRACE Coworking Jaffna City">TRACE Coworking Jaffna City</option>
+                  <option value="TRACE BREAD Center, Makandura">TRACE BREAD Center, Makandura</option>
+                  <option value="TRACE - JRDC Incubator, Kandy">TRACE - JRDC Incubator, Kandy</option>
+                  <option value="TRACE Creators Space, Rathnapura">TRACE Creators Space, Rathnapura</option>
+                  <option value="TRACE Batticaloa">TRACE Batticaloa</option>
+                  <option value="Southern Innovation Hub">Southern Innovation Hub</option>
+                  <option value="UOK Innovation Hub">UOK Innovation Hub</option>
+                  <option value="UWU Innovation Hub">UWU Innovation Hub</option>
                 </select>
               </div>
 
@@ -2596,14 +2606,17 @@ export default function AdminDashboardPage({
                   onChange={(e) => setEditingAdminForm({ ...editingAdminForm, branch: e.target.value })}
                   style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#ffffff' }}
                 >
-                  <option value="TRACE Expert City (Colombo)">TRACE Expert City (Colombo)</option>
-                  <option value="TRACE Main Branch (Colombo)">TRACE Main Branch (Colombo)</option>
-                  <option value="CodeGen Hub (Bay 1-5)">CodeGen Hub (Bay 1-5)</option>
-                  <option value="LSEG Sri Lanka Branch (Bay 11-12)">LSEG Branch (Bay 11-12)</option>
-                  <option value="TRACE Innovation Hub (Kandy)">TRACE Innovation Hub (Kandy)</option>
-                  <option value="TRACE Coastal Hub (Galle)">TRACE Coastal Hub (Galle)</option>
-                  <option value="TRACE Tech Park (Jaffna)">TRACE Tech Park (Jaffna)</option>
-                  <option value="TRACE Wayamba Incubator (Kurunegala)">TRACE Wayamba Incubator</option>
+                  <option value="TRACE Expert City Colombo 10">TRACE Expert City Colombo 10</option>
+                  <option value="HomeTree Coworking, Colombo 04">HomeTree Coworking, Colombo 04</option>
+                  <option value="TRACE Coworking Colombo 02">TRACE Coworking Colombo 02</option>
+                  <option value="TRACE Coworking Jaffna City">TRACE Coworking Jaffna City</option>
+                  <option value="TRACE BREAD Center, Makandura">TRACE BREAD Center, Makandura</option>
+                  <option value="TRACE - JRDC Incubator, Kandy">TRACE - JRDC Incubator, Kandy</option>
+                  <option value="TRACE Creators Space, Rathnapura">TRACE Creators Space, Rathnapura</option>
+                  <option value="TRACE Batticaloa">TRACE Batticaloa</option>
+                  <option value="Southern Innovation Hub">Southern Innovation Hub</option>
+                  <option value="UOK Innovation Hub">UOK Innovation Hub</option>
+                  <option value="UWU Innovation Hub">UWU Innovation Hub</option>
                 </select>
               </div>
 

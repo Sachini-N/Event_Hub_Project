@@ -10,7 +10,7 @@ export default function AddVenueModal({
   showToast,
 }) {
   const [name, setName] = useState('');
-  const [branch, setBranch] = useState('TRACE Expert City (Colombo)');
+  const [branch, setBranch] = useState('TRACE Expert City Colombo 10');
   const [province, setProvince] = useState('Western Province');
   const [address, setAddress] = useState('');
   const [capacity, setCapacity] = useState('150');
@@ -23,19 +23,39 @@ export default function AddVenueModal({
   const [submitting, setSubmitting] = useState(false);
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
 
+  const BRANCH_PROVINCE_MAP = {
+    'TRACE Expert City Colombo 10': 'Western Province',
+    'HomeTree Coworking, Colombo 04': 'Western Province',
+    'TRACE Coworking Colombo 02': 'Western Province',
+    'TRACE Coworking Jaffna City': 'Northern Province',
+    'TRACE BREAD Center, Makandura': 'North Western Province',
+    'TRACE - JRDC Incubator, Kandy': 'Central Province',
+    'TRACE Creators Space, Rathnapura': 'Sabaragamuwa Province',
+    'TRACE Batticaloa': 'Eastern Province',
+    'Southern Innovation Hub': 'Southern Province',
+    'UOK Innovation Hub': 'Western Province',
+    'UWU Innovation Hub': 'Uva Province',
+  };
+
   const getProvinceForBranch = (bName) => {
     if (!bName) return 'Western Province';
-    if (bName.includes('Colombo')) return 'Western Province';
-    if (bName.includes('Kandy')) return 'Central Province';
-    if (bName.includes('Jaffna')) return 'Northern Province';
-    if (bName.includes('Galle')) return 'Southern Province';
-    if (bName.includes('Kurunegala')) return 'North Western Province';
+    if (BRANCH_PROVINCE_MAP[bName]) return BRANCH_PROVINCE_MAP[bName];
+    const lower = bName.toLowerCase();
+    if (lower.includes('colombo') || lower.includes('hometree') || lower.includes('uok') || lower.includes('kelaniya')) return 'Western Province';
+    if (lower.includes('kandy') || lower.includes('jrdc') || lower.includes('peradeniya')) return 'Central Province';
+    if (lower.includes('jaffna')) return 'Northern Province';
+    if (lower.includes('galle') || lower.includes('southern') || lower.includes('matara')) return 'Southern Province';
+    if (lower.includes('makandura') || lower.includes('kurunegala') || lower.includes('bread') || lower.includes('wayamba')) return 'North Western Province';
+    if (lower.includes('rathnapura') || lower.includes('creators') || lower.includes('sabaragamuwa')) return 'Sabaragamuwa Province';
+    if (lower.includes('batticaloa') || lower.includes('eastern')) return 'Eastern Province';
+    if (lower.includes('uwu') || lower.includes('badulla') || lower.includes('uva')) return 'Uva Province';
     return 'Western Province';
   };
 
   const handleBranchChange = (newBranch) => {
     setBranch(newBranch);
-    setProvince(getProvinceForBranch(newBranch));
+    const matchedProvince = getProvinceForBranch(newBranch);
+    setProvince(matchedProvince);
   };
 
   useEffect(() => {
@@ -60,7 +80,7 @@ export default function AddVenueModal({
       setDescription(editingVenue.description || '');
     } else {
       setName('');
-      setBranch('TRACE Expert City (Colombo)');
+      setBranch('TRACE Expert City Colombo 10');
       setProvince('Western Province');
       setAddress('');
       setCapacity('150');
@@ -252,11 +272,17 @@ export default function AddVenueModal({
                   value={branch}
                   onChange={(e) => handleBranchChange(e.target.value)}
                 >
-                  <option value="TRACE Expert City (Colombo)">TRACE Expert City (Colombo)</option>
-                  <option value="TRACE Innovation Hub (Kandy)">TRACE Innovation Hub (Kandy)</option>
-                  <option value="TRACE Tech Park (Jaffna)">TRACE Tech Park (Jaffna)</option>
-                  <option value="TRACE Hub (Galle)">TRACE Hub (Galle)</option>
-                  <option value="TRACE Tech Bay (Kurunegala)">TRACE Tech Bay (Kurunegala)</option>
+                  <option value="TRACE Expert City Colombo 10">TRACE Expert City Colombo 10</option>
+                  <option value="HomeTree Coworking, Colombo 04">HomeTree Coworking, Colombo 04</option>
+                  <option value="TRACE Coworking Colombo 02">TRACE Coworking Colombo 02</option>
+                  <option value="TRACE Coworking Jaffna City">TRACE Coworking Jaffna City</option>
+                  <option value="TRACE BREAD Center, Makandura">TRACE BREAD Center, Makandura</option>
+                  <option value="TRACE - JRDC Incubator, Kandy">TRACE - JRDC Incubator, Kandy</option>
+                  <option value="TRACE Creators Space, Rathnapura">TRACE Creators Space, Rathnapura</option>
+                  <option value="TRACE Batticaloa">TRACE Batticaloa</option>
+                  <option value="Southern Innovation Hub">Southern Innovation Hub</option>
+                  <option value="UOK Innovation Hub">UOK Innovation Hub</option>
+                  <option value="UWU Innovation Hub">UWU Innovation Hub</option>
                 </select>
               </div>
 
@@ -271,15 +297,15 @@ export default function AddVenueModal({
                   value={province}
                   onChange={(e) => setProvince(e.target.value)}
                 >
-                  <option value="Western Province">Western Province (Colombo)</option>
+                  <option value="Western Province">Western Province (Colombo, Kelaniya)</option>
                   <option value="Central Province">Central Province (Kandy)</option>
                   <option value="Northern Province">Northern Province (Jaffna)</option>
-                  <option value="Southern Province">Southern Province (Galle)</option>
-                  <option value="North Western Province">North Western Province (Kurunegala)</option>
-                  <option value="Eastern Province">Eastern Province</option>
+                  <option value="Southern Province">Southern Province (Southern Hub, Galle)</option>
+                  <option value="North Western Province">North Western Province (Makandura, Kurunegala)</option>
+                  <option value="Eastern Province">Eastern Province (Batticaloa)</option>
+                  <option value="Sabaragamuwa Province">Sabaragamuwa Province (Rathnapura)</option>
+                  <option value="Uva Province">Uva Province (Badulla, UWU)</option>
                   <option value="North Central Province">North Central Province</option>
-                  <option value="Uva Province">Uva Province</option>
-                  <option value="Sabaragamuwa Province">Sabaragamuwa Province</option>
                 </select>
               </div>
             </div>

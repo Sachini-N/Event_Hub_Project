@@ -6,55 +6,115 @@ import { optimizeImageUrl } from '../utils/eventUtils';
 // TRACE Branch metadata definition for rich display & badges
 const TRACE_BRANCHES_META = [
   {
-    id: 'TRACE Expert City (Colombo)',
+    id: 'TRACE Expert City Colombo 10',
     name: 'TRACE Expert City',
     location: 'Colombo 10, Western Province',
-    shortName: 'Colombo Hub',
+    shortName: 'Colombo 10 Hub',
     icon: 'fa-building-user',
     color: '#5d4df6',
     badgeBg: '#e60023',
     bannerGradient: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e1b4b 100%)',
-    description: 'Our flagship 14-acre technology hub in Maradana, featuring enterprise auditoriums, tech labs, and collaborative ecosystem spaces.',
+    description: 'Flagship technology campus in Maradana featuring auditoriums, technology labs, and innovation deck.',
   },
   {
-    id: 'TRACE Innovation Hub (Kandy)',
-    name: 'TRACE Innovation Hub',
-    location: 'Peradeniya Rd, Kandy',
-    shortName: 'Kandy Hub',
-    icon: 'fa-mountain-city',
-    color: '#059669',
-    bannerGradient: 'linear-gradient(135deg, #064e3b 0%, #047857 50%, #0f172a 100%)',
-    description: 'Central Province technology campus surrounded by lush hills, designed for regional developer summits and AI maker labs.',
+    id: 'HomeTree Coworking, Colombo 04',
+    name: 'HomeTree Coworking',
+    location: 'Colombo 04, Western Province',
+    shortName: 'HomeTree Col 04',
+    icon: 'fa-leaf',
+    color: '#10b981',
+    bannerGradient: 'linear-gradient(135deg, #064e3b 0%, #059669 50%, #0f172a 100%)',
+    description: 'Eco-conscious modern coworking space, collaborative workshop zones, and creative meeting lounges.',
   },
   {
-    id: 'TRACE Tech Park (Jaffna)',
-    name: 'TRACE Tech Park',
-    location: 'Palaly Innovation Rd, Jaffna',
-    shortName: 'Jaffna Tech Park',
+    id: 'TRACE Coworking Colombo 02',
+    name: 'TRACE Coworking Col 02',
+    location: 'Colombo 02, Western Province',
+    shortName: 'Colombo 02 Hub',
+    icon: 'fa-briefcase',
+    color: '#3b82f6',
+    bannerGradient: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #0f172a 100%)',
+    description: 'Dynamic urban coworking hub in central Colombo for corporate meetings and tech teams.',
+  },
+  {
+    id: 'TRACE Coworking Jaffna City',
+    name: 'TRACE Coworking Jaffna City',
+    location: 'Jaffna City, Northern Province',
+    shortName: 'Jaffna Hub',
     icon: 'fa-cubes-stacked',
     color: '#d97706',
     bannerGradient: 'linear-gradient(135deg, #78350f 0%, #b45309 50%, #1e293b 100%)',
-    description: 'Northern Sri Lanka tech initiative fostering regional software engineering, startup innovation decks, and coding bootcamps.',
+    description: 'Northern innovation space fostering regional engineering, developer summits, and coding sprints.',
   },
   {
-    id: 'TRACE Hub (Galle)',
-    name: 'TRACE Hub Galle',
-    location: 'Fort Marine Drive, Galle',
-    shortName: 'Galle Coastal Hub',
+    id: 'TRACE BREAD Center, Makandura',
+    name: 'TRACE BREAD Center',
+    location: 'Makandura, North Western Province',
+    shortName: 'Makandura Center',
+    icon: 'fa-wheat-awn',
+    color: '#f59e0b',
+    bannerGradient: 'linear-gradient(135deg, #78350f 0%, #d97706 50%, #0f172a 100%)',
+    description: 'Agri-tech, biotechnology, and rural innovation center in the North Western province.',
+  },
+  {
+    id: 'TRACE - JRDC Incubator, Kandy',
+    name: 'TRACE - JRDC Incubator',
+    location: 'Peradeniya, Kandy, Central Province',
+    shortName: 'Kandy Incubator',
+    icon: 'fa-mountain-city',
+    color: '#059669',
+    bannerGradient: 'linear-gradient(135deg, #064e3b 0%, #047857 50%, #0f172a 100%)',
+    description: 'Joint research & development campus in Kandy for AI innovation, academia collaboration, and maker labs.',
+  },
+  {
+    id: 'TRACE Creators Space, Rathnapura',
+    name: 'TRACE Creators Space',
+    location: 'Rathnapura, Sabaragamuwa Province',
+    shortName: 'Rathnapura Hub',
+    icon: 'fa-gem',
+    color: '#ec4899',
+    bannerGradient: 'linear-gradient(135deg, #831843 0%, #db2777 50%, #0f172a 100%)',
+    description: 'Creative technology deck empowering young digital creators and tech startups in Sabaragamuwa.',
+  },
+  {
+    id: 'TRACE Batticaloa',
+    name: 'TRACE Batticaloa',
+    location: 'Batticaloa, Eastern Province',
+    shortName: 'Batticaloa Hub',
+    icon: 'fa-network-wired',
+    color: '#06b6d4',
+    bannerGradient: 'linear-gradient(135deg, #164e63 0%, #0891b2 50%, #0f172a 100%)',
+    description: 'Eastern coastal innovation deck for regional developer forums and IT training workshops.',
+  },
+  {
+    id: 'Southern Innovation Hub',
+    name: 'Southern Innovation Hub',
+    location: 'Southern Province, Sri Lanka',
+    shortName: 'Southern Hub',
     icon: 'fa-water',
     color: '#0284c7',
-    bannerGradient: 'linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0f172a 100%)',
-    description: 'Coastal event venue overlooking the historic Indian Ocean fort, tailored for corporate retreats and technical symposiums.',
+    bannerGradient: 'linear-gradient(135deg, #0c4a6e 0%, #0284c7 50%, #0f172a 100%)',
+    description: 'Premier technology and enterprise event space serving the Southern economic and tech corridor.',
   },
   {
-    id: 'TRACE Tech Bay (Kurunegala)',
-    name: 'TRACE Tech Bay',
-    location: 'Lake Round Rd, Kurunegala',
-    shortName: 'Wayamba Incubator',
-    icon: 'fa-warehouse',
-    color: '#7c3aed',
-    bannerGradient: 'linear-gradient(135deg, #4c1d95 0%, #6d28d9 50%, #0f172a 100%)',
-    description: 'Wayamba province incubator hall and startup launchpad empowering regional tech entrepreneurs and digital creators.',
+    id: 'UOK Innovation Hub',
+    name: 'UOK Innovation Hub',
+    location: 'Kelaniya, Western Province',
+    shortName: 'UOK Hub',
+    icon: 'fa-graduation-cap',
+    color: '#8b5cf6',
+    bannerGradient: 'linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #0f172a 100%)',
+    description: 'University of Kelaniya partnership hub linking university students with industry tech leaders.',
+  },
+  {
+    id: 'UWU Innovation Hub',
+    name: 'UWU Innovation Hub',
+    location: 'Badulla, Uva Province',
+    shortName: 'UWU Hub',
+    icon: 'fa-compass',
+    color: '#6366f1',
+    bannerGradient: 'linear-gradient(135deg, #312e81 0%, #4f46e5 50%, #0f172a 100%)',
+    description: 'Uva Wellassa university innovation deck driving value-addition technology projects in Uva.',
   },
 ];
 
@@ -87,20 +147,29 @@ export default function VenuesPage({ showToast }) {
     if (v.province) return v.province;
     const str = `${v.branch || ''} ${v.city || ''} ${v.address || ''} ${v.name || ''}`.toLowerCase();
 
-    if (str.includes('colombo') || str.includes('maradana') || str.includes('western') || str.includes('expert city')) {
+    if (str.includes('colombo') || str.includes('maradana') || str.includes('western') || str.includes('expert city') || str.includes('hometree') || str.includes('uok') || str.includes('kelaniya')) {
       return 'Western Province';
     }
-    if (str.includes('kandy') || str.includes('peradeniya') || str.includes('central')) {
+    if (str.includes('kandy') || str.includes('peradeniya') || str.includes('central') || str.includes('jrdc')) {
       return 'Central Province';
     }
     if (str.includes('jaffna') || str.includes('palaly') || str.includes('northern')) {
       return 'Northern Province';
     }
-    if (str.includes('galle') || str.includes('fort') || str.includes('southern')) {
+    if (str.includes('galle') || str.includes('fort') || str.includes('southern') || str.includes('matara') || str.includes('ruhuna')) {
       return 'Southern Province';
     }
-    if (str.includes('kurunegala') || str.includes('wayamba') || str.includes('north western')) {
+    if (str.includes('kurunegala') || str.includes('wayamba') || str.includes('north western') || str.includes('makandura') || str.includes('bread')) {
       return 'North Western Province';
+    }
+    if (str.includes('rathnapura') || str.includes('creators') || str.includes('sabaragamuwa')) {
+      return 'Sabaragamuwa Province';
+    }
+    if (str.includes('batticaloa') || str.includes('eastern')) {
+      return 'Eastern Province';
+    }
+    if (str.includes('uwu') || str.includes('badulla') || str.includes('uva')) {
+      return 'Uva Province';
     }
     return 'Western Province';
   };
@@ -358,15 +427,15 @@ export default function VenuesPage({ showToast }) {
                 onChange={(e) => setProvinceFilter(e.target.value)}
               >
                 <option value="All">All Sri Lanka</option>
-                <option value="Western Province">Western Province (Colombo)</option>
+                <option value="Western Province">Western Province (Colombo, Kelaniya)</option>
                 <option value="Central Province">Central Province (Kandy)</option>
                 <option value="Northern Province">Northern Province (Jaffna)</option>
-                <option value="Southern Province">Southern Province (Galle)</option>
-                <option value="North Western Province">North Western Province (Kurunegala)</option>
-                <option value="Eastern Province">Eastern Province</option>
+                <option value="Southern Province">Southern Province (Southern Hub, Galle)</option>
+                <option value="North Western Province">North Western Province (Makandura, Kurunegala)</option>
+                <option value="Eastern Province">Eastern Province (Batticaloa)</option>
+                <option value="Sabaragamuwa Province">Sabaragamuwa Province (Rathnapura)</option>
+                <option value="Uva Province">Uva Province (Badulla, UWU)</option>
                 <option value="North Central Province">North Central Province</option>
-                <option value="Uva Province">Uva Province</option>
-                <option value="Sabaragamuwa Province">Sabaragamuwa Province</option>
               </select>
               <i className="fa-solid fa-chevron-down select-arrow"></i>
             </div>
@@ -382,13 +451,17 @@ export default function VenuesPage({ showToast }) {
                 onChange={(e) => setSelectedBranch(e.target.value)}
               >
                 <option value="All">All TRACE Hubs</option>
-                <option value="TRACE Expert City">TRACE Expert City (Colombo)</option>
-                <option value="CodeGen">CodeGen Hub (Bay 1-5)</option>
-                <option value="LSEG">LSEG Branch (Bay 11-12)</option>
-                <option value="Kandy">TRACE Innovation Hub (Kandy)</option>
-                <option value="Galle">TRACE Coastal Hub (Galle)</option>
-                <option value="Jaffna">TRACE Tech Park (Jaffna)</option>
-                <option value="Wayamba">TRACE Wayamba Incubator</option>
+                <option value="TRACE Expert City Colombo 10">TRACE Expert City Colombo 10</option>
+                <option value="HomeTree Coworking, Colombo 04">HomeTree Coworking, Colombo 04</option>
+                <option value="TRACE Coworking Colombo 02">TRACE Coworking Colombo 02</option>
+                <option value="TRACE Coworking Jaffna City">TRACE Coworking Jaffna City</option>
+                <option value="TRACE BREAD Center, Makandura">TRACE BREAD Center, Makandura</option>
+                <option value="TRACE - JRDC Incubator, Kandy">TRACE - JRDC Incubator, Kandy</option>
+                <option value="TRACE Creators Space, Rathnapura">TRACE Creators Space, Rathnapura</option>
+                <option value="TRACE Batticaloa">TRACE Batticaloa</option>
+                <option value="Southern Innovation Hub">Southern Innovation Hub</option>
+                <option value="UOK Innovation Hub">UOK Innovation Hub</option>
+                <option value="UWU Innovation Hub">UWU Innovation Hub</option>
               </select>
               <i className="fa-solid fa-chevron-down select-arrow"></i>
             </div>
@@ -579,7 +652,7 @@ export default function VenuesPage({ showToast }) {
           <div
             className="modal-card venue-split-modal-card"
             onClick={(e) => e.stopPropagation()}
-            style={{ position: 'relative', overflow: 'hidden' }}
+            style={{ position: 'relative', overflow: 'hidden', maxWidth: '1180px', width: '95%', maxHeight: '92vh', minHeight: '620px' }}
           >
             {/* Floating Close Button */}
             <button
@@ -611,18 +684,18 @@ export default function VenuesPage({ showToast }) {
             </button>
 
             {/* SPACE DETAILS & DATABASE PHOTO GALLERY (SIDE-BY-SIDE 2-COLUMN SPLIT) */}
-            <div className="venue-split-grid" style={{ gridTemplateColumns: '1fr 1fr', maxHeight: '88vh' }}>
+            <div className="venue-split-grid" style={{ gridTemplateColumns: '1.05fr 0.95fr', minHeight: '620px', maxHeight: '92vh', height: '100%' }}>
               
               {/* LEFT SIDE: DATABASE UPLOADED PHOTO GALLERY SHOWCASE */}
-              <div className="venue-split-left-gallery" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderRight: '1px solid #e2e8f0', overflowY: 'auto' }}>
+              <div className="venue-split-left-gallery" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', height: '100%', borderRight: '1px solid #e2e8f0', overflowY: 'auto', background: '#f8fafc' }}>
                 {(() => {
                   const modalImages = getModalImages(activeVenueModal);
                   const currentImg = modalImages[modalActivePhotoIndex] || modalImages[0];
 
                   return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', height: '100%', flex: 1 }}>
                       {/* Main Active Photo View */}
-                      <div style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '480px', borderRadius: '16px', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 20px rgba(0,0,0,0.12)' }}>
+                      <div className="modal-active-photo-box" style={{ position: 'relative', overflow: 'hidden', width: '100%', flex: 1, minHeight: '520px', borderRadius: '16px', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
                         <img
                           key={modalActivePhotoIndex}
                           src={optimizeImageUrl(currentImg, 1200)}
@@ -764,7 +837,7 @@ export default function VenuesPage({ showToast }) {
               </div>
 
               {/* RIGHT SIDE: VENUE NAME, SPECIFICATIONS & DETAILS DISPLAY */}
-              <div className="venue-split-right-details" style={{ padding: '1.75rem 2rem 1.75rem 1.75rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', overflowY: 'auto', background: '#ffffff' }}>
+              <div className="venue-split-right-details" style={{ padding: '2rem 2.25rem 2rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', overflowY: 'auto', background: '#ffffff', height: '100%', justifyContent: 'space-between' }}>
                 
                 {/* 1. SPACE NAME & TOP BADGES */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', paddingRight: '2.5rem' }}>
@@ -830,18 +903,6 @@ export default function VenuesPage({ showToast }) {
                     </div>
                   </div>
                 )}
-
-                {/* 4. VENUE COORDINATOR CONTACT */}
-                <div style={{ background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid #e2e8f0', marginTop: 'auto' }}>
-                  <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Venue Coordinator</span>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.2rem' }}>
-                    <strong style={{ fontSize: '0.86rem', color: '#0f172a' }}>Senal (TRACE Facilities)</strong>
-                    <a href="tel:+94766433975" style={{ fontSize: '0.82rem', color: '#0052cc', textDecoration: 'none', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <i className="fa-solid fa-phone"></i> +94 76 643 3975
-                    </a>
-                  </div>
-                </div>
-
               </div>
             </div>
           </div>

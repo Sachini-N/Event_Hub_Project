@@ -2049,6 +2049,20 @@ textarea:focus {
 
 .past-archive-card {
   height: 100%;
+  cursor: pointer;
+  user-select: none;
+}
+
+.past-archive-card .event-card-title {
+  transition: color 0.2s ease;
+}
+
+.past-archive-card:hover .event-card-title {
+  color: #0284c7;
+}
+
+.past-archive-card .event-location-row {
+  margin-bottom: 0;
 }
 
 /* Past Events Card Image Enhancements: Increased Size & Reduced Color / Muted Archive Effect */
@@ -9823,9 +9837,10 @@ body.dark-mode .meta-value {
    Venue Details Modal Split Layout & Mobile Responsiveness
    ========================================================================== */
 .venue-split-modal-card {
-  max-width: 1120px;
+  max-width: 1180px;
   width: 95%;
-  max-height: 88vh;
+  max-height: 92vh;
+  min-height: 620px;
   border-radius: 20px;
   overflow: hidden;
   padding: 0;
@@ -10063,6 +10078,19 @@ textarea.venue-inquiry-input {
     flex-direction: column !important;
     max-height: none !important;
     overflow: visible !important;
+  }
+
+  .venue-split-left-gallery {
+    border-right: none !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 1rem !important;
+    height: auto !important;
+  }
+
+  .venue-split-left-gallery .modal-active-photo-box {
+    min-height: 280px !important;
+    height: 280px !important;
+    flex: none !important;
   }
 
   .venue-split-right-gallery {

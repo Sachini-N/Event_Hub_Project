@@ -307,19 +307,6 @@ export default function PastEventsSection({
                         <i className="fa-solid fa-location-dot location-icon"></i>
                         <span>{item.location || 'TRACE Expert City, Colombo'}</span>
                       </div>
-
-                      <div className="card-button-group">
-                        <button
-                          className="btn-details-outline"
-                          style={{ width: '100%', textTransform: 'none', fontWeight: '700' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCardClick(item);
-                          }}
-                        >
-                          <i className="fa-solid fa-eye" style={{ marginRight: '6px' }}></i> View Details & Recap
-                        </button>
-                      </div>
                     </div>
                   </div>
                 );
@@ -410,19 +397,6 @@ export default function PastEventsSection({
                   <div className="event-location-row">
                     <i className="fa-solid fa-location-dot location-icon"></i>
                     <span>{item.location || 'TRACE Expert City, Colombo'}</span>
-                  </div>
-
-                  <div className="card-button-group">
-                    <button
-                      className="btn-details-outline"
-                      style={{ width: '100%', textTransform: 'none', fontWeight: '700' }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCardClick(item);
-                      }}
-                    >
-                      <i className="fa-solid fa-eye" style={{ marginRight: '6px' }}></i> View Details & Recap
-                    </button>
                   </div>
                 </div>
               </div>

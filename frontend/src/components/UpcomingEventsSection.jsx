@@ -11,14 +11,9 @@ export default function UpcomingEventsSection({
   openRegistrationModal,
   openGalleryLightbox,
 }) {
-  const upcomingCount = events.filter((e) => e.status !== 'draft' && !isEventPast(e)).length;
-  const pastCount = events.filter((e) => e.status !== 'draft' && isEventPast(e)).length;
-
-  const currentTab = activeTab === 'past' ? 'past' : 'upcoming';
-
   const filteredEvents = events.filter((event) => {
     const isPast = isEventPast(event);
-    const matchesTab = currentTab === 'past' ? isPast : (!isPast && event.status !== 'draft');
+    if (isPast || event.status === 'draft') return false;
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
       !q ||
@@ -27,7 +22,7 @@ export default function UpcomingEventsSection({
       (event.category && event.category.toLowerCase().includes(q)) ||
       (event.speaker && event.speaker.name && event.speaker.name.toLowerCase().includes(q));
 
-    return matchesTab && matchesSearch;
+    return matchesSearch;
   });
 
   // Limit to 3 items on the home page preview
@@ -55,7 +50,7 @@ export default function UpcomingEventsSection({
         
         <div className="section-header-row">
           <h2 className="section-title">
-            {currentTab === 'upcoming' ? 'Upcoming Events' : 'Past Events & Showcase'}
+            Upcoming Events
           </h2>
           <div className="header-right-controls">
             <button
@@ -71,22 +66,6 @@ export default function UpcomingEventsSection({
           </div>
         </div>
 
-        {/* Tab Switchers */}
-        <div className="tab-filter-bar">
-          <button
-            className={`tab-pill ${activeTab === 'upcoming' ? 'active' : ''}`}
-            onClick={() => setActiveTab('upcoming')}
-          >
-            Upcoming Events <span className="badge">{upcomingCount}</span>
-          </button>
-          <button
-            className={`tab-pill ${activeTab === 'past' ? 'active' : ''}`}
-            onClick={() => setActiveTab('past')}
-          >
-            Past Events & Showcase <span className="badge">{pastCount}</span>
-          </button>
-        </div>
-
         {/* Loading Spinner */}
         {loading && (
           <div className="loading-state">
@@ -99,8 +78,8 @@ export default function UpcomingEventsSection({
         {!loading && displayEvents.length === 0 && (
           <div className="empty-state">
             <i className="fa-solid fa-calendar-xmark"></i>
-            <h3>No events found</h3>
-            <p>Try adjusting your search criteria or switch between upcoming and past tabs.</p>
+            <h3>No upcoming events found</h3>
+            <p>Try adjusting your search criteria or check back later for new events.</p>
           </div>
         )}
 
