@@ -14,7 +14,7 @@ const getVenues = async (req, res) => {
 // POST /api/venues (Create new venue)
 const createVenue = async (req, res) => {
   try {
-    const { name, branch, city, province, address, capacity, rentalPrice, pricePerHour, status, coverImage, images, amenities, description } = req.body;
+    const { name, branch, city, province, address, capacity, rentalPrice, pricePerHour, status, type, coverImage, images, amenities, description } = req.body;
 
     if (!name || !address || !capacity) {
       return res.status(400).json({ success: false, message: "Please provide Venue Name, Address, and Capacity." });
@@ -37,6 +37,7 @@ const createVenue = async (req, res) => {
       rentalPrice: formattedPrice,
       pricePerHour: numericPrice,
       status: status || "Available",
+      type: type || "Meeting Room",
       coverImage: venueImages[0],
       images: venueImages,
       amenities: Array.isArray(amenities) ? amenities : (amenities ? amenities.split(",").map(a => a.trim()) : ["High-Speed WiFi", "Air Conditioned"]),
@@ -53,7 +54,7 @@ const createVenue = async (req, res) => {
 // PUT /api/venues/:id (Update existing venue)
 const updateVenue = async (req, res) => {
   try {
-    const { name, branch, city, province, address, capacity, rentalPrice, pricePerHour, status, coverImage, images, amenities, description } = req.body;
+    const { name, branch, city, province, address, capacity, rentalPrice, pricePerHour, status, type, coverImage, images, amenities, description } = req.body;
 
     const numericPrice = pricePerHour !== undefined ? Number(pricePerHour) : undefined;
     const formattedPrice = rentalPrice || (numericPrice !== undefined ? `Rs. ${numericPrice.toLocaleString()} / hr` : undefined);
@@ -68,6 +69,7 @@ const updateVenue = async (req, res) => {
     if (numericPrice !== undefined) updateFields.pricePerHour = numericPrice;
     if (formattedPrice !== undefined) updateFields.rentalPrice = formattedPrice;
     if (status !== undefined) updateFields.status = status;
+    if (type !== undefined) updateFields.type = type;
     if (coverImage !== undefined) updateFields.coverImage = coverImage;
     if (images !== undefined) updateFields.images = images;
     if (amenities !== undefined) {
@@ -116,6 +118,7 @@ const seedInitialVenues = async () => {
           rentalPrice: "Rs. 45,000 / hr",
           pricePerHour: 45000,
           status: "Available",
+          type: "Auditorium & Hall",
           coverImage: "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80",
           amenities: ["4K Cinema Projector", "Gigabit Fiber WiFi", "Stage Sound & Lighting", "Air Conditioned", "VIP Lounge Access"],
           description: "Premier enterprise auditorium equipped for tech summit keynotes, hackathons, and product launch events.",
@@ -129,6 +132,7 @@ const seedInitialVenues = async () => {
           rentalPrice: "Rs. 25,000 / hr",
           pricePerHour: 25000,
           status: "Available",
+          type: "Tech Lab & Maker Space",
           coverImage: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80",
           amenities: ["Interactive Smart Boards", "Power Desk Hubs", "Dual 4K Displays", "Catering Station"],
           description: "Hands-on tech laboratory and workshop facility designed for developer bootcamps and team hackathons.",
@@ -142,6 +146,7 @@ const seedInitialVenues = async () => {
           rentalPrice: "Rs. 18,000 / hr",
           pricePerHour: 18000,
           status: "Reserved",
+          type: "Meeting Room",
           coverImage: "https://images.unsplash.com/photo-1431540015161-0bf868a2d407?auto=format&fit=crop&w=800&q=80",
           amenities: ["4K Video Conference Cam", "Acoustic Soundproofing", "Executive Seating", "Coffee Bar"],
           description: "Collaborative executive suite for ecosystem partner roundtables and startup investor pitch sessions.",
@@ -157,6 +162,7 @@ const seedInitialVenues = async () => {
           rentalPrice: "Rs. 30,000 / hr",
           pricePerHour: 30000,
           status: "Available",
+          type: "Auditorium & Hall",
           coverImage: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80",
           amenities: ["High-Lumen Projector", "Outdoor Terrace Access", "Centralized Audio", "High-Speed WiFi"],
           description: "Scenic tech event hall situated in the central hill district, ideal for regional tech conferences and university tech summits.",
@@ -170,6 +176,7 @@ const seedInitialVenues = async () => {
           rentalPrice: "Rs. 15,000 / hr",
           pricePerHour: 15000,
           status: "Available",
+          type: "Tech Lab & Maker Space",
           coverImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80",
           amenities: ["Hardware Workbenches", "IoT Testing Kit", "High-Speed Internet", "Ergonomic Chairs"],
           description: "Specialized Maker Lab for artificial intelligence, robotics, and hardware prototype building workshops.",
@@ -185,6 +192,7 @@ const seedInitialVenues = async () => {
           rentalPrice: "Rs. 22,000 / hr",
           pricePerHour: 22000,
           status: "Available",
+          type: "Event Space",
           coverImage: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=800&q=80",
           amenities: ["Dual Projection Screen", "Wireless Microphones", "Podium Stage", "AC Hall"],
           description: "Spacious event deck catering to northern tech initiatives, startup showcases, and developer meetups.",
@@ -198,6 +206,7 @@ const seedInitialVenues = async () => {
           rentalPrice: "Rs. 12,000 / hr",
           pricePerHour: 12000,
           status: "Reserved",
+          type: "Co-Working Space",
           coverImage: "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=800&q=80",
           amenities: ["High-Speed Fiber Cable", "Presentation Display", "Whiteboard Walls", "Breakout Lounge"],
           description: "Modern coding space built for intense coding competitions, bootcamps, and developer community sessions.",
@@ -213,6 +222,7 @@ const seedInitialVenues = async () => {
           rentalPrice: "Rs. 35,000 / hr",
           pricePerHour: 35000,
           status: "Available",
+          type: "Meeting Room",
           coverImage: "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=800&q=80",
           amenities: ["Sea View Terrace", "Full HD Projector", "Wireless Sound System", "Catering & Coffee Bar"],
           description: "Coastal event space overlooking the historic Galle coastline, ideal for corporate retreats and technology summits.",
@@ -228,6 +238,7 @@ const seedInitialVenues = async () => {
           rentalPrice: "Rs. 16,000 / hr",
           pricePerHour: 16000,
           status: "Available",
+          type: "Co-Working Space",
           coverImage: "https://images.unsplash.com/photo-1577412647305-991150c7d163?auto=format&fit=crop&w=800&q=80",
           amenities: ["High-Speed WiFi", "Modular Seating", "AV Presentation Setup", "Air Conditioned"],
           description: "Entrepreneurship and startup incubator hall empowering regional innovators and technology startups in Wayamba province.",

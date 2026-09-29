@@ -218,6 +218,7 @@ export default function AdminDashboardPage({
   const [venueSearchQuery, setVenueSearchQuery] = useState('');
   const [venueBranchFilter, setVenueBranchFilter] = useState('all');
   const [venueStatusFilter, setVenueStatusFilter] = useState('all');
+  const [venueTypeFilter, setVenueTypeFilter] = useState('all');
   const [venueCapacityFilter, setVenueCapacityFilter] = useState('all');
   const [sidebarHidden, setSidebarHidden] = useState(false);
 
@@ -674,7 +675,15 @@ export default function AdminDashboardPage({
       }
     }
 
-    // 4. Capacity Filter
+    // 4. Space Type Filter
+    if (venueTypeFilter !== 'all') {
+      const vType = (v.type || '').toLowerCase();
+      const target = venueTypeFilter.toLowerCase();
+      const vName = (v.name || '').toLowerCase();
+      if (!vType.includes(target) && !target.includes(vType) && !vName.includes(target)) return false;
+    }
+
+    // 5. Capacity Filter
     if (venueCapacityFilter === 'small' && (v.capacity || 0) >= 100) return false;
     if (venueCapacityFilter === 'medium' && ((v.capacity || 0) < 100 || (v.capacity || 0) > 200)) return false;
     if (venueCapacityFilter === 'large' && (v.capacity || 0) <= 200) return false;
@@ -1388,13 +1397,14 @@ export default function AdminDashboardPage({
                     <i className="fa-solid fa-filter" style={{ color: '#5d4df6', fontSize: '1rem' }}></i>
                     <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>Filter Spaces ({displayedVenues.length} of {venues.length})</h3>
                   </div>
-                  {(venueSearchQuery || venueBranchFilter !== 'all' || venueStatusFilter !== 'all' || venueCapacityFilter !== 'all') && (
+                  {(venueSearchQuery || venueBranchFilter !== 'all' || venueStatusFilter !== 'all' || venueTypeFilter !== 'all' || venueCapacityFilter !== 'all') && (
                     <button
                       type="button"
                       onClick={() => {
                         setVenueSearchQuery('');
                         setVenueBranchFilter('all');
                         setVenueStatusFilter('all');
+                        setVenueTypeFilter('all');
                         setVenueCapacityFilter('all');
                       }}
                       style={{ background: '#f1f5f9', color: '#64748b', border: 'none', padding: '0.35rem 0.85rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '5px', transition: 'all 0.2s' }}
@@ -1458,7 +1468,25 @@ export default function AdminDashboardPage({
                     </select>
                   </div>
 
-                  {/* 4. Capacity Filter */}
+                  {/* 4. Space Type Filter */}
+                  <div className="profile-form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: '0.3rem', display: 'block' }}>Space Type</label>
+                    <select
+                      value={venueTypeFilter}
+                      onChange={(e) => setVenueTypeFilter(e.target.value)}
+                      style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', background: '#ffffff', color: '#0f172a' }}
+                    >
+                      <option value="all">All Space Types</option>
+                      <option value="Meeting Room">Meeting Room</option>
+                      <option value="Co-Working">Co-Working Space</option>
+                      <option value="Auditorium">Auditorium & Hall</option>
+                      <option value="Tech Lab">Tech Lab & Maker Space</option>
+                      <option value="Private Office">Private Office / Suite</option>
+                      <option value="Event Space">Event Space</option>
+                    </select>
+                  </div>
+
+                  {/* 5. Capacity Filter */}
                   <div className="profile-form-group" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: '0.3rem', display: 'block' }}>Seating Capacity</label>
                     <select

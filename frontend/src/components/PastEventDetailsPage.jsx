@@ -189,7 +189,17 @@ export default function PastEventDetailsPage({
 
         {/* Hero Header Banner */}
         <div className="past-details-hero-card">
-          <div className="past-hero-image-box">
+          <div
+            className="past-hero-image-box"
+            onClick={() =>
+              onOpenGalleryLightbox &&
+              onOpenGalleryLightbox(
+                { title: pastEvent.title, gallery: [pastEvent.coverImage, ...(galleryList || [])] },
+                0
+              )
+            }
+            title="Click to view full uncropped photo"
+          >
             <div className="past-hero-backdrop" style={{ backgroundImage: `url(${pastEvent.coverImage})` }} />
             <img className="past-hero-img" src={pastEvent.coverImage} alt={pastEvent.title} />
             <div className="past-hero-overlay"></div>
@@ -197,6 +207,21 @@ export default function PastEventDetailsPage({
               <span className="badge-pulse-dot"></span>
               <i className="fa-solid fa-clock-rotate-left"></i> COMPLETED ARCHIVE
             </span>
+            {onOpenGalleryLightbox && (
+              <button
+                type="button"
+                className="past-hero-zoom-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenGalleryLightbox(
+                    { title: pastEvent.title, gallery: [pastEvent.coverImage, ...(galleryList || [])] },
+                    0
+                  );
+                }}
+              >
+                <i className="fa-solid fa-expand"></i> View Full Poster
+              </button>
+            )}
           </div>
 
           <div className="past-hero-content">

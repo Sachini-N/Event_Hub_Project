@@ -140,7 +140,34 @@ export default function VenuesPage({ showToast }) {
   const [provinceFilter, setProvinceFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [capacityFilter, setCapacityFilter] = useState('All');
+  const [spaceTypeFilter, setSpaceTypeFilter] = useState('All');
+
+  // Helper function to derive space type (Meeting Room, Co-working, Auditorium, etc.)
+  const getSpaceType = (v) => {
+    if (!v) return 'Meeting Room';
+    if (v.type && typeof v.type === 'string' && v.type.trim()) return v.type;
+    const str = `${v.name || ''} ${v.description || ''} ${v.branch || ''} ${v.address || ''}`.toLowerCase();
+
+    if (str.includes('coworking') || str.includes('co-working') || str.includes('incubator') || str.includes('shared desk') || str.includes('coding hub') || str.includes('creators space')) {
+      return 'Co-Working Space';
+    }
+    if (str.includes('auditorium') || str.includes('amphitheater') || str.includes('pavilion') || str.includes('theatre') || str.includes('grand')) {
+      return 'Auditorium & Hall';
+    }
+    if (str.includes('lab') || str.includes('maker') || str.includes('cyber') || str.includes('coding') || str.includes('hardware') || str.includes('ai lab') || str.includes('tech lab')) {
+      return 'Tech Lab & Maker Space';
+    }
+    if (str.includes('suite') || str.includes('private office') || str.includes('executive')) {
+      return 'Private Office / Suite';
+    }
+    if (str.includes('deck') || str.includes('terrace') || str.includes('expo') || str.includes('event space')) {
+      return 'Event Space';
+    }
+    if (str.includes('meeting') || str.includes('conference') || str.includes('boardroom') || str.includes('room')) {
+      return 'Meeting Room';
+    }
+    return 'Meeting Room';
+  };
 
   // Helper function to derive province for any space
   const getSpaceProvince = (v) => {
@@ -277,12 +304,17 @@ export default function VenuesPage({ showToast }) {
       }
     }
 
-    // 3. Capacity Filter
-    if (capacityFilter !== 'All') {
-      const cap = Number(v.capacity) || 0;
-      if (capacityFilter === 'small' && cap >= 100) return false;
-      if (capacityFilter === 'medium' && (cap < 100 || cap > 200)) return false;
-      if (capacityFilter === 'large' && cap <= 200) return false;
+    // 3. Space Type Filter
+    if (spaceTypeFilter !== 'All') {
+      const type = getSpaceType(v).toLowerCase();
+      const target = spaceTypeFilter.toLowerCase();
+      if (target === 'meeting room' && !(type.includes('meeting') || type.includes('conference') || type.includes('room'))) return false;
+      else if (target === 'co-working' && !(type.includes('co-working') || type.includes('coworking') || type.includes('incubator') || type.includes('desk'))) return false;
+      else if (target === 'auditorium' && !(type.includes('auditorium') || type.includes('hall') || type.includes('amphitheater') || type.includes('pavilion'))) return false;
+      else if (target === 'tech lab' && !(type.includes('lab') || type.includes('maker') || type.includes('tech'))) return false;
+      else if (target === 'private office' && !(type.includes('office') || type.includes('suite'))) return false;
+      else if (target === 'event space' && !(type.includes('event') || type.includes('deck') || type.includes('space'))) return false;
+      else if (!type.includes(target) && !target.includes(type)) return false;
     }
 
     // 4. Status Filter
@@ -383,7 +415,7 @@ export default function VenuesPage({ showToast }) {
   const handleClearFilters = () => {
     setProvinceFilter('All');
     setSelectedBranch('All');
-    setCapacityFilter('All');
+    setSpaceTypeFilter('All');
     setStatusFilter('All');
     setSearchQuery('');
   };
@@ -467,19 +499,22 @@ export default function VenuesPage({ showToast }) {
             </div>
           </div>
 
-          {/* 4. Capacity Selector */}
+          {/* 4. Space Type Selector */}
           <div className="filter-item">
-            <label htmlFor="spaces-filter-capacity">Capacity</label>
+            <label htmlFor="spaces-filter-type">Space Type</label>
             <div className="select-wrapper">
               <select
-                id="spaces-filter-capacity"
-                value={capacityFilter}
-                onChange={(e) => setCapacityFilter(e.target.value)}
+                id="spaces-filter-type"
+                value={spaceTypeFilter}
+                onChange={(e) => setSpaceTypeFilter(e.target.value)}
               >
-                <option value="All">Any Size</option>
-                <option value="small">Small (&lt; 100 Seats)</option>
-                <option value="medium">Medium (100-200)</option>
-                <option value="large">Large (&gt; 200 Seats)</option>
+                <option value="All">All Types</option>
+                <option value="Meeting Room">Meeting Room</option>
+                <option value="Co-Working">Co-Working Space</option>
+                <option value="Auditorium">Auditorium & Conference Hall</option>
+                <option value="Tech Lab">Tech Lab & Maker Space</option>
+                <option value="Private Office">Private Office / Suite</option>
+                <option value="Event Space">Event Space</option>
               </select>
               <i className="fa-solid fa-chevron-down select-arrow"></i>
             </div>
@@ -528,7 +563,7 @@ export default function VenuesPage({ showToast }) {
                 setProvinceFilter('All');
                 setSearchQuery('');
                 setStatusFilter('All');
-                setCapacityFilter('All');
+                setSpaceTypeFilter('All');
               }}
             >
               <i className="fa-solid fa-filter-circle-xmark"></i> Reset All Filters
@@ -546,7 +581,20 @@ export default function VenuesPage({ showToast }) {
               );
 
               return (
-                <div key={v._id || v.id} className="venue-card-redesign">
+                <div
+                  key={v._id || v.id}
+                  className="venue-card-redesign"
+                  onClick={() => handleOpenInquiryModal(v, 'details')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleOpenInquiryModal(v, 'details');
+                    }
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
                   {/* Card Banner Image */}
                   <div className="venue-banner-wrapper">
                     <img
@@ -590,6 +638,9 @@ export default function VenuesPage({ showToast }) {
                           <i className={`fa-solid ${branchMeta?.icon || 'fa-building'}`}></i>
                           <span>{branchMeta?.shortName || venueBranchName}</span>
                         </div>
+                        <span style={{ fontSize: '0.74rem', fontWeight: '700', color: '#0284c7', background: '#f0f9ff', border: '1px solid #bae6fd', padding: '2px 7px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <i className="fa-solid fa-shapes"></i> {getSpaceType(v)}
+                        </span>
                         <span style={{ fontSize: '0.74rem', fontWeight: '700', color: '#5d4df6', background: '#eff6ff', border: '1px solid #dbeafe', padding: '2px 7px', borderRadius: '6px' }}>
                           📍 {getSpaceProvince(v)}
                         </span>
@@ -629,7 +680,10 @@ export default function VenuesPage({ showToast }) {
                     <div className="venue-card-actions">
                       <button
                         className="btn-venue-inquire"
-                        onClick={() => handleOpenInquiryModal(v, 'details')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenInquiryModal(v, 'details');
+                        }}
                       >
                         <i className="fa-solid fa-eye"></i> View Space Details & Photos
                       </button>
@@ -857,8 +911,11 @@ export default function VenuesPage({ showToast }) {
                     </span>
                   </div>
 
-                  {/* Province, Capacity & Location Address */}
+                  {/* Province, Type, Capacity & Location Address */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.2rem' }}>
+                    <span style={{ fontSize: '0.76rem', fontWeight: '700', color: '#0369a1', background: '#e0f2fe', border: '1px solid #bae6fd', padding: '0.25rem 0.65rem', borderRadius: '20px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <i className="fa-solid fa-shapes"></i> {getSpaceType(activeVenueModal)}
+                    </span>
                     <span style={{ fontSize: '0.76rem', fontWeight: '700', color: '#5d4df6', background: '#eff6ff', border: '1px solid #dbeafe', padding: '0.25rem 0.65rem', borderRadius: '20px' }}>
                       📍 {getSpaceProvince(activeVenueModal)}
                     </span>

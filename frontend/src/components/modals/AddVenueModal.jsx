@@ -16,6 +16,7 @@ export default function AddVenueModal({
   const [capacity, setCapacity] = useState('150');
   const [pricePerHour, setPricePerHour] = useState('25000');
   const [status, setStatus] = useState('Available');
+  const [type, setType] = useState('Meeting Room');
   const [coverImage, setCoverImage] = useState('');
   const [imageList, setImageList] = useState([]);
   const [amenities, setAmenities] = useState('High-Speed WiFi, 4K Projectors, Air Conditioned, Sound System');
@@ -71,6 +72,7 @@ export default function AddVenueModal({
         : (editingVenue.rentalPrice ? String(editingVenue.rentalPrice).replace(/[^0-9]/g, '') : '25000');
       setPricePerHour(numPrice || '25000');
       setStatus(editingVenue.status || 'Available');
+      setType(editingVenue.type || 'Meeting Room');
       const existingImgs = Array.isArray(editingVenue.images) && editingVenue.images.length > 0
         ? editingVenue.images
         : (editingVenue.coverImage ? [editingVenue.coverImage] : []);
@@ -86,6 +88,7 @@ export default function AddVenueModal({
       setCapacity('150');
       setPricePerHour('25000');
       setStatus('Available');
+      setType('Meeting Room');
       setCoverImage('');
       setImageList([]);
       setAmenities('High-Speed WiFi, 4K Projectors, Air Conditioned, Sound System');
@@ -193,6 +196,7 @@ export default function AddVenueModal({
           rentalPrice: formattedRentalPrice,
           pricePerHour: numPrice,
           status,
+          type,
           coverImage: finalImages[0] || coverImage,
           images: finalImages,
           amenities: typeof amenities === 'string' ? amenities.split(',').map((a) => a.trim()).filter(Boolean) : amenities,
@@ -324,6 +328,25 @@ export default function AddVenueModal({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
+              </div>
+
+              <div className="profile-form-group">
+                <label htmlFor="venue-type">
+                  <i className="fa-solid fa-shapes" style={{ color: '#6366f1' }}></i>
+                  Space Type *
+                </label>
+                <select
+                  id="venue-type"
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                >
+                  <option value="Meeting Room">Meeting Room</option>
+                  <option value="Co-Working Space">Co-Working Space</option>
+                  <option value="Auditorium & Hall">Auditorium & Conference Hall</option>
+                  <option value="Tech Lab & Maker Space">Tech Lab & Maker Space</option>
+                  <option value="Private Office / Suite">Private Office / Suite</option>
+                  <option value="Event Space">Event Space</option>
+                </select>
               </div>
 
               <div className="profile-form-group">

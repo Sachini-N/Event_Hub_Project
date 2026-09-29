@@ -45,6 +45,11 @@ const venueSchema = new mongoose.Schema(
       enum: ["Available", "Reserved", "Under Maintenance"],
       default: "Available",
     },
+    type: {
+      type: String,
+      default: "Meeting Room",
+      trim: true,
+    },
     coverImage: {
       type: String,
       default: "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80",
