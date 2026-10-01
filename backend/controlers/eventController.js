@@ -146,7 +146,7 @@ const updateEvent = async (req, res) => {
       }
     }
 
-    const updatedEvent = await Event.findByIdAndUpdate(req.params.id, eventData, { new: true, runValidators: true });
+    const updatedEvent = await Event.findByIdAndUpdate(req.params.id, eventData, { returnDocument: 'after', runValidators: true });
     if (!updatedEvent) {
       return res.status(404).json({ success: false, message: "Event not found" });
     }

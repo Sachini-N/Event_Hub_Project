@@ -1,8 +1,9 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import traceVideo from '../assets/Trace Vedio.mp4';
 
 export default function HeroSection({ scrollToEvents }) {
   const videoRef = useRef(null);
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -16,11 +17,15 @@ export default function HeroSection({ scrollToEvents }) {
       <div className="hero-video-wrapper">
         <video
           ref={videoRef}
-          className="hero-video-element"
+          className={`hero-video-element ${isVideoLoaded ? 'video-ready' : 'video-loading'}`}
           autoPlay
           loop
           muted
           playsInline
+          preload="auto"
+          poster="/hero-bg-1.jpg"
+          onLoadedData={() => setIsVideoLoaded(true)}
+          onCanPlay={() => setIsVideoLoaded(true)}
         >
           <source src={traceVideo} type="video/mp4" />
           <source src="/trace-video.mp4" type="video/mp4" />

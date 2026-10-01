@@ -37,7 +37,7 @@ const registerForEvent = async (req, res) => {
         $expr: { $lt: ["$registeredCount", "$capacity"] },
       },
       { $inc: { registeredCount: 1 } },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!updatedEvent) {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import EditEventModal from './modals/EditEventModal';
-import AddVenueModal from './modals/AddVenueModal';
+import AddVenueModal, { PRESET_BRANCHES } from './modals/AddVenueModal';
 import CreateEventPage from './CreateEventPage';
 import CloudinaryUploader from './CloudinaryUploader';
 import { notifyEventUpdated } from '../utils/eventUtils';
@@ -54,19 +54,21 @@ export default function AdminDashboardPage({
   const [editingAdminUser, setEditingAdminUser] = useState(null);
   const [editingAdminForm, setEditingAdminForm] = useState({
     name: '',
-    branch: 'TRACE Expert City (Colombo)',
+    branch: 'TRACE Expert City Colombo 10',
     permissions: ['manage_events', 'manage_registrations'],
     avatar: '',
   });
+  const [isCustomEditAdminBranch, setIsCustomEditAdminBranch] = useState(false);
   const [savingAdminEdit, setSavingAdminEdit] = useState(false);
 
   const [branchAdminForm, setBranchAdminForm] = useState({
     name: '',
     email: '',
     password: '',
-    branch: 'TRACE Expert City (Colombo)',
+    branch: 'TRACE Expert City Colombo 10',
     permissions: ['manage_events', 'manage_registrations'],
   });
+  const [isCustomBranchAdmin, setIsCustomBranchAdmin] = useState(false);
   const [emailNotificationModalData, setEmailNotificationModalData] = useState(null);
   const [submittingBranchAdmin, setSubmittingBranchAdmin] = useState(false);
 
@@ -136,9 +138,10 @@ export default function AdminDashboardPage({
           name: '',
           email: '',
           password: '',
-          branch: 'TRACE Expert City (Colombo)',
+          branch: 'TRACE Expert City Colombo 10',
           permissions: ['manage_events', 'manage_registrations'],
         });
+        setIsCustomBranchAdmin(false);
       } else {
         if (showToast) showToast(data.message || 'Failed to assign branch admin', 'error');
       }
@@ -623,6 +626,217 @@ export default function AdminDashboardPage({
     return true;
   });
 
+  // Export Registrations to Excel (CSV with UTF-8 BOM)
+  const handleExportExcel = () => {
+    if (!displayedRegistrations || displayedRegistrations.length === 0) {
+      if (showToast) showToast('No registration data available to export.', 'warning');
+      return;
+    }
+
+    const headers = [
+      '#',
+      'Attendee Name',
+      'Email Address',
+      'Contact Number',
+      'Event Name',
+      'Status',
+      'Registered Date'
+    ];
+
+    const rows = displayedRegistrations.map((reg, idx) => [
+      idx + 1,
+      reg.name || '',
+      reg.email || '',
+      reg.contactNumber || 'N/A',
+      reg.eventTitle || 'TRACE Event',
+      reg.status || 'Confirmed',
+      reg.createdAt ? new Date(reg.createdAt).toLocaleDateString() : 'N/A'
+    ]);
+
+    const csvContent =
+      '\uFEFF' +
+      [headers, ...rows]
+        .map((r) => r.map((cell) => `"${String(cell || '').replace(/"/g, '""')}"`).join(','))
+        .join('\r\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const eventNameSlug = regEventFilter !== 'all' ? regEventFilter.replace(/[^a-zA-Z0-9]/g, '_') : 'All_Events';
+    link.href = url;
+    link.setAttribute('download', `TRACE_Registrations_${eventNameSlug}_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    if (showToast) showToast(`Successfully exported ${displayedRegistrations.length} registrations to Excel!`, 'success');
+  };
+
+  // Export Registrations to Branded Printable PDF
+  const handleExportPDF = () => {
+    if (!displayedRegistrations || displayedRegistrations.length === 0) {
+      if (showToast) showToast('No registration data available to export.', 'warning');
+      return;
+    }
+
+    const printWin = window.open('', '_blank', 'width=1100,height=750');
+    if (!printWin) {
+      if (showToast) showToast('Pop-up window blocked. Please allow pop-ups for this site.', 'error');
+      return;
+    }
+
+    const eventName = regEventFilter === 'all' ? 'All Events' : regEventFilter;
+    const statusName = regStatusFilter === 'all' ? 'All Statuses' : regStatusFilter;
+    const reportDate = new Date().toLocaleString();
+    const confirmedCount = displayedRegistrations.filter((r) => (r.status || 'Confirmed') === 'Confirmed').length;
+    const pendingCount = displayedRegistrations.filter((r) => r.status === 'Pending').length;
+    const cancelledCount = displayedRegistrations.filter((r) => r.status === 'Cancelled').length;
+
+    const rowsHtml = displayedRegistrations
+      .map(
+        (r, idx) => `
+        <tr>
+          <td style="text-align:center;color:#64748b;font-weight:600;">${idx + 1}</td>
+          <td><strong>${r.name || 'Anonymous'}</strong></td>
+          <td style="color:#2563eb;">${r.email || '-'}</td>
+          <td>${r.contactNumber || '-'}</td>
+          <td><span style="font-weight:600;color:#0f172a;">${r.eventTitle || 'TRACE Event'}</span></td>
+          <td style="text-align:center;">
+            <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;${
+              (r.status || 'Confirmed') === 'Confirmed'
+                ? 'background:#dcfce7;color:#15803d;'
+                : r.status === 'Pending'
+                ? 'background:#fef3c7;color:#b45309;'
+                : 'background:#fee2e2;color:#b91c1c;'
+            }">
+              ${r.status || 'Confirmed'}
+            </span>
+          </td>
+          <td style="font-size:12px;color:#64748b;">${r.createdAt ? new Date(r.createdAt).toLocaleDateString() : 'N/A'}</td>
+        </tr>
+      `
+      )
+      .join('');
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>TRACE Event Registrations Report - ${eventName}</title>
+        <meta charset="utf-8" />
+        <style>
+          * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+          body { background: #f8fafc; color: #1e293b; padding: 25px; line-height: 1.5; }
+          .print-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #5d4df6; padding-bottom: 15px; margin-bottom: 20px; }
+          .brand-title { font-size: 24px; font-weight: 800; color: #1e1b4b; letter-spacing: -0.5px; }
+          .brand-badge { display: inline-block; background: #5d4df6; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle; }
+          .report-meta { font-size: 12px; color: #64748b; text-align: right; }
+          .summary-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+          .summary-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; }
+          .summary-card .label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
+          .summary-card .value { font-size: 20px; font-weight: 800; color: #0f172a; }
+          table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; font-size: 13px; }
+          th { background: #f1f5f9; color: #475569; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; padding: 10px 12px; text-align: left; border-bottom: 1px solid #cbd5e1; }
+          td { padding: 9px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+          tr:nth-child(even) { background-color: #fafbfd; }
+          .action-bar { background: #1e1b4b; color: #fff; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+          .action-btn { background: #5d4df6; color: #fff; border: none; padding: 8px 18px; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; transition: background 0.2s; }
+          .action-btn:hover { background: #4b36e3; }
+          .close-btn { background: #334155; color: #fff; border: none; padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; margin-left: 8px; }
+          @media print {
+            .no-print { display: none !important; }
+            body { background: #fff; padding: 0; }
+            @page { size: A4 landscape; margin: 10mm; }
+            table { page-break-inside: auto; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="action-bar no-print">
+          <div>
+            <strong>TRACE Event Hub - PDF Export Preview</strong>
+            <span style="opacity:0.8;font-size:12px;margin-left:8px;">Ready for Save to PDF / Printing</span>
+          </div>
+          <div>
+            <button class="action-btn" onclick="window.print()">🖨️ Save as PDF / Print</button>
+            <button class="close-btn" onclick="window.close()">✕ Close</button>
+          </div>
+        </div>
+
+        <div class="print-header">
+          <div>
+            <div class="brand-title">TRACE EXPERT CITY <span class="brand-badge">EVENT HUB</span></div>
+            <div style="font-size:14px;font-weight:600;color:#5d4df6;margin-top:4px;">Official Event Attendee Registrations Report</div>
+            <div style="font-size:12px;color:#64748b;margin-top:2px;">Event: <strong>${eventName}</strong> | Status Filter: <strong>${statusName}</strong></div>
+          </div>
+          <div class="report-meta">
+            <div>Generated: <strong>${reportDate}</strong></div>
+            <div>Total Attendees: <strong>${displayedRegistrations.length}</strong></div>
+            <div style="color:#059669;font-weight:600;">Verified TRACE System Record</div>
+          </div>
+        </div>
+
+        <div class="summary-cards">
+          <div class="summary-card">
+            <div class="label">Total Records</div>
+            <div class="value">${displayedRegistrations.length}</div>
+          </div>
+          <div class="summary-card">
+            <div class="label">Confirmed</div>
+            <div class="value" style="color:#16a34a;">${confirmedCount}</div>
+          </div>
+          <div class="summary-card">
+            <div class="label">Pending</div>
+            <div class="value" style="color:#d97706;">${pendingCount}</div>
+          </div>
+          <div class="summary-card">
+            <div class="label">Cancelled</div>
+            <div class="value" style="color:#dc2626;">${cancelledCount}</div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px;text-align:center;">#</th>
+              <th>Attendee Name</th>
+              <th>Email Address</th>
+              <th>Contact Number</th>
+              <th>Event Title</th>
+              <th style="text-align:center;">Status</th>
+              <th>Registered Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+
+        <div style="margin-top:25px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;display:flex;justify-content:space-between;">
+          <span>TRACE Expert City &bull; Maradana Rd, Colombo 10 &bull; info@trace.lk</span>
+          <span>Confidential Administrative Record &bull; Page 1</span>
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 400);
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+    printWin.document.open();
+    printWin.document.write(htmlContent);
+    printWin.document.close();
+
+    if (showToast) showToast('Opening printable report for Save to PDF...', 'info');
+  };
+
   // Filter Venue Inquiries logic for Manage Venue Inquiries Page
   const displayedVenueBookings = venueBookings.filter((bk) => {
     if (inquiryStatusFilter !== 'all' && (bk.status || 'Pending') !== inquiryStatusFilter) return false;
@@ -690,6 +904,11 @@ export default function AdminDashboardPage({
 
     return true;
   });
+
+  const allVenueBranches = Array.from(new Set([
+    ...PRESET_BRANCHES,
+    ...venues.map((v) => v.branch).filter(Boolean),
+  ]));
 
   const pendingInquiriesCount = venueBookings.filter((b) => (b.status || 'Pending') === 'Pending').length;
   const contactedInquiriesCount = venueBookings.filter((b) => b.status === 'Contacted').length;
@@ -874,34 +1093,56 @@ export default function AdminDashboardPage({
 
               {/* Filter Toolbar Box */}
               <div className="reg-toolbar-panel">
-                <div className="reg-filter-group">
-                  <label>SELECT EVENT</label>
-                  <select
-                    className="reg-filter-select"
-                    value={regEventFilter}
-                    onChange={(e) => setRegEventFilter(e.target.value)}
-                  >
-                    <option value="all">All Events</option>
-                    {events.map((evt) => (
-                      <option key={evt._id} value={evt.title}>
-                        {evt.title}
-                      </option>
-                    ))}
-                  </select>
+                <div className="reg-toolbar-filters">
+                  <div className="reg-filter-group">
+                    <label>SELECT EVENT</label>
+                    <select
+                      className="reg-filter-select"
+                      value={regEventFilter}
+                      onChange={(e) => setRegEventFilter(e.target.value)}
+                    >
+                      <option value="all">All Events</option>
+                      {events.map((evt) => (
+                        <option key={evt._id} value={evt.title}>
+                          {evt.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="reg-filter-group">
+                    <label>STATUS FILTER</label>
+                    <select
+                      className="reg-filter-select"
+                      value={regStatusFilter}
+                      onChange={(e) => setRegStatusFilter(e.target.value)}
+                    >
+                      <option value="all">All Statuses</option>
+                      <option value="Confirmed">Confirmed</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
                 </div>
 
-                <div className="reg-filter-group">
-                  <label>STATUS FILTER</label>
-                  <select
-                    className="reg-filter-select"
-                    value={regStatusFilter}
-                    onChange={(e) => setRegStatusFilter(e.target.value)}
+                {/* Export Action Buttons */}
+                <div className="reg-export-actions">
+                  <button
+                    type="button"
+                    className="btn-export-excel"
+                    onClick={handleExportExcel}
+                    title="Download registration list as Excel (CSV) spreadsheet"
                   >
-                    <option value="all">All Statuses</option>
-                    <option value="Confirmed">Confirmed</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Cancelled">Cancelled</option>
-                  </select>
+                    <i className="fa-solid fa-file-excel"></i> Export Excel
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-export-pdf"
+                    onClick={handleExportPDF}
+                    title="Export / Print attendee list as PDF report"
+                  >
+                    <i className="fa-solid fa-file-pdf"></i> Export PDF
+                  </button>
                 </div>
               </div>
 
@@ -1414,29 +1655,29 @@ export default function AdminDashboardPage({
                   )}
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', alignItems: 'center' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', alignItems: 'flex-end' }}>
                   {/* 1. Search Query */}
-                  <div className="profile-form-group" style={{ margin: 0 }}>
-                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: '0.3rem', display: 'block' }}>Search Space</label>
-                    <div className="search-input-wrapper" style={{ position: 'relative' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: 0, margin: 0 }}>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block' }}>Search Space</label>
+                    <div style={{ position: 'relative', width: '100%', minWidth: 0 }}>
+                      <i className="fa-solid fa-magnifying-glass" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontSize: '0.85rem', pointerEvents: 'none', zIndex: 1 }}></i>
                       <input
                         type="text"
                         placeholder="Search space name, address..."
                         value={venueSearchQuery}
                         onChange={(e) => setVenueSearchQuery(e.target.value)}
-                        style={{ width: '100%', padding: '0.6rem 0.85rem 0.6rem 2.2rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', background: '#ffffff', color: '#0f172a' }}
+                        style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', height: '42px', padding: '0.6rem 0.85rem 0.6rem 2.3rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', background: '#ffffff', color: '#0f172a', outline: 'none' }}
                       />
-                      <i className="fa-solid fa-magnifying-glass" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontSize: '0.85rem' }}></i>
                     </div>
                   </div>
 
                   {/* 2. TRACE Branch Filter */}
-                  <div className="profile-form-group" style={{ margin: 0 }}>
-                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: '0.3rem', display: 'block' }}>TRACE Branch</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: 0, margin: 0 }}>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block' }}>TRACE Branch</label>
                     <select
                       value={venueBranchFilter}
                       onChange={(e) => setVenueBranchFilter(e.target.value)}
-                      style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', background: '#ffffff', color: '#0f172a' }}
+                      style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', height: '42px', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', background: '#ffffff', color: '#0f172a', outline: 'none', cursor: 'pointer' }}
                     >
                       <option value="all">All TRACE Hubs</option>
                       <option value="TRACE Expert City Colombo 10">TRACE Expert City Colombo 10</option>
@@ -1454,12 +1695,12 @@ export default function AdminDashboardPage({
                   </div>
 
                   {/* 3. Availability Status Filter */}
-                  <div className="profile-form-group" style={{ margin: 0 }}>
-                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: '0.3rem', display: 'block' }}>Status</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: 0, margin: 0 }}>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block' }}>Status</label>
                     <select
                       value={venueStatusFilter}
                       onChange={(e) => setVenueStatusFilter(e.target.value)}
-                      style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', background: '#ffffff', color: '#0f172a' }}
+                      style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', height: '42px', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', background: '#ffffff', color: '#0f172a', outline: 'none', cursor: 'pointer' }}
                     >
                       <option value="all">All Statuses</option>
                       <option value="Available">Available</option>
@@ -1469,12 +1710,12 @@ export default function AdminDashboardPage({
                   </div>
 
                   {/* 4. Space Type Filter */}
-                  <div className="profile-form-group" style={{ margin: 0 }}>
-                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: '0.3rem', display: 'block' }}>Space Type</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: 0, margin: 0 }}>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block' }}>Space Type</label>
                     <select
                       value={venueTypeFilter}
                       onChange={(e) => setVenueTypeFilter(e.target.value)}
-                      style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', background: '#ffffff', color: '#0f172a' }}
+                      style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', height: '42px', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', background: '#ffffff', color: '#0f172a', outline: 'none', cursor: 'pointer' }}
                     >
                       <option value="all">All Space Types</option>
                       <option value="Meeting Room">Meeting Room</option>
@@ -1487,12 +1728,12 @@ export default function AdminDashboardPage({
                   </div>
 
                   {/* 5. Capacity Filter */}
-                  <div className="profile-form-group" style={{ margin: 0 }}>
-                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: '0.3rem', display: 'block' }}>Seating Capacity</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: 0, margin: 0 }}>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block' }}>Seating Capacity</label>
                     <select
                       value={venueCapacityFilter}
                       onChange={(e) => setVenueCapacityFilter(e.target.value)}
-                      style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', background: '#ffffff', color: '#0f172a' }}
+                      style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', height: '42px', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', background: '#ffffff', color: '#0f172a', outline: 'none', cursor: 'pointer' }}
                     >
                       <option value="all">Any Capacity</option>
                       <option value="small">Small (&lt; 100 Seats)</option>
@@ -2408,6 +2649,8 @@ export default function AdminDashboardPage({
         isOpen={Boolean(editingEvent)}
         onClose={() => setEditingEvent(null)}
         event={editingEvent}
+        token={token || localStorage.getItem('eventhub_token')}
+        currentUser={currentUser}
         onEventUpdated={(updatedEvent) => {
           if (updatedEvent && updatedEvent._id) {
             setEvents((prev) =>
@@ -2427,6 +2670,7 @@ export default function AdminDashboardPage({
           setShowAddVenueModal(false);
           setEditingVenue(null);
         }}
+        token={token || localStorage.getItem('eventhub_token')}
         editingVenue={editingVenue}
         onVenueCreated={(newVenue) => {
           setVenues((prev) => [newVenue, ...prev]);

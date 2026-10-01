@@ -79,7 +79,7 @@ const updateVenue = async (req, res) => {
     }
     if (description !== undefined) updateFields.description = description;
 
-    const venue = await Venue.findByIdAndUpdate(req.params.id, updateFields, { new: true, runValidators: true });
+    const venue = await Venue.findByIdAndUpdate(req.params.id, updateFields, { returnDocument: 'after', runValidators: true });
     if (!venue) {
       return res.status(404).json({ success: false, message: "Venue not found" });
     }

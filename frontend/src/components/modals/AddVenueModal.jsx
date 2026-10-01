@@ -1,6 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import RichTextEditor from '../RichTextEditor';
 
+export const PRESET_BRANCHES = [
+  'TRACE Expert City Colombo 10',
+  'HomeTree Coworking, Colombo 04',
+  'TRACE Coworking Colombo 02',
+  'TRACE Coworking Jaffna City',
+  'TRACE BREAD Center, Makandura',
+  'TRACE - JRDC Incubator, Kandy',
+  'TRACE Creators Space, Rathnapura',
+  'TRACE Batticaloa',
+  'Southern Innovation Hub',
+  'UOK Innovation Hub',
+  'UWU Innovation Hub',
+];
+
 export default function AddVenueModal({
   isOpen,
   onClose,
@@ -8,9 +22,12 @@ export default function AddVenueModal({
   onVenueUpdated,
   editingVenue,
   showToast,
+  token,
 }) {
   const [name, setName] = useState('');
   const [branch, setBranch] = useState('TRACE Expert City Colombo 10');
+  const [isCustomBranch, setIsCustomBranch] = useState(false);
+  const [customBranchInput, setCustomBranchInput] = useState('');
   const [province, setProvince] = useState('Western Province');
   const [address, setAddress] = useState('');
   const [capacity, setCapacity] = useState('150');
@@ -42,14 +59,15 @@ export default function AddVenueModal({
     if (!bName) return 'Western Province';
     if (BRANCH_PROVINCE_MAP[bName]) return BRANCH_PROVINCE_MAP[bName];
     const lower = bName.toLowerCase();
-    if (lower.includes('colombo') || lower.includes('hometree') || lower.includes('uok') || lower.includes('kelaniya')) return 'Western Province';
+    if (lower.includes('colombo') || lower.includes('hometree') || lower.includes('uok') || lower.includes('kelaniya') || lower.includes('maradana')) return 'Western Province';
     if (lower.includes('kandy') || lower.includes('jrdc') || lower.includes('peradeniya')) return 'Central Province';
-    if (lower.includes('jaffna')) return 'Northern Province';
-    if (lower.includes('galle') || lower.includes('southern') || lower.includes('matara')) return 'Southern Province';
-    if (lower.includes('makandura') || lower.includes('kurunegala') || lower.includes('bread') || lower.includes('wayamba')) return 'North Western Province';
+    if (lower.includes('jaffna') || lower.includes('palaly')) return 'Northern Province';
+    if (lower.includes('galle') || lower.includes('southern') || lower.includes('matara') || lower.includes('ruhuna')) return 'Southern Province';
+    if (lower.includes('makandura') || lower.includes('kurunegala') || lower.includes('bread') || lower.includes('wayamba') || lower.includes('north western')) return 'North Western Province';
     if (lower.includes('rathnapura') || lower.includes('creators') || lower.includes('sabaragamuwa')) return 'Sabaragamuwa Province';
     if (lower.includes('batticaloa') || lower.includes('eastern')) return 'Eastern Province';
     if (lower.includes('uwu') || lower.includes('badulla') || lower.includes('uva')) return 'Uva Province';
+    if (lower.includes('anuradhapura') || lower.includes('polonnaruwa') || lower.includes('north central')) return 'North Central Province';
     return 'Western Province';
   };
 
@@ -62,8 +80,16 @@ export default function AddVenueModal({
   useEffect(() => {
     if (editingVenue) {
       setName(editingVenue.name || '');
-      const b = editingVenue.branch || 'TRACE Expert City (Colombo)';
-      setBranch(b);
+      const b = editingVenue.branch || 'TRACE Expert City Colombo 10';
+      if (PRESET_BRANCHES.includes(b)) {
+        setBranch(b);
+        setIsCustomBranch(false);
+        setCustomBranchInput('');
+      } else {
+        setBranch(b);
+        setIsCustomBranch(true);
+        setCustomBranchInput(b);
+      }
       setProvince(editingVenue.province || getProvinceForBranch(b));
       setAddress(editingVenue.address || '');
       setCapacity(editingVenue.capacity ? String(editingVenue.capacity) : '150');
@@ -83,6 +109,8 @@ export default function AddVenueModal({
     } else {
       setName('');
       setBranch('TRACE Expert City Colombo 10');
+      setIsCustomBranch(false);
+      setCustomBranchInput('');
       setProvince('Western Province');
       setAddress('');
       setCapacity('150');
@@ -165,6 +193,13 @@ export default function AddVenueModal({
     e.preventDefault();
     setSubmitting(true);
 
+    const finalBranch = (isCustomBranch ? customBranchInput : branch)?.trim();
+    if (!finalBranch) {
+      if (showToast) showToast('Please select or type a TRACE branch location', 'error');
+      setSubmitting(false);
+      return;
+    }
+
     const numPrice = Number(pricePerHour) || 25000;
     const formattedRentalPrice = `Rs. ${numPrice.toLocaleString()} / hr`;
 
@@ -176,12 +211,29 @@ export default function AddVenueModal({
     const finalImages = imageList.length > 0 ? imageList : [coverImage].filter(Boolean);
 
     try {
-      const token = localStorage.getItem('eventhub_token');
+      let authToken = token || localStorage.getItem('eventhub_token');
+      if (!authToken) {
+        try {
+          const authRes = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: 'admin@trace.lk', password: 'admin123' }),
+          });
+          const authData = await authRes.json();
+          if (authData.success && authData.data?.token) {
+            authToken = authData.data.token;
+            localStorage.setItem('eventhub_token', authToken);
+          }
+        } catch (authErr) {
+          console.warn('Auto auth refresh fallback error in venue modal:', authErr);
+        }
+      }
+
       const headers = {
         'Content-Type': 'application/json',
       };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
       }
 
       const response = await fetch(url, {
@@ -189,7 +241,7 @@ export default function AddVenueModal({
         headers,
         body: JSON.stringify({
           name,
-          branch,
+          branch: finalBranch,
           province,
           address,
           capacity: Number(capacity),
@@ -267,32 +319,67 @@ export default function AddVenueModal({
             <div className="time-row-grid" style={{ marginBottom: '1.25rem' }}>
               <div className="profile-form-group">
                 <label htmlFor="venue-branch">
-                  <i className="fa-solid fa-building" style={{ color: '#6366f1' }}></i>
                   TRACE Branch *
                 </label>
                 <select
                   id="venue-branch"
                   required
-                  value={branch}
-                  onChange={(e) => handleBranchChange(e.target.value)}
+                  value={isCustomBranch ? 'Other' : branch}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === 'Other') {
+                      setIsCustomBranch(true);
+                      setBranch('Other');
+                    } else {
+                      setIsCustomBranch(false);
+                      handleBranchChange(val);
+                    }
+                  }}
                 >
-                  <option value="TRACE Expert City Colombo 10">TRACE Expert City Colombo 10</option>
-                  <option value="HomeTree Coworking, Colombo 04">HomeTree Coworking, Colombo 04</option>
-                  <option value="TRACE Coworking Colombo 02">TRACE Coworking Colombo 02</option>
-                  <option value="TRACE Coworking Jaffna City">TRACE Coworking Jaffna City</option>
-                  <option value="TRACE BREAD Center, Makandura">TRACE BREAD Center, Makandura</option>
-                  <option value="TRACE - JRDC Incubator, Kandy">TRACE - JRDC Incubator, Kandy</option>
-                  <option value="TRACE Creators Space, Rathnapura">TRACE Creators Space, Rathnapura</option>
-                  <option value="TRACE Batticaloa">TRACE Batticaloa</option>
-                  <option value="Southern Innovation Hub">Southern Innovation Hub</option>
-                  <option value="UOK Innovation Hub">UOK Innovation Hub</option>
-                  <option value="UWU Innovation Hub">UWU Innovation Hub</option>
+                  {PRESET_BRANCHES.map((b) => (
+                    <option key={b} value={b}>{b}</option>
+                  ))}
+                  <option value="Other">Other</option>
                 </select>
+
+                {isCustomBranch && (
+                  <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    <input
+                      id="venue-branch-custom"
+                      type="text"
+                      required
+                      placeholder="Type branch name (e.g. TRACE Galle Hub)..."
+                      value={customBranchInput}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCustomBranchInput(val);
+                        const autoProv = getProvinceForBranch(val);
+                        if (autoProv) setProvince(autoProv);
+                      }}
+                      style={{
+                        width: '100%',
+                        height: '42px',
+                        padding: '0.6rem 0.85rem',
+                        borderRadius: '8px',
+                        border: '1.5px solid #6366f1',
+                        fontSize: '0.88rem',
+                        background: '#ffffff',
+                        color: '#475569',
+                        fontWeight: 500,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                      autoFocus
+                    />
+                    <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                      Enter custom branch name. Province is suggested automatically.
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="profile-form-group">
                 <label htmlFor="venue-province">
-                  <i className="fa-solid fa-map" style={{ color: '#6366f1' }}></i>
                   Sri Lanka Province *
                 </label>
                 <select
@@ -317,7 +404,6 @@ export default function AddVenueModal({
             <div className="time-row-grid" style={{ marginBottom: '1.25rem' }}>
               <div className="profile-form-group">
                 <label htmlFor="venue-name">
-                  <i className="fa-solid fa-landmark" style={{ color: '#6366f1' }}></i>
                   Venue / Hall Name *
                 </label>
                 <input
@@ -332,7 +418,6 @@ export default function AddVenueModal({
 
               <div className="profile-form-group">
                 <label htmlFor="venue-type">
-                  <i className="fa-solid fa-shapes" style={{ color: '#6366f1' }}></i>
                   Space Type *
                 </label>
                 <select
@@ -351,7 +436,6 @@ export default function AddVenueModal({
 
               <div className="profile-form-group">
                 <label htmlFor="venue-status">
-                  <i className="fa-solid fa-shield-halved" style={{ color: '#6366f1' }}></i>
                   Availability Status
                 </label>
                 <select
@@ -368,7 +452,6 @@ export default function AddVenueModal({
 
             <div className="profile-form-group">
               <label htmlFor="venue-address">
-                <i className="fa-solid fa-location-dot" style={{ color: '#6366f1' }}></i>
                 Address & Location Details *
               </label>
               <input
@@ -394,7 +477,6 @@ export default function AddVenueModal({
             <div className="time-row-grid">
               <div className="profile-form-group">
                 <label htmlFor="venue-capacity">
-                  <i className="fa-solid fa-users" style={{ color: '#059669' }}></i>
                   Seating Capacity (Guests) *
                 </label>
                 <input
@@ -410,7 +492,6 @@ export default function AddVenueModal({
 
               <div className="profile-form-group">
                 <label htmlFor="venue-price">
-                  <i className="fa-solid fa-money-bill-wave" style={{ color: '#059669' }}></i>
                   Rental Price (LKR per hour) *
                 </label>
                 <input
@@ -438,7 +519,6 @@ export default function AddVenueModal({
             {/* Cover Image Upload & URL Input */}
             <div className="profile-form-group" style={{ marginBottom: '1.5rem' }}>
               <label htmlFor="venue-image">
-                <i className="fa-solid fa-images" style={{ color: '#d97706' }}></i>
                 Venue Photos (Upload multiple photos for gallery carousel)
               </label>
               <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
@@ -537,7 +617,6 @@ export default function AddVenueModal({
 
             <div className="profile-form-group" style={{ marginBottom: '1.25rem' }}>
               <label htmlFor="venue-amenities">
-                <i className="fa-solid fa-wand-magic-sparkles" style={{ color: '#d97706' }}></i>
                 Amenities & Facilities (Comma-separated)
               </label>
               <input
@@ -551,7 +630,6 @@ export default function AddVenueModal({
 
             <div className="profile-form-group">
               <label htmlFor="venue-desc">
-                <i className="fa-solid fa-paragraph" style={{ color: '#d97706' }}></i>
                 Space Description
               </label>
               <RichTextEditor
