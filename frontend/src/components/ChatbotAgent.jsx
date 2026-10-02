@@ -4,7 +4,6 @@ export default function ChatbotAgent({ currentUser, setActiveTab, events = [] })
   const [isOpen, setIsOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(1);
 
   // Generate a user handle for display (e.g. User_8s27gk or Logged-in Name)
   const [userHandle] = useState(() => {
@@ -51,9 +50,6 @@ export default function ChatbotAgent({ currentUser, setActiveTab, events = [] })
 
   const toggleOpen = () => {
     setIsOpen(!isOpen);
-    if (!isOpen) {
-      setUnreadCount(0);
-    }
   };
 
   const handleClearHistory = () => {
@@ -314,7 +310,6 @@ export default function ChatbotAgent({ currentUser, setActiveTab, events = [] })
           title="Open Welcome Agent"
         >
           <div className="chatbot-fab-icon">💬</div>
-          {unreadCount > 0 && <span className="chatbot-fab-badge">{unreadCount}</span>}
           <span className="chatbot-fab-pulse"></span>
         </button>
       )}
