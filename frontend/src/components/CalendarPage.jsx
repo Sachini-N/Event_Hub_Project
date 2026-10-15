@@ -393,12 +393,6 @@ export default function CalendarPage({
                     >
                       View Event
                     </button>
-                    <button
-                      className="btn-side-gcal"
-                      onClick={() => openGoogleCalendar(selectedEvent)}
-                    >
-                      <i className="fa-regular fa-calendar-plus"></i> Add to Google Calendar
-                    </button>
                   </div>
                 </div>
               </div>

@@ -1,5 +1,6 @@
 const User = require("../model/User");
 const { signToken } = require("../middleware/authMiddleware");
+const crypto = require("crypto");
 
 // POST /api/auth/signup
 const signupUser = async (req, res) => {
@@ -451,6 +452,172 @@ const sendEmailCredentials = async (req, res) => {
   }
 };
 
+// POST /api/auth/forgot-password (Request 6-digit verification code to reset password)
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Please provide your email address." });
+    }
+
+    const emailClean = email.toLowerCase().trim();
+    const user = await User.findOne({ email: emailClean });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "No registered account found with this email address." });
+    }
+
+    // Generate secure 6-digit numeric OTP code
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Hash OTP with sha256 before saving to database
+    const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
+
+    // Code expires in 15 minutes
+    const expires = new Date(Date.now() + 15 * 60 * 1000);
+
+    user.resetPasswordOtp = hashedOtp;
+    user.resetPasswordOtpExpires = expires;
+    await user.save();
+
+    console.log(`[AUTH] Password reset code generated for ${user.email}: ${otp}`);
+
+    const emailSubject = `🔐 TRACE Event Hub - Password Reset Code: ${otp}`;
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+      <body style="font-family: Arial, sans-serif; background-color: #f1f5f9; padding: 24px; color: #334155; margin: 0;">
+        <div style="max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 14px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 4px 16px rgba(0,0,0,0.08);">
+          <div style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: #ffffff; padding: 28px 20px; text-align: center;">
+            <h2 style="margin: 0; font-size: 22px; font-weight: 800; letter-spacing: 0.5px;">🔐 TRACE Event Hub</h2>
+            <p style="margin: 6px 0 0 0; color: #c7d2fe; font-size: 13px;">Security & Password Recovery</p>
+          </div>
+          <div style="padding: 28px 24px;">
+            <p style="font-size: 15px; margin-top: 0;">Hello <strong>${user.name}</strong>,</p>
+            <p style="font-size: 14px; color: #475569; line-height: 1.5;">
+              We received a request to reset the password for your TRACE Event Hub account (<strong>${user.email}</strong>).
+            </p>
+            <p style="font-size: 14px; color: #475569; line-height: 1.5;">
+              Please use the 6-digit verification code below to set your new password:
+            </p>
+
+            <div style="background: #f8fafc; border: 2px dashed #6366f1; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0;">
+              <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">Your 6-Digit Reset Code</div>
+              <div style="font-size: 36px; font-weight: 800; letter-spacing: 10px; color: #4338ca; font-family: monospace;">${otp}</div>
+              <div style="font-size: 12px; color: #e11d48; margin-top: 10px; font-weight: 600;">⏰ Valid for 15 minutes only</div>
+            </div>
+
+            <p style="font-size: 13px; color: #64748b; margin-bottom: 0; line-height: 1.5;">
+              If you didn't request a password reset, you can safely ignore this email. Your current password remains active and secure.
+            </p>
+          </div>
+          <div style="background: #f8fafc; padding: 16px 24px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #94a3b8;">
+            TRACE Expert City, Colombo &bull; Enterprise Event Hub &bull; Need help? Contact <a href="mailto:admin@trace.lk" style="color:#6366f1;text-decoration:none;">admin@trace.lk</a>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const emailResult = await sendRealEmail({
+      to: user.email,
+      subject: emailSubject,
+      html: emailHtml,
+    });
+
+    res.json({
+      success: true,
+      message: `A 6-digit verification code has been sent to ${user.email}.`,
+      previewUrl: emailResult.previewUrl || null,
+      devOtp: process.env.NODE_ENV !== "production" ? otp : undefined,
+    });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({ success: false, message: "Failed to send password reset code.", error: error.message });
+  }
+};
+
+// POST /api/auth/verify-reset-otp (Validate 6-digit verification code)
+const verifyResetOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ success: false, message: "Please provide email and the 6-digit code." });
+    }
+
+    const emailClean = email.toLowerCase().trim();
+    const user = await User.findOne({ email: emailClean });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User account not found." });
+    }
+
+    if (!user.resetPasswordOtp || !user.resetPasswordOtpExpires) {
+      return res.status(400).json({ success: false, message: "No active password reset request found. Please request a new code." });
+    }
+
+    if (new Date() > user.resetPasswordOtpExpires) {
+      return res.status(400).json({ success: false, message: "Verification code has expired. Please request a new one." });
+    }
+
+    const hashedInputOtp = crypto.createHash("sha256").update(otp.trim()).digest("hex");
+    if (user.resetPasswordOtp !== hashedInputOtp) {
+      return res.status(400).json({ success: false, message: "Invalid verification code. Please check and try again." });
+    }
+
+    res.json({ success: true, message: "Verification code validated successfully." });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Verification failed.", error: error.message });
+  }
+};
+
+// POST /api/auth/reset-password (Set new password using verified 6-digit code)
+const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ success: false, message: "Please provide email, verification code, and new password." });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: "Password must be at least 6 characters long." });
+    }
+
+    const emailClean = email.toLowerCase().trim();
+    const user = await User.findOne({ email: emailClean });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User account not found." });
+    }
+
+    if (!user.resetPasswordOtp || !user.resetPasswordOtpExpires) {
+      return res.status(400).json({ success: false, message: "No active password reset request found. Please request a new code." });
+    }
+
+    if (new Date() > user.resetPasswordOtpExpires) {
+      return res.status(400).json({ success: false, message: "Verification code has expired. Please request a new code." });
+    }
+
+    const hashedInputOtp = crypto.createHash("sha256").update(otp.trim()).digest("hex");
+    if (user.resetPasswordOtp !== hashedInputOtp) {
+      return res.status(400).json({ success: false, message: "Invalid verification code. Please check and try again." });
+    }
+
+    // Set new password (the pre-save hook will automatically hash with bcrypt)
+    user.password = newPassword;
+    user.resetPasswordOtp = undefined;
+    user.resetPasswordOtpExpires = undefined;
+    await user.save();
+
+    console.log(`[AUTH] Password successfully reset for user ${user.email}`);
+
+    res.json({
+      success: true,
+      message: "Your password has been successfully reset! You can now log in with your new password.",
+    });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({ success: false, message: "Failed to reset password.", error: error.message });
+  }
+};
+
 module.exports = {
   signupUser,
   loginUser,
@@ -462,4 +629,8 @@ module.exports = {
   updateUserAdminDetails,
   createBranchAdmin,
   sendEmailCredentials,
+  forgotPassword,
+  verifyResetOtp,
+  resetPassword,
 };
+

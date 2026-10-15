@@ -1,7 +1,20 @@
 const express = require("express");
 const router = express.Router();
 const rateLimit = require("express-rate-limit");
-const { signupUser, loginUser, getMe, updateUserProfile, getAllUsers, deleteUser, updateUserAdminDetails, createBranchAdmin, sendEmailCredentials } = require("../controlers/authController");
+const {
+  signupUser,
+  loginUser,
+  getMe,
+  updateUserProfile,
+  getAllUsers,
+  deleteUser,
+  updateUserAdminDetails,
+  createBranchAdmin,
+  sendEmailCredentials,
+  forgotPassword,
+  verifyResetOtp,
+  resetPassword,
+} = require("../controlers/authController");
 const { protect, authorize } = require("../middleware/authMiddleware");
 
 // Rate limiting for auth endpoints (prevents brute-force attacks)
@@ -18,6 +31,15 @@ router.post("/signup", authLimiter, signupUser);
 
 // POST /api/auth/login
 router.post("/login", authLimiter, loginUser);
+
+// POST /api/auth/forgot-password (Request reset code)
+router.post("/forgot-password", authLimiter, forgotPassword);
+
+// POST /api/auth/verify-reset-otp (Validate reset code)
+router.post("/verify-reset-otp", authLimiter, verifyResetOtp);
+
+// POST /api/auth/reset-password (Set new password)
+router.post("/reset-password", authLimiter, resetPassword);
 
 // POST /api/auth/create-branch-admin (Admin only)
 router.post("/create-branch-admin", protect, authorize("admin", "super_admin"), createBranchAdmin);

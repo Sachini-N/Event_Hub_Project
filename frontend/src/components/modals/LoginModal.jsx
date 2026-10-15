@@ -5,6 +5,8 @@ export default function LoginModal({
   onClose,
   onLoginSuccess,
   switchToSignup,
+  openForgotPassword,
+  initialEmail = '',
   showToast,
 }) {
   const [email, setEmail] = useState('');
@@ -19,7 +21,9 @@ export default function LoginModal({
       const isRemembered = localStorage.getItem('eventhub_remember_me') === 'true';
       const savedEmail = localStorage.getItem('eventhub_remember_email') || '';
 
-      if (isRemembered && savedEmail) {
+      if (initialEmail) {
+        setEmail(initialEmail);
+      } else if (isRemembered && savedEmail) {
         setEmail(savedEmail);
         setRememberMe(true);
       } else {
@@ -30,7 +34,7 @@ export default function LoginModal({
       setPassword('');
       setShowPassword(false);
     }
-  }, [isOpen]);
+  }, [isOpen, initialEmail]);
 
   const handleClose = () => {
     const isRemembered = localStorage.getItem('eventhub_remember_me') === 'true';
@@ -287,12 +291,31 @@ export default function LoginModal({
               />
               Remember me
             </label>
-            <span
-              style={{ color: '#5d4df6', fontWeight: '600', cursor: 'pointer' }}
-              onClick={() => showToast('Please contact TRACE IT support or check credentials.', 'info')}
+            <button
+              type="button"
+              onClick={() => {
+                if (openForgotPassword) {
+                  openForgotPassword(email.trim());
+                } else {
+                  showToast('Please contact TRACE IT support or check credentials.', 'info');
+                }
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                color: '#5d4df6',
+                fontWeight: '700',
+                cursor: 'pointer',
+                fontSize: '0.82rem',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
             >
-              Need help?
-            </span>
+              Forgot Password?
+            </button>
           </div>
 
           {/* Full-Width Gradient Action Button */}

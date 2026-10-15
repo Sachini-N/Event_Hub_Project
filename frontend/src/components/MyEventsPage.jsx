@@ -62,6 +62,55 @@ export default function MyEventsPage({
     }
   }, [currentUser]);
 
+  const handleAddToGoogleCalendar = (eventItem) => {
+    try {
+      const eventDate = new Date(eventItem.date || Date.now());
+      let startHours = 10;
+      let startMinutes = 0;
+
+      if (eventItem.time) {
+        const timeMatch = eventItem.time.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+        if (timeMatch) {
+          let h = parseInt(timeMatch[1], 10);
+          const m = parseInt(timeMatch[2], 10);
+          const meridiem = timeMatch[3] ? timeMatch[3].toUpperCase() : null;
+          if (meridiem === 'PM' && h < 12) h += 12;
+          if (meridiem === 'AM' && h === 12) h = 0;
+          startHours = h;
+          startMinutes = m;
+        }
+      }
+
+      const start = new Date(eventDate);
+      start.setHours(startHours, startMinutes, 0, 0);
+      const end = new Date(start.getTime() + 2 * 60 * 60 * 1000); // 2 hours default
+
+      const pad = (n) => String(n).padStart(2, '0');
+      const toUtc = (d) =>
+        `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}00Z`;
+
+      const startUtc = toUtc(start);
+      const endUtc = toUtc(end);
+
+      const title = encodeURIComponent(eventItem.title || 'TRACE Event');
+      const location = encodeURIComponent(eventItem.location || 'TRACE Expert City, Colombo');
+      const details = encodeURIComponent(
+        `Registered Event Pass on TRACE Event Hub\nTicket: ${eventItem.ticketId || 'CONFIRMED'}\nTime: ${eventItem.time || '10:00 AM'}\nLocation: ${eventItem.location || 'TRACE Expert City'}\n\nOrganized by TRACE Expert City.`
+      );
+
+      const googleCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startUtc}/${endUtc}&details=${details}&location=${location}`;
+
+      window.open(googleCalUrl, '_blank', 'noopener,noreferrer');
+
+      if (showToast) {
+        showToast('Opening Google Calendar to save event...', 'success');
+      }
+    } catch (err) {
+      console.error('Error adding to Google Calendar:', err);
+      downloadIcs(eventItem);
+    }
+  };
+
   const downloadIcs = (eventItem) => {
     const eventDate = new Date(eventItem.date || Date.now());
     const formatDateForIcs = (date) => date.toISOString().replace(/-|:|\.\d\d\d/g, '');
@@ -243,8 +292,8 @@ export default function MyEventsPage({
                     <span>Reminder enabled</span>
                   </div>
 
-                  {/* Action Buttons Row */}
-                  <div className="my-card-actions-row" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {/* Action Buttons Row - Horizontal single line */}
+                  <div className="my-card-actions-row">
                     <button
                       className="btn-my-view-event"
                       onClick={() => onViewEvent && onViewEvent(item)}
@@ -253,29 +302,19 @@ export default function MyEventsPage({
                     </button>
                     <button
                       className="btn-my-add-calendar"
-                      onClick={() => {
-                        if (onOpenCalendar) onOpenCalendar();
-                      }}
+                      onClick={() => handleAddToGoogleCalendar(item)}
+                      title="Save this event directly to your Google Calendar"
                     >
-                      Add to Calendar
+                      <i className="fa-brands fa-google"></i>
+                      <span>Add to Calendar</span>
                     </button>
                     {activeSubTab === 'upcoming' && (
                       <button
                         className="btn-my-cancel-pass"
                         onClick={() => handleCancelRegistration(item._id, item.title)}
-                        style={{
-                          background: 'transparent',
-                          border: '1px solid #ef4444',
-                          color: '#ef4444',
-                          padding: '6px 12px',
-                          borderRadius: '20px',
-                          fontSize: '0.8rem',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                        }}
+                        title="Cancel this registration"
                       >
-                        Cancel Pass
+                        Cancel
                       </button>
                     )}
                   </div>

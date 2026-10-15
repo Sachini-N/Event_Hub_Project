@@ -17,15 +17,12 @@ export default function HeroSection({ scrollToEvents }) {
       <div className="hero-video-wrapper">
         <video
           ref={videoRef}
-          className={`hero-video-element ${isVideoLoaded ? 'video-ready' : 'video-loading'}`}
+          className="hero-video-element video-ready"
           autoPlay
           loop
           muted
           playsInline
           preload="auto"
-          poster="/hero-bg-1.jpg"
-          onLoadedData={() => setIsVideoLoaded(true)}
-          onCanPlay={() => setIsVideoLoaded(true)}
         >
           <source src={traceVideo} type="video/mp4" />
           <source src="/trace-video.mp4" type="video/mp4" />

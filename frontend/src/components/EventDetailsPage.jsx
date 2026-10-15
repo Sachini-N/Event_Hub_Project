@@ -151,6 +151,53 @@ export default function EventDetailsPage({
     });
   };
 
+  const handleAddToGoogleCalendar = () => {
+    const evt = activeEvent;
+    if (!evt) return;
+    try {
+      const eventDate = new Date(evt.date || Date.now());
+      let startHours = 10;
+      let startMinutes = 0;
+
+      if (evt.time) {
+        const timeMatch = evt.time.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+        if (timeMatch) {
+          let h = parseInt(timeMatch[1], 10);
+          const m = parseInt(timeMatch[2], 10);
+          const meridiem = timeMatch[3] ? timeMatch[3].toUpperCase() : null;
+          if (meridiem === 'PM' && h < 12) h += 12;
+          if (meridiem === 'AM' && h === 12) h = 0;
+          startHours = h;
+          startMinutes = m;
+        }
+      }
+
+      const start = new Date(eventDate);
+      start.setHours(startHours, startMinutes, 0, 0);
+      const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+
+      const pad = (n) => String(n).padStart(2, '0');
+      const toUtc = (d) =>
+        `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}00Z`;
+
+      const startUtc = toUtc(start);
+      const endUtc = toUtc(end);
+
+      const title = encodeURIComponent(evt.title || 'TRACE Event');
+      const location = encodeURIComponent(evt.location || 'TRACE Expert City, Colombo');
+      const details = encodeURIComponent(
+        `Registered Event on TRACE Event Hub\nTicket: ${registrationData?.ticketId || 'CONFIRMED'}\nTime: ${evt.time || '10:00 AM'}\nLocation: ${evt.location || 'TRACE Expert City'}\n\nOrganized by TRACE Expert City.`
+      );
+
+      const googleCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startUtc}/${endUtc}&details=${details}&location=${location}`;
+
+      window.open(googleCalUrl, '_blank', 'noopener,noreferrer');
+      if (showToast) showToast('Opening Google Calendar...', 'success');
+    } catch (e) {
+      if (onOpenCalendar) onOpenCalendar();
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -333,11 +380,10 @@ export default function EventDetailsPage({
                 <div className="success-actions-row">
                   <button
                     className="btn-add-calendar-blue"
-                    onClick={() => {
-                      if (onOpenCalendar) onOpenCalendar();
-                    }}
+                    onClick={handleAddToGoogleCalendar}
+                    title="Save event directly to your Google Calendar"
                   >
-                    <i className="fa-regular fa-calendar-plus"></i> Add to Calendar
+                    <i className="fa-brands fa-google"></i> Add to Calendar
                   </button>
                   <button className="btn-view-my-events-outline" onClick={onOpenMyEvents}>
                     View My Events

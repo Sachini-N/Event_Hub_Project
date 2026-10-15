@@ -21,6 +21,7 @@ import MyRegistrationsModal from './components/modals/MyRegistrationsModal';
 import AdminModal from './components/modals/AdminModal';
 import LoginModal from './components/modals/LoginModal';
 import SignupModal from './components/modals/SignupModal';
+import ForgotPasswordModal from './components/modals/ForgotPasswordModal';
 import LogoutConfirmModal from './components/modals/LogoutConfirmModal';
 import ToastNotification from './components/modals/ToastNotification';
 import ChatbotAgent from './components/ChatbotAgent';
@@ -95,6 +96,9 @@ export default function App() {
   const [showAdmin, setShowAdmin] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [loginPrefillEmail, setLoginPrefillEmail] = useState('');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Toast State
@@ -120,9 +124,18 @@ export default function App() {
     const handleHashChange = () => {
       const rawHash = window.location.hash || '#home';
       const cleanHash = rawHash.split('?')[0];
+      if (cleanHash === '#forgot-password' || cleanHash === '#reset-password') {
+        setShowForgotPassword(true);
+      }
       const targetTab = HASH_TO_TAB_MAP[cleanHash] || 'home';
       setActiveTabState(targetTab);
     };
+
+    // Check initial hash on load
+    const initialRaw = window.location.hash || '';
+    if (initialRaw.startsWith('#forgot-password') || initialRaw.startsWith('#reset-password')) {
+      setShowForgotPassword(true);
+    }
 
     window.addEventListener('popstate', handleHashChange);
     window.addEventListener('hashchange', handleHashChange);
@@ -582,9 +595,27 @@ export default function App() {
         isOpen={showLogin}
         onClose={() => setShowLogin(false)}
         onLoginSuccess={handleAuthSuccess}
+        initialEmail={loginPrefillEmail}
+        openForgotPassword={(prefillEmail) => {
+          setShowLogin(false);
+          setForgotPasswordEmail(prefillEmail || '');
+          setShowForgotPassword(true);
+        }}
         switchToSignup={() => {
           setShowLogin(false);
           setShowSignup(true);
+        }}
+        showToast={showToast}
+      />
+
+      <ForgotPasswordModal
+        isOpen={showForgotPassword}
+        onClose={() => setShowForgotPassword(false)}
+        initialEmail={forgotPasswordEmail}
+        switchToLogin={(prefillEmail) => {
+          setShowForgotPassword(false);
+          setLoginPrefillEmail(prefillEmail || '');
+          setShowLogin(true);
         }}
         showToast={showToast}
       />
