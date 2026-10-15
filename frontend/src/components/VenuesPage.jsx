@@ -251,8 +251,8 @@ export default function VenuesPage({ showToast }) {
     return () => clearInterval(timer);
   }, [activeVenueModal]);
 
-  const fetchVenues = async () => {
-    if (venues.length === 0) {
+  const fetchVenues = async (silent = false) => {
+    if (!silent && venues.length === 0) {
       setLoading(true);
     }
     try {
@@ -266,7 +266,7 @@ export default function VenuesPage({ showToast }) {
       }
     } catch (err) {
       console.error('Error fetching venues:', err);
-      if (showToast && venues.length === 0) showToast('Failed to load venue listings', 'error');
+      if (showToast && !silent && venues.length === 0) showToast('Failed to load venue listings', 'error');
     } finally {
       setLoading(false);
     }
@@ -274,6 +274,59 @@ export default function VenuesPage({ showToast }) {
 
   useEffect(() => {
     fetchVenues();
+
+    const handleLiveVenueUpdate = (updatedVenue) => {
+      if (updatedVenue && (updatedVenue._id || updatedVenue.id)) {
+        setVenues((prev) => {
+          const id = updatedVenue._id || updatedVenue.id;
+          const exists = prev.some((v) => (v._id || v.id) === id);
+          if (exists) {
+            return prev.map((v) => ((v._id || v.id) === id ? { ...v, ...updatedVenue } : v));
+          }
+          return [updatedVenue, ...prev];
+        });
+      }
+      fetchVenues(true);
+    };
+
+    const handleCustomVenueEvent = (e) => handleLiveVenueUpdate(e.detail);
+    window.addEventListener('eventhub_venues_updated', handleCustomVenueEvent);
+
+    let bc = null;
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        bc = new BroadcastChannel('eventhub_channel');
+        bc.onmessage = (msg) => {
+          if (msg.data?.type === 'VENUE_UPDATED') {
+            handleLiveVenueUpdate(msg.data.detail);
+          }
+        };
+      } catch (err) {}
+    }
+
+    const handleStorage = (e) => {
+      if (e.key === 'eventhub_last_venue_update' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (parsed?.detail) handleLiveVenueUpdate(parsed.detail);
+        } catch (err) {}
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchVenues(true);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('eventhub_venues_updated', handleCustomVenueEvent);
+      window.removeEventListener('storage', handleStorage);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (bc) bc.close();
+    };
   }, []);
 
   // Filter logic

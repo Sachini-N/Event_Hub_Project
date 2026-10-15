@@ -128,6 +128,29 @@ export function notifyEventUpdated(detail) {
 }
 
 /**
+ * Broadcasts a venue change (update, create, delete) across components and tabs immediately.
+ * @param {Object} detail - The updated/created venue or { _id, deleted: true }
+ */
+export function notifyVenueUpdated(detail) {
+  if (!detail) return;
+  try {
+    sessionStorage.removeItem('eventhub_cached_venues');
+    window.dispatchEvent(new CustomEvent('eventhub_venues_updated', { detail }));
+    if (typeof BroadcastChannel !== 'undefined') {
+      const bc = new BroadcastChannel('eventhub_channel');
+      bc.postMessage({ type: 'VENUE_UPDATED', detail });
+      bc.close();
+    }
+    localStorage.setItem(
+      'eventhub_last_venue_update',
+      JSON.stringify({ detail, timestamp: Date.now() })
+    );
+  } catch (err) {
+    console.error('Error dispatching venue update broadcast:', err);
+  }
+}
+
+/**
  * Optimizes image URLs for fast web delivery (Cloudinary WebP/AVIF auto-format and Unsplash width/quality).
  * @param {string} url - Original image URL
  * @param {number} width - Maximum display width

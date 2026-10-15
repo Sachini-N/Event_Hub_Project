@@ -104,8 +104,12 @@ export default function ChatbotAgent({ currentUser, setActiveTab, events = [] })
       };
     }
 
-    // Filter non-draft events from real DB state
-    const validEvents = (events || []).filter((e) => e.status !== 'draft');
+    // Filter non-draft and upcoming events from real DB state
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const upcomingEvents = (events || [])
+      .filter((e) => e.status !== 'draft' && new Date(e.date) >= today)
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
 
     // 4. Next event query (REAL DB DATA ONLY)
     if (
@@ -117,33 +121,58 @@ export default function ChatbotAgent({ currentUser, setActiveTab, events = [] })
       q.includes('ilanga') ||
       q.includes('mokadda')
     ) {
-      if (!validEvents || validEvents.length === 0) {
+      if (!upcomingEvents || upcomingEvents.length === 0) {
         return {
           reply: `📅 Currently, there are no upcoming events in the database.`,
           quickPrompts: ['🏢 Explore Venues'],
         };
       }
 
-      const nextEvt = validEvents[0];
+      const nextEvt = upcomingEvents[0];
       const evtDateStr = nextEvt.date ? new Date(nextEvt.date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : 'Date TBD';
       const speakerInfo = nextEvt.speaker && nextEvt.speaker.name ? `\n🎤 **Speaker:** ${nextEvt.speaker.name} (${nextEvt.speaker.role || 'Guest'})` : '';
+      const cleanDescription = (nextEvt.description || "").replace(/<[^>]*>?/gm, '').substring(0, 200) + '...';
 
       return {
-        reply: `🚀 **Next Event in Database:**\n\n📌 **${nextEvt.title}**\n📅 **Date:** ${evtDateStr}\n⏰ **Time:** ${nextEvt.time || 'TBA'}\n📍 **Location:** ${nextEvt.location}\n🏷️ **Category:** ${nextEvt.category || 'General'}${speakerInfo}\n👥 **Seats:** ${nextEvt.registeredCount || 0}/${nextEvt.capacity || 100} Registered\n\n📝 *Description:* ${nextEvt.description}\n\n💡 *Tip: Click **Upcoming Events** to view all events!*`,
+        reply: `🚀 **Next Event in Database:**\n\n📌 **${nextEvt.title}**\n📅 **Date:** ${evtDateStr}\n⏰ **Time:** ${nextEvt.time || 'TBA'}\n📍 **Location:** ${nextEvt.location}\n🏷️ **Category:** ${nextEvt.category || 'General'}${speakerInfo}\n👥 **Seats:** ${nextEvt.registeredCount || 0}/${nextEvt.capacity || 100} Registered\n\n📝 *Description:* ${cleanDescription}\n\n💡 *Tip: Click **Upcoming Events** to view all events!*`,
         quickPrompts: ['📅 Upcoming Events', '🏢 Explore Venues'],
       };
     }
 
-    // 5. Upcoming events (REAL DB DATA ONLY)
-    if (q.includes('upcoming') || q.includes('events') || q.includes('schedule') || q.includes('monawada')) {
-      if (!validEvents || validEvents.length === 0) {
+    // 5. Past events search
+    if (q.includes('past') || q.includes('previous') || q.includes('happened') || q.includes('completed')) {
+      const pastEvents = (events || [])
+        .filter((e) => e.status !== 'draft' && new Date(e.date) < today)
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      if (!pastEvents || pastEvents.length === 0) {
+        return {
+          reply: `📅 Currently, there are no past events in the database.`,
+          quickPrompts: ['📅 Upcoming Events', '🏢 Explore Venues'],
+        };
+      }
+
+      const eventListStr = pastEvents
+        .slice(0, 5)
+        .map((e, i) => `**${i + 1}. ${e.title}**\n📅 ${new Date(e.date).toLocaleDateString()}`)
+        .join('\n\n');
+
+      return {
+        reply: `🕰️ **Past Events in Database (${pastEvents.length}):**\n\n${eventListStr}\n\n💡 *Ask me about "upcoming events" to see what's next!*`,
+        quickPrompts: ['📅 Upcoming Events', '🏢 Explore Venues'],
+      };
+    }
+
+    // 6. Upcoming events (REAL DB DATA ONLY)
+    if (q.includes('upcoming') || q.includes('event') || q.includes('schedule') || q.includes('monawada')) {
+      if (!upcomingEvents || upcomingEvents.length === 0) {
         return {
           reply: `📅 Currently, there are no upcoming events in the database.`,
           quickPrompts: ['🏢 Explore Venues'],
         };
       }
 
-      const eventListStr = validEvents
+      const eventListStr = upcomingEvents
         .slice(0, 5)
         .map(
           (e, i) =>
@@ -152,7 +181,7 @@ export default function ChatbotAgent({ currentUser, setActiveTab, events = [] })
         .join('\n\n');
 
       return {
-        reply: `🎉 **Upcoming Events in Database (${validEvents.length}):**\n\n${eventListStr}\n\n💡 *Ask me "what is next event" for details!*`,
+        reply: `🎉 **Upcoming Events in Database (${upcomingEvents.length}):**\n\n${eventListStr}\n\n💡 *Ask me "what is next event" for details!*`,
         quickPrompts: ['What is next event?', '🏢 Explore Venues'],
       };
     }
@@ -166,7 +195,7 @@ export default function ChatbotAgent({ currentUser, setActiveTab, events = [] })
     }
 
     // 7. Search events by keyword in real DB events array
-    const searchMatches = validEvents.filter(
+    const searchMatches = (events || []).filter(
       (e) =>
         (e.title && e.title.toLowerCase().includes(q)) ||
         (e.description && e.description.toLowerCase().includes(q)) ||
@@ -210,8 +239,7 @@ export default function ChatbotAgent({ currentUser, setActiveTab, events = [] })
     setLoading(true);
 
     try {
-      const isDevHost = window.location.port === '3000' || window.location.port === '5173';
-      const apiUrl = isDevHost ? 'http://localhost:5000/api/chat/message' : '/api/chat/message';
+      const apiUrl = '/api/chat/message';
 
       const response = await fetch(apiUrl, {
         method: 'POST',

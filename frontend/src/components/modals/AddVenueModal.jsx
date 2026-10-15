@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import RichTextEditor from '../RichTextEditor';
+import { notifyVenueUpdated } from '../../utils/eventUtils';
 
 export const PRESET_BRANCHES = [
   'TRACE Expert City Colombo 10',
@@ -261,6 +262,7 @@ export default function AddVenueModal({
       if (result.success) {
         const msg = isEdit ? `Venue "${name}" updated successfully!` : `Venue "${name}" added successfully!`;
         if (showToast) showToast(msg, 'success');
+        notifyVenueUpdated(result.data);
         if (isEdit && onVenueUpdated) onVenueUpdated(result.data);
         else if (onVenueCreated) onVenueCreated(result.data);
         onClose();

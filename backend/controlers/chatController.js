@@ -1,6 +1,8 @@
 const Event = require("../model/Event");
 const Venue = require("../model/Venue");
 const Registration = require("../model/Registration");
+const { getEventsCache } = require("./eventController");
+const { getVenuesCache } = require("./venueController");
 
 /**
  * Helper to call Google Gemini API if GEMINI_API_KEY is defined in environment.
@@ -10,35 +12,23 @@ async function getGeminiResponse(userPrompt, conversationHistory, systemContext)
   if (!apiKey) return null;
 
   try {
-    const contents = [
-      {
-        role: "user",
-        parts: [
-          {
-            text: `You are 'Welcome Agent', the intelligent AI assistant for TRACE Sri Lanka & EventHub ecosystem. 
+    const systemPromptText = `You are 'Welcome Agent', the intelligent AI assistant for TRACE Sri Lanka & EventHub ecosystem. 
+Current Server Date and Time: ${new Date().toString()}
 System Knowledge Context (ONLY USE THIS REAL DATABASE DATA):
 ${systemContext}
 
 Instructions:
-- When asked about events or next event, ONLY mention the exact real events present in the System Knowledge Context. Do NOT invent or make up imaginary events.
+- When asked about events, ONLY mention the exact real events present in the System Knowledge Context. Do NOT invent or make up imaginary events.
+- If asked about the "next" event, ONLY show the single most immediate upcoming event. Do NOT list all upcoming events.
+- If asked about "upcoming events" in general, list the upcoming events from the context.
 - If there are no events listed in the database context, clearly state: "Currently, there are no events stored in the database."
 - When greeted with "hi trace" or "hi", respond politely:
   "Hi, thank you for reaching out. You are currently being assisted by our AI assistant.
 
-Hello! How can I help you today with information about TRACE and its innovation ecosystem?"
-- Format responses clearly with bold text and emojis.`,
-          },
-        ],
-      },
-      {
-        role: "model",
-        parts: [
-          {
-            text: "Hi, thank you for reaching out. You are currently being assisted by our AI assistant.\n\nHello! How can I help you today with information about TRACE and its innovation ecosystem?",
-          },
-        ],
-      },
-    ];
+- Format responses beautifully. Keep sentences simple, nice, and very easy to understand.
+- Use a clean, modern style with emojis, bullet points, and bold text for readability. Avoid long, overwhelming paragraphs.`;
+
+    const contents = [];
 
     if (Array.isArray(conversationHistory)) {
       conversationHistory.slice(-6).forEach((msg) => {
@@ -52,20 +42,36 @@ Hello! How can I help you today with information about TRACE and its innovation 
 
     contents.push({ role: "user", parts: [{ text: userPrompt }] });
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents }),
+    const modelsToTry = ["gemini-3.5-flash-lite", "gemini-flash-latest", "gemini-3.8-flash"];
+    for (const modelName of modelsToTry) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+              systemInstruction: {
+                role: "system",
+                parts: [{ text: systemPromptText }]
+              },
+              contents 
+            }),
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const botReply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (botReply) return botReply;
+        } else {
+          console.warn(`Gemini API ${modelName} returned status:`, response.status);
+        }
+      } catch (err) {
+        console.warn(`Error with Gemini ${modelName}:`, err.message);
       }
-    );
-
-    if (!response.ok) return null;
-
-    const data = await response.json();
-    const botReply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    return botReply || null;
+    }
+    return null;
   } catch (err) {
     console.error("Gemini API error:", err.message);
     return null;
@@ -75,11 +81,8 @@ Hello! How can I help you today with information about TRACE and its innovation 
 /**
  * Smart Database Query Engine for Welcome Agent - STRICTLY READS REAL MONGO DB DATA
  */
-async function generateSmartFallbackResponse(userPrompt, dbEvents, venues) {
+async function generateSmartFallbackResponse(userPrompt, upcomingEvents, allEvents, venues) {
   const query = userPrompt.toLowerCase().trim();
-
-  // Filter non-draft events
-  const validEvents = (dbEvents || []).filter((e) => e.status !== "draft");
 
   // 1. Greeting handling (matching user reference screenshot)
   if (
@@ -106,34 +109,54 @@ async function generateSmartFallbackResponse(userPrompt, dbEvents, venues) {
   }
 
   // 3. Next event query (STRICTLY FETCHES FROM MONGO DB)
-  if (query.includes("next event") || query.includes("what is next") || query.includes("whats next") || query.includes("first event")) {
-    if (!validEvents || validEvents.length === 0) {
+  if (query.includes("next event") || query.includes("what is next") || query.includes("whats next") || query.includes("first event") || query.includes("next upcoming") || query.includes("ilanga") || query.includes("mokadda")) {
+    if (!upcomingEvents || upcomingEvents.length === 0) {
       return {
-        reply: "📅 Currently, there are no events stored in the database. Please check back later!",
+        reply: "📅 Currently, there are no upcoming events stored in the database. Please check back later!",
         quickPrompts: ["Explore Venues"],
       };
     }
 
-    const nextEvt = validEvents[0];
+    const nextEvt = upcomingEvents[0];
     const evtDateStr = nextEvt.date ? new Date(nextEvt.date).toLocaleDateString("en-US", { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : "Date TBD";
     const speakerInfo = nextEvt.speaker && nextEvt.speaker.name ? `\n🎤 **Speaker:** ${nextEvt.speaker.name} (${nextEvt.speaker.role || 'Guest'})` : "";
+    const cleanDescription = (nextEvt.description || "").replace(/<[^>]*>?/gm, '').substring(0, 200) + '...';
 
     return {
-      reply: `🚀 **Next Event in Database:**\n\n📌 **${nextEvt.title}**\n📅 **Date:** ${evtDateStr}\n⏰ **Time:** ${nextEvt.time || 'TBA'}\n📍 **Location:** ${nextEvt.location}\n🏷️ **Category:** ${nextEvt.category || 'General'}${speakerInfo}\n👥 **Registered:** ${nextEvt.registeredCount || 0}/${nextEvt.capacity || 100} Seats\n\n📝 *Description:* ${nextEvt.description}\n\n💡 *Tip: Click **Upcoming Events** in navigation to view details!*`,
+      reply: `🚀 **Next Event in Database:**\n\n📌 **${nextEvt.title}**\n📅 **Date:** ${evtDateStr}\n⏰ **Time:** ${nextEvt.time || 'TBA'}\n📍 **Location:** ${nextEvt.location}\n🏷️ **Category:** ${nextEvt.category || 'General'}${speakerInfo}\n👥 **Registered:** ${nextEvt.registeredCount || 0}/${nextEvt.capacity || 100} Seats\n\n📝 *Description:* ${cleanDescription}\n\n💡 *Tip: Click **Upcoming Events** in navigation to view details!*`,
       quickPrompts: ["📅 All Upcoming Events", "🏢 Explore Venues"],
     };
   }
 
-  // 4. Upcoming events search (STRICTLY LISTS REAL MONGO DB EVENTS)
-  if (query.includes("upcoming") || query.includes("event") || query.includes("schedule")) {
-    if (!validEvents || validEvents.length === 0) {
+  // 4. Past events search
+  if (query.includes("past") || query.includes("previous") || query.includes("happened") || query.includes("completed")) {
+    const pEvents = allEvents.filter(e => new Date(e.date) < new Date().setHours(0,0,0,0));
+    if (!pEvents || pEvents.length === 0) {
       return {
-        reply: "📅 Currently, there are no events stored in the database.",
+        reply: "📅 Currently, there are no past events stored in the database.",
+        quickPrompts: ["Upcoming Events", "Explore Venues"],
+      };
+    }
+    const eventListStr = pEvents
+      .slice(0, 5)
+      .map((e, i) => `**${i + 1}. ${e.title}**\n📅 ${new Date(e.date).toLocaleDateString()}`)
+      .join("\n\n");
+    return {
+      reply: `🕰️ **Past Events in Database (${pEvents.length}):**\n\n${eventListStr}\n\n💡 *Ask me about upcoming events to see what's next!*`,
+      quickPrompts: ["Upcoming Events", "Explore Venues"],
+    };
+  }
+
+  // 5. Upcoming events search (STRICTLY LISTS REAL MONGO DB EVENTS)
+  if (query.includes("upcoming") || query.includes("event") || query.includes("schedule") || query.includes("monawada")) {
+    if (!upcomingEvents || upcomingEvents.length === 0) {
+      return {
+        reply: "📅 Currently, there are no upcoming events stored in the database.",
         quickPrompts: ["Explore Venues"],
       };
     }
 
-    const eventListStr = validEvents
+    const eventListStr = upcomingEvents
       .map(
         (e, i) =>
           `**${i + 1}. ${e.title}**\n📍 *${e.location}* | 📅 ${new Date(e.date).toLocaleDateString()} | ⏰ ${e.time}\n👥 ${e.registeredCount || 0}/${e.capacity || 100} Registered`
@@ -141,7 +164,7 @@ async function generateSmartFallbackResponse(userPrompt, dbEvents, venues) {
       .join("\n\n");
 
     return {
-      reply: `🎉 **Events Stored in Database (${validEvents.length}):**\n\n${eventListStr}\n\n💡 *Ask me "what is next event" for details on the immediate next event!*`,
+      reply: `🎉 **Upcoming Events Stored in Database (${upcomingEvents.length}):**\n\n${eventListStr}\n\n💡 *Ask me "what is next event" for details on the immediate next event!*`,
       quickPrompts: ["What is next event?", "🏢 Explore Venues"],
     };
   }
@@ -214,21 +237,51 @@ const handleChatMessage = async (req, res) => {
       return res.status(400).json({ success: false, message: "Message text is required." });
     }
 
-    // Query real-time MongoDB data ONLY
-    const dbEvents = await Event.find({ status: { $ne: "draft" } }).sort({ date: 1 }).lean();
-    const venues = await Venue.find({ status: "Available" }).limit(10).lean();
+    // Query real-time cached & database data
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let allDbEvents = getEventsCache();
+    if (!allDbEvents || allDbEvents.length === 0) {
+      try {
+        const fetchPromise = Event.find({ status: { $ne: "draft" } }).sort({ date: 1 }).lean();
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 2000));
+        allDbEvents = await Promise.race([fetchPromise, timeoutPromise]);
+      } catch (e) {
+        allDbEvents = getEventsCache() || [];
+      }
+    }
+    
+    // Extract upcoming and past events dynamically
+    const upcomingEvents = (allDbEvents || []).filter(e => e.status !== "draft" && new Date(e.date) >= today);
+    const pastEvents = (allDbEvents || []).filter(e => e.status !== "draft" && new Date(e.date) < today);
+
+    let venues = getVenuesCache();
+    if (!venues || venues.length === 0) {
+      try {
+        const fetchPromise = Venue.find({ status: "Available" }).limit(10).lean();
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 2000));
+        venues = await Promise.race([fetchPromise, timeoutPromise]);
+      } catch (e) {
+        venues = getVenuesCache() || [];
+      }
+    }
 
     const systemContext = `
 REAL MONGO DATABASE KNOWLEDGE:
-- Total Events in DB: ${dbEvents.length}
-- Events in DB: ${
-      dbEvents.length > 0
-        ? dbEvents.map((e) => `[ID: ${e._id}] Title: ${e.title}, Date: ${new Date(e.date).toDateString()}, Time: ${e.time}, Location: ${e.location}, Category: ${e.category}, Registered: ${e.registeredCount}/${e.capacity}`).join("; ")
-        : "NONE (Database has 0 events)"
+- Upcoming Events: ${
+      upcomingEvents.length > 0
+        ? upcomingEvents.map((e) => `[ID: ${e._id}] Title: ${e.title}, Date: ${new Date(e.date).toDateString()}, Time: ${e.time}, Location: ${e.location}, Desc: ${(e.description || "").replace(/<[^>]*>?/gm, '').substring(0, 150)}...`).join("; ")
+        : "NONE"
+    }
+- Past Events: ${
+      pastEvents.length > 0
+        ? pastEvents.map((e) => `[ID: ${e._id}] Title: ${e.title}, Date: ${new Date(e.date).toDateString()}`).join("; ")
+        : "NONE"
     }
 - Available Venues: ${
       venues.length > 0
-        ? venues.map((v) => `${v.name} (${v.rentalPrice})`).join("; ")
+        ? venues.map((v) => `[ID: ${v._id}] Name: ${v.name}, Branch: ${v.branch || 'TRACE Expert City'}, Address: ${v.address}, Capacity: ${v.capacity} persons, Rental Price: ${v.rentalPrice || (v.pricePerHour ? 'Rs. ' + Number(v.pricePerHour).toLocaleString() + ' / hr' : '')}, Type: ${v.type || 'Space'}, Amenities: ${(v.amenities || []).join(', ')}`).join("; ")
         : "NONE"
     }
 `;
@@ -237,7 +290,7 @@ REAL MONGO DATABASE KNOWLEDGE:
     let quickPrompts = ["What is next event?", "Upcoming Events", "Explore Venues"];
 
     if (!botReply) {
-      const fallbackResult = await generateSmartFallbackResponse(message, dbEvents, venues);
+      const fallbackResult = await generateSmartFallbackResponse(message, upcomingEvents, allDbEvents, venues);
       botReply = fallbackResult.reply;
       if (fallbackResult.quickPrompts) {
         quickPrompts = fallbackResult.quickPrompts;

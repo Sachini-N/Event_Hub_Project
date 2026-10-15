@@ -5,6 +5,34 @@ try {
   // Ignore in environments where setting DNS servers is restricted
 }
 
+// Monkey-patch dns.lookup for MongoDB Atlas clusters when local OS DNS fails
+const originalLookup = dns.lookup;
+dns.lookup = function (hostname, options, callback) {
+  if (typeof options === "function") {
+    callback = options;
+    options = {};
+  }
+  originalLookup(hostname, options, (err, address, family) => {
+    if (
+      err &&
+      (err.code === "ENOTFOUND" || err.code === "EAI_AGAIN") &&
+      (hostname.includes("mongodb.net") || hostname.includes("cluster0"))
+    ) {
+      dns.resolve4(hostname, (resolveErr, addresses) => {
+        if (!resolveErr && addresses && addresses.length > 0) {
+          if (options && options.all) {
+            return callback(null, addresses.map((ip) => ({ address: ip, family: 4 })));
+          }
+          return callback(null, addresses[0], 4);
+        }
+        callback(err, address, family);
+      });
+    } else {
+      callback(err, address, family);
+    }
+  });
+};
+
 require("dotenv").config();
 
 const express = require("express");
@@ -58,30 +86,41 @@ app.use(express.json({ limit: "25mb" }));
 app.use(express.urlencoded({ limit: "25mb", extended: true }));
 
 // Serverless-friendly cached MongoDB connection helper
-let isDbConnected = false;
+let dbConnectionPromise = null;
 const connectDB = async () => {
-  if (isDbConnected || mongoose.connection.readyState >= 1) return;
+  if (mongoose.connection.readyState === 1) return;
+  if (dbConnectionPromise) return dbConnectionPromise;
+
   if (!process.env.MONGO_URI) {
     throw new Error("MONGO_URI is not defined in environment variables.");
   }
-  await mongoose.connect(process.env.MONGO_URI);
-  isDbConnected = true;
-  console.log("Connected to MongoDB successfully!");
-  await seedInitialEvents();
-  await seedAdminUser();
-  await seedInitialVenues();
-  await seedInitialVenueBookings();
+
+  dbConnectionPromise = mongoose
+    .connect(process.env.MONGO_URI)
+    .then(async () => {
+      console.log("Connected to MongoDB successfully!");
+      await seedInitialEvents();
+      await seedAdminUser();
+      await seedInitialVenues();
+      await seedInitialVenueBookings();
+    })
+    .catch((err) => {
+      dbConnectionPromise = null;
+      console.error("MongoDB Connection Error:", err.message);
+      throw err;
+    });
+
+  return dbConnectionPromise;
 };
 
-// Ensure database connection before serving any request (essential for Vercel serverless cold starts)
-app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-    next();
-  } catch (err) {
-    console.error("Database connection error:", err.message);
-    res.status(500).json({ success: false, message: "Database connection failed", error: err.message });
+// Non-blocking connection trigger so API callers get instant responses
+app.use((req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    connectDB().catch((err) => {
+      console.warn("Background DB reconnect notice:", err.message);
+    });
   }
+  next();
 });
 
 // API Routes

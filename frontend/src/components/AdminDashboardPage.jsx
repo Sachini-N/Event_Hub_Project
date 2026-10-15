@@ -3,7 +3,7 @@ import EditEventModal from './modals/EditEventModal';
 import AddVenueModal, { PRESET_BRANCHES } from './modals/AddVenueModal';
 import CreateEventPage from './CreateEventPage';
 import CloudinaryUploader from './CloudinaryUploader';
-import { notifyEventUpdated } from '../utils/eventUtils';
+import { notifyEventUpdated, notifyVenueUpdated } from '../utils/eventUtils';
 
 export default function AdminDashboardPage({
   currentUser,
@@ -1864,14 +1864,17 @@ export default function AdminDashboardPage({
                                   });
                                   const data = await res.json();
                                   if (data.success) {
+                                    notifyVenueUpdated({ _id: venueId, id: venueId, deleted: true });
                                     setVenues((prev) => prev.filter((item) => (item._id || item.id) !== venueId));
                                     if (showToast) showToast(`Deleted venue "${v.name}" successfully!`, 'success');
                                   } else {
+                                    notifyVenueUpdated({ _id: venueId, id: venueId, deleted: true });
                                     setVenues((prev) => prev.filter((item) => (item._id || item.id) !== venueId));
                                     if (showToast) showToast(data.message || `Deleted venue "${v.name}"`, 'info');
                                   }
                                 } catch (err) {
                                   console.error('Error deleting venue:', err);
+                                  notifyVenueUpdated({ _id: venueId, id: venueId, deleted: true });
                                   setVenues((prev) => prev.filter((item) => (item._id || item.id) !== venueId));
                                   if (showToast) showToast(`Deleted venue "${v.name}"`, 'info');
                                 }
