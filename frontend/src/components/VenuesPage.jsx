@@ -754,7 +754,6 @@ export default function VenuesPage({ showToast }) {
         <div
           className="modal-overlay"
           onClick={() => setActiveVenueModal(null)}
-          style={{ zIndex: 1050 }}
         >
           <div
             className="modal-card venue-split-modal-card"

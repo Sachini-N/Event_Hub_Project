@@ -178,7 +178,7 @@ export default function ForgotPasswordModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1250 }}>
+    <div className="modal-overlay" onClick={onClose}>
       <div
         className="modal-card"
         onClick={(e) => e.stopPropagation()}
