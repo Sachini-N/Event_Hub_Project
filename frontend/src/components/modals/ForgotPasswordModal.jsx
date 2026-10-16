@@ -7,7 +7,8 @@ export default function ForgotPasswordModal({
   initialEmail = '',
   showToast,
 }) {
-  const [step, setStep] = useState('request'); // 'request' | 'reset' | 'success'
+  // 4-Step Wizard Flow: 'request' -> 'verify' -> 'new-password' -> 'success'
+  const [step, setStep] = useState('request');
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -16,11 +17,11 @@ export default function ForgotPasswordModal({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
-  const [devOtpHint, setDevOtpHint] = useState(null);
 
   const otpInputRef = useRef(null);
+  const newPasswordInputRef = useRef(null);
 
-  // Initialize or reset when modal opens
+  // Initialize or reset state when modal opens
   useEffect(() => {
     if (isOpen) {
       setEmail(initialEmail || '');
@@ -30,7 +31,7 @@ export default function ForgotPasswordModal({
       setConfirmPassword('');
       setShowPassword(false);
       setShowConfirmPassword(false);
-      setDevOtpHint(null);
+      setLoading(false);
     }
   }, [isOpen, initialEmail]);
 
@@ -45,7 +46,7 @@ export default function ForgotPasswordModal({
 
   if (!isOpen) return null;
 
-  // Step 1: Request 6-digit Reset OTP
+  // STEP 1: Request 6-digit Reset Code to Email
   const handleRequestOtp = async (e) => {
     if (e) e.preventDefault();
     if (!email || !email.includes('@')) {
@@ -65,10 +66,7 @@ export default function ForgotPasswordModal({
 
       if (data.success) {
         showToast(data.message || 'Verification code sent to your email!', 'success');
-        if (data.devOtp) {
-          setDevOtpHint(data.devOtp);
-        }
-        setStep('reset');
+        setStep('verify');
         setCountdown(60); // 60s cooldown before resend
         setTimeout(() => {
           if (otpInputRef.current) otpInputRef.current.focus();
@@ -90,14 +88,49 @@ export default function ForgotPasswordModal({
     await handleRequestOtp();
   };
 
-  // Step 2: Submit Reset Password with OTP
-  const handleResetPassword = async (e) => {
+  // STEP 2: Verify the 6-Digit Code (Only proceed if code is VALID)
+  const handleVerifyOtp = async (e) => {
     e.preventDefault();
 
-    if (!otp || otp.trim().length < 6) {
-      showToast('Please enter the 6-digit verification code.', 'error');
+    if (!otp || otp.trim().length !== 6) {
+      showToast('Please enter the full 6-digit verification code.', 'error');
+      if (otpInputRef.current) otpInputRef.current.focus();
       return;
     }
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/auth/verify-reset-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          otp: otp.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showToast('Code verified! Please create your new password.', 'success');
+        setStep('new-password');
+        setTimeout(() => {
+          if (newPasswordInputRef.current) newPasswordInputRef.current.focus();
+        }, 150);
+      } else {
+        showToast(data.message || 'Invalid or expired verification code.', 'error');
+      }
+    } catch (err) {
+      console.error('Verification error:', err);
+      showToast('Network error while verifying code.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // STEP 3: Submit New Password
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
 
     if (!newPassword || newPassword.length < 6) {
       showToast('New password must be at least 6 characters long.', 'error');
@@ -145,7 +178,7 @@ export default function ForgotPasswordModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1250 }}>
+    <div className="modal-overlay" onClick={onClose}>
       <div
         className="modal-card"
         onClick={(e) => e.stopPropagation()}
@@ -185,6 +218,42 @@ export default function ForgotPasswordModal({
           <i className="fa-solid fa-xmark"></i>
         </button>
 
+        {/* Step Indicator Progress Pills */}
+        {step !== 'success' && (
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '1.25rem' }}>
+            <div
+              style={{
+                width: '36px',
+                height: '4px',
+                borderRadius: '4px',
+                background: '#5d4df6',
+                transition: 'all 0.3s ease',
+              }}
+              title="Step 1: Request Code"
+            />
+            <div
+              style={{
+                width: '36px',
+                height: '4px',
+                borderRadius: '4px',
+                background: step === 'verify' || step === 'new-password' ? '#5d4df6' : '#e2e8f0',
+                transition: 'all 0.3s ease',
+              }}
+              title="Step 2: Verify Code"
+            />
+            <div
+              style={{
+                width: '36px',
+                height: '4px',
+                borderRadius: '4px',
+                background: step === 'new-password' ? '#5d4df6' : '#e2e8f0',
+                transition: 'all 0.3s ease',
+              }}
+              title="Step 3: New Password"
+            />
+          </div>
+        )}
+
         {/* Brand Header */}
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <div
@@ -204,7 +273,9 @@ export default function ForgotPasswordModal({
           >
             {step === 'success' ? (
               <i className="fa-solid fa-circle-check" style={{ color: '#10b981' }}></i>
-            ) : step === 'reset' ? (
+            ) : step === 'new-password' ? (
+              <i className="fa-solid fa-lock"></i>
+            ) : step === 'verify' ? (
               <i className="fa-solid fa-shield-halved"></i>
             ) : (
               <i className="fa-solid fa-key"></i>
@@ -213,23 +284,29 @@ export default function ForgotPasswordModal({
 
           <h2 style={{ fontSize: '1.45rem', fontWeight: '800', color: '#0f172a', margin: '0 0 0.35rem 0' }}>
             {step === 'request' && 'Forgot Password?'}
-            {step === 'reset' && 'Reset Your Password'}
+            {step === 'verify' && 'Enter Verification Code'}
+            {step === 'new-password' && 'Create New Password'}
             {step === 'success' && 'Password Reset Complete!'}
           </h2>
 
           <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0, lineHeight: 1.45 }}>
             {step === 'request' &&
               "Enter your registered account email, and we'll send a 6-digit recovery code to reset your password."}
-            {step === 'reset' && (
+            {step === 'verify' && (
               <>
-                Enter the 6-digit code sent to <strong style={{ color: '#0f172a' }}>{email}</strong> and set your new password.
+                Enter the 6-digit code sent to <strong style={{ color: '#0f172a' }}>{email}</strong> to verify your identity.
+              </>
+            )}
+            {step === 'new-password' && (
+              <>
+                Create a new strong password for <strong style={{ color: '#0f172a' }}>{email}</strong>.
               </>
             )}
             {step === 'success' && 'Your account password has been updated securely. You can now log in.'}
           </p>
         </div>
 
-        {/* STEP 1: Request Code */}
+        {/* STEP 1: Request Code Form */}
         {step === 'request' && (
           <form onSubmit={handleRequestOtp} autoComplete="off">
             <div className="form-group" style={{ marginBottom: '1.25rem' }}>
@@ -325,51 +402,11 @@ export default function ForgotPasswordModal({
           </form>
         )}
 
-        {/* STEP 2: Enter OTP & Set New Password */}
-        {step === 'reset' && (
-          <form onSubmit={handleResetPassword} autoComplete="off">
-            {/* Dev OTP auto-hint banner if local/demo */}
-            {devOtpHint && (
-              <div
-                style={{
-                  background: '#f0fdf4',
-                  border: '1px solid #bbf7d0',
-                  color: '#166534',
-                  borderRadius: '10px',
-                  padding: '0.65rem 0.85rem',
-                  fontSize: '0.82rem',
-                  marginBottom: '1rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <span>
-                  <i className="fa-solid fa-circle-info" style={{ marginRight: '6px' }}></i>
-                  Test Code: <strong>{devOtpHint}</strong>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setOtp(devOtpHint)}
-                  style={{
-                    background: '#166534',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '6px',
-                    padding: '2px 8px',
-                    fontSize: '0.75rem',
-                    fontWeight: '700',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Auto Fill
-                </button>
-              </div>
-            )}
-
-            {/* 6-Digit Verification Code */}
-            <div className="form-group" style={{ marginBottom: '1.1rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+        {/* STEP 2: Enter & Verify 6-Digit OTP */}
+        {step === 'verify' && (
+          <form onSubmit={handleVerifyOtp} autoComplete="off">
+            <div className="form-group" style={{ marginBottom: '1.35rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
                 <label
                   htmlFor="reset-otp"
                   style={{ fontSize: '0.82rem', fontWeight: '700', color: '#334155', margin: 0 }}
@@ -383,9 +420,9 @@ export default function ForgotPasswordModal({
                     background: 'none',
                     border: 'none',
                     padding: 0,
-                    color: '#64748b',
+                    color: '#5d4df6',
                     fontSize: '0.78rem',
-                    textDecoration: 'underline',
+                    fontWeight: '600',
                     cursor: 'pointer',
                   }}
                 >
@@ -412,17 +449,18 @@ export default function ForgotPasswordModal({
                   name="otp"
                   required
                   maxLength={6}
-                  placeholder="123456"
+                  placeholder="------"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   style={{
                     width: '100%',
-                    padding: '0.72rem 0.85rem 0.72rem 2.5rem',
-                    fontSize: '1.05rem',
-                    letterSpacing: '4px',
-                    fontWeight: '700',
-                    borderRadius: '10px',
-                    border: '1px solid #cbd5e1',
+                    padding: '0.85rem 0.85rem 0.85rem 2.5rem',
+                    fontSize: '1.25rem',
+                    letterSpacing: '8px',
+                    fontWeight: '800',
+                    textAlign: 'center',
+                    borderRadius: '12px',
+                    border: '1.5px solid #cbd5e1',
                     outline: 'none',
                     background: '#f8fafc',
                     color: '#1e1b4b',
@@ -433,7 +471,10 @@ export default function ForgotPasswordModal({
               </div>
 
               {/* Resend Code Row */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.4rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.65rem' }}>
+                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                  Check your inbox or spam folder
+                </span>
                 <button
                   type="button"
                   onClick={handleResendOtp}
@@ -452,11 +493,68 @@ export default function ForgotPasswordModal({
                   }}
                 >
                   <i className="fa-solid fa-rotate-right" style={{ fontSize: '0.75rem' }}></i>
-                  {countdown > 0 ? `Resend code in ${countdown}s` : 'Resend Code'}
+                  {countdown > 0 ? `Resend in ${countdown}s` : 'Resend Code'}
                 </button>
               </div>
             </div>
 
+            {/* Verify Code Button */}
+            <button
+              type="submit"
+              disabled={loading || otp.length !== 6}
+              style={{
+                width: '100%',
+                padding: '0.85rem 1rem',
+                fontSize: '0.95rem',
+                fontWeight: '800',
+                borderRadius: '12px',
+                background:
+                  otp.length === 6 && !loading
+                    ? 'linear-gradient(135deg, #5d4df6 0%, #4338ca 100%)'
+                    : '#cbd5e1',
+                color: '#ffffff',
+                border: 'none',
+                cursor: otp.length === 6 && !loading ? 'pointer' : 'not-allowed',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                boxShadow:
+                  otp.length === 6 && !loading ? '0 4px 14px rgba(93, 77, 246, 0.35)' : 'none',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              {loading ? (
+                <>
+                  <i className="fa-solid fa-spinner fa-spin"></i> Verifying Code...
+                </>
+              ) : (
+                <>
+                  <i className="fa-solid fa-arrow-right"></i> Verify Code & Continue
+                </>
+              )}
+            </button>
+
+            {/* Change email or back */}
+            <div style={{ marginTop: '1.25rem', textAlign: 'center', fontSize: '0.85rem', color: '#64748b' }}>
+              Entered wrong email?{' '}
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setStep('request');
+                }}
+                style={{ color: '#5d4df6', fontWeight: '800', textDecoration: 'none' }}
+              >
+                Go Back
+              </a>
+            </div>
+          </form>
+        )}
+
+        {/* STEP 3: Create New Password (Only shown AFTER code is verified!) */}
+        {step === 'new-password' && (
+          <form onSubmit={handleResetPassword} autoComplete="off">
             {/* New Password */}
             <div className="form-group" style={{ marginBottom: '1.1rem' }}>
               <label
@@ -478,6 +576,7 @@ export default function ForgotPasswordModal({
                   }}
                 ></i>
                 <input
+                  ref={newPasswordInputRef}
                   type={showPassword ? 'text' : 'password'}
                   id="reset-new-password"
                   name="newPassword"
@@ -612,7 +711,7 @@ export default function ForgotPasswordModal({
             >
               {loading ? (
                 <>
-                  <i className="fa-solid fa-spinner fa-spin"></i> Resetting Password...
+                  <i className="fa-solid fa-spinner fa-spin"></i> Saving New Password...
                 </>
               ) : (
                 <>
@@ -623,7 +722,7 @@ export default function ForgotPasswordModal({
           </form>
         )}
 
-        {/* STEP 3: Success State */}
+        {/* STEP 4: Success State */}
         {step === 'success' && (
           <div style={{ textAlign: 'center', paddingTop: '0.5rem' }}>
             <div

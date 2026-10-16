@@ -74,7 +74,7 @@ export default function SignupModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={handleClose} style={{ zIndex: 1200 }}>
+    <div className="modal-overlay" onClick={handleClose}>
       <div
         className="modal-card"
         onClick={(e) => e.stopPropagation()}
