@@ -218,7 +218,7 @@ const seedAdminUser = async () => {
 // GET /api/auth/users (Get all registered users for Admin)
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password").sort({ createdAt: -1 });
+    const users = await User.find().select("-password -resetPasswordOtp -resetPasswordOtpExpires").sort({ createdAt: -1 });
     res.json({ success: true, count: users.length, data: users });
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to fetch registered users", error: error.message });

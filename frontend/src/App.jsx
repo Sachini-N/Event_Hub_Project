@@ -4,27 +4,30 @@ import HeroSection from './components/HeroSection';
 import WhyJoinSection from './components/WhyJoinSection';
 import UpcomingEventsSection from './components/UpcomingEventsSection';
 import UpcomingEventsPage from './components/UpcomingEventsPage';
-import EventDetailsPage from './components/EventDetailsPage';
-import MyEventsPage from './components/MyEventsPage';
-import ProfilePage from './components/ProfilePage';
-import CalendarPage from './components/CalendarPage';
-const AdminDashboardPage = React.lazy(() => import('./components/AdminDashboardPage'));
 import PastEventsSection from './components/PastEventsSection';
-import PastEventDetailsPage from './components/PastEventDetailsPage';
-import VenuesPage from './components/VenuesPage';
 import Footer from './components/Footer';
-
-import RegistrationModal from './components/modals/RegistrationModal';
-import ConfirmationModal from './components/modals/ConfirmationModal';
-import LightboxModal from './components/modals/LightboxModal';
-import MyRegistrationsModal from './components/modals/MyRegistrationsModal';
-import AdminModal from './components/modals/AdminModal';
-import LoginModal from './components/modals/LoginModal';
-import SignupModal from './components/modals/SignupModal';
-import ForgotPasswordModal from './components/modals/ForgotPasswordModal';
-import LogoutConfirmModal from './components/modals/LogoutConfirmModal';
 import ToastNotification from './components/modals/ToastNotification';
-import ChatbotAgent from './components/ChatbotAgent';
+
+// Lazy-loaded pages (reduces initial bundle size and accelerates first page load)
+const EventDetailsPage = React.lazy(() => import('./components/EventDetailsPage'));
+const MyEventsPage = React.lazy(() => import('./components/MyEventsPage'));
+const ProfilePage = React.lazy(() => import('./components/ProfilePage'));
+const CalendarPage = React.lazy(() => import('./components/CalendarPage'));
+const AdminDashboardPage = React.lazy(() => import('./components/AdminDashboardPage'));
+const PastEventDetailsPage = React.lazy(() => import('./components/PastEventDetailsPage'));
+const VenuesPage = React.lazy(() => import('./components/VenuesPage'));
+const ChatbotAgent = React.lazy(() => import('./components/ChatbotAgent'));
+
+// Lazy-loaded modals (only downloaded when triggered by user)
+const RegistrationModal = React.lazy(() => import('./components/modals/RegistrationModal'));
+const ConfirmationModal = React.lazy(() => import('./components/modals/ConfirmationModal'));
+const LightboxModal = React.lazy(() => import('./components/modals/LightboxModal'));
+const MyRegistrationsModal = React.lazy(() => import('./components/modals/MyRegistrationsModal'));
+const AdminModal = React.lazy(() => import('./components/modals/AdminModal'));
+const LoginModal = React.lazy(() => import('./components/modals/LoginModal'));
+const SignupModal = React.lazy(() => import('./components/modals/SignupModal'));
+const ForgotPasswordModal = React.lazy(() => import('./components/modals/ForgotPasswordModal'));
+const LogoutConfirmModal = React.lazy(() => import('./components/modals/LogoutConfirmModal'));
 
 const TAB_TO_HASH_MAP = {
   home: '#home',
@@ -438,78 +441,78 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'past-details' && (
-          <PastEventDetailsPage
-            event={selectedPastEvent}
-            onBack={() => setActiveTab('past')}
-            showToast={showToast}
-            onOpenGalleryLightbox={(evt, index) => setLightboxData({ event: evt, index })}
-          />
-        )}
+        <React.Suspense
+          fallback={
+            <div style={{ padding: '5rem 0', textAlign: 'center', color: '#6366f1' }}>
+              <i className="fa-solid fa-circle-notch fa-spin" style={{ fontSize: '2.5rem', marginBottom: '1rem', display: 'block' }}></i>
+              <span style={{ color: '#64748b', fontSize: '0.95rem', fontWeight: '500' }}>Loading view...</span>
+            </div>
+          }
+        >
+          {activeTab === 'past-details' && (
+            <PastEventDetailsPage
+              event={selectedPastEvent}
+              onBack={() => setActiveTab('past')}
+              showToast={showToast}
+              onOpenGalleryLightbox={(evt, index) => setLightboxData({ event: evt, index })}
+            />
+          )}
 
-        {activeTab === 'event-details' && (
-          <EventDetailsPage
-            event={selectedDetailsEvent}
-            onBack={() => setActiveTab('upcoming')}
-            currentUser={currentUser}
-            onRegistrationSuccess={(data) => {
-              fetchEvents();
-            }}
-            onOpenMyEvents={() => setActiveTab('my-events')}
-            onOpenCalendar={() => {
-              setActiveTab('calendar');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            showToast={showToast}
-          />
-        )}
+          {activeTab === 'event-details' && (
+            <EventDetailsPage
+              event={selectedDetailsEvent}
+              onBack={() => setActiveTab('upcoming')}
+              currentUser={currentUser}
+              onRegistrationSuccess={(data) => {
+                fetchEvents();
+              }}
+              onOpenMyEvents={() => setActiveTab('my-events')}
+              onOpenCalendar={() => {
+                setActiveTab('calendar');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              showToast={showToast}
+            />
+          )}
 
-        {activeTab === 'my-events' && (
-          <MyEventsPage
-            currentUser={currentUser}
-            onViewEvent={openEventDetails}
-            onOpenCalendar={() => {
-              setActiveTab('calendar');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            showToast={showToast}
-            openLoginModal={() => setShowLogin(true)}
-          />
-        )}
+          {activeTab === 'my-events' && (
+            <MyEventsPage
+              currentUser={currentUser}
+              onViewEvent={openEventDetails}
+              onOpenCalendar={() => {
+                setActiveTab('calendar');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              showToast={showToast}
+              openLoginModal={() => setShowLogin(true)}
+            />
+          )}
 
-        {activeTab === 'profile' && (
-          <ProfilePage
-            token={token}
-            currentUser={currentUser}
-            setCurrentUser={setCurrentUser}
-            logout={promptLogout}
-            showToast={showToast}
-          />
-        )}
+          {activeTab === 'profile' && (
+            <ProfilePage
+              token={token}
+              currentUser={currentUser}
+              setCurrentUser={setCurrentUser}
+              logout={promptLogout}
+              showToast={showToast}
+            />
+          )}
 
-        {activeTab === 'calendar' && (
-          <CalendarPage
-            currentUser={currentUser}
-            onSelectEvent={openEventDetails}
-            onOpenUpcoming={() => setActiveTab('upcoming')}
-            showToast={showToast}
-            openLoginModal={() => setShowLogin(true)}
-          />
-        )}
+          {activeTab === 'calendar' && (
+            <CalendarPage
+              currentUser={currentUser}
+              onSelectEvent={openEventDetails}
+              onOpenUpcoming={() => setActiveTab('upcoming')}
+              showToast={showToast}
+              openLoginModal={() => setShowLogin(true)}
+            />
+          )}
 
-        {activeTab === 'venues-page' && (
-          <VenuesPage showToast={showToast} />
-        )}
+          {activeTab === 'venues-page' && (
+            <VenuesPage showToast={showToast} />
+          )}
 
-        {activeTab === 'admin' && (
-          <React.Suspense
-            fallback={
-              <div style={{ padding: '4rem 0', textAlign: 'center', color: '#5d4df6', fontWeight: '700' }}>
-                <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2rem', marginBottom: '1rem', display: 'block' }}></i>
-                Loading Admin Portal...
-              </div>
-            }
-          >
+          {activeTab === 'admin' && (
             <AdminDashboardPage
               currentUser={currentUser}
               setCurrentUser={setCurrentUser}
@@ -545,103 +548,121 @@ export default function App() {
                 fetchEvents();
               }}
             />
-          </React.Suspense>
-        )}
+          )}
+        </React.Suspense>
       </main>
 
       {!hideHeaderFooter && <Footer setActiveTab={setActiveTab} />}
 
-      {/* Modals */}
-      <RegistrationModal
-        isOpen={Boolean(regEvent)}
-        onClose={() => setRegEvent(null)}
-        event={regEvent}
-        currentUser={currentUser}
-        onSuccess={(data) => {
-          setConfData(data);
-          fetchEvents(); // refresh counts
-        }}
-        showToast={showToast}
-      />
+      {/* Modals - Async Lazy-Loaded and Conditionally Mounted */}
+      <React.Suspense fallback={null}>
+        {Boolean(regEvent) && (
+          <RegistrationModal
+            isOpen={true}
+            onClose={() => setRegEvent(null)}
+            event={regEvent}
+            currentUser={currentUser}
+            onSuccess={(data) => {
+              setConfData(data);
+              fetchEvents(); // refresh counts
+            }}
+            showToast={showToast}
+          />
+        )}
 
-      <ConfirmationModal
-        isOpen={Boolean(confData)}
-        onClose={() => setConfData(null)}
-        registrationData={confData}
-        showToast={showToast}
-      />
+        {Boolean(confData) && (
+          <ConfirmationModal
+            isOpen={true}
+            onClose={() => setConfData(null)}
+            registrationData={confData}
+            showToast={showToast}
+          />
+        )}
 
-      <LightboxModal
-        isOpen={Boolean(lightboxData)}
-        onClose={() => setLightboxData(null)}
-        event={lightboxData?.event}
-        initialIndex={lightboxData?.index || 0}
-      />
+        {Boolean(lightboxData) && (
+          <LightboxModal
+            isOpen={true}
+            onClose={() => setLightboxData(null)}
+            event={lightboxData?.event}
+            initialIndex={lightboxData?.index || 0}
+          />
+        )}
 
-      <MyRegistrationsModal
-        isOpen={showMyRegs}
-        onClose={() => setShowMyRegs(false)}
-        showToast={showToast}
-      />
+        {showMyRegs && (
+          <MyRegistrationsModal
+            isOpen={true}
+            onClose={() => setShowMyRegs(false)}
+            showToast={showToast}
+          />
+        )}
 
-      <AdminModal
-        isOpen={showAdmin}
-        onClose={() => setShowAdmin(false)}
-        onEventCreated={fetchEvents}
-        showToast={showToast}
-      />
+        {showAdmin && (
+          <AdminModal
+            isOpen={true}
+            onClose={() => setShowAdmin(false)}
+            onEventCreated={fetchEvents}
+            showToast={showToast}
+          />
+        )}
 
-      <LoginModal
-        isOpen={showLogin}
-        onClose={() => setShowLogin(false)}
-        onLoginSuccess={handleAuthSuccess}
-        initialEmail={loginPrefillEmail}
-        openForgotPassword={(prefillEmail) => {
-          setShowLogin(false);
-          setForgotPasswordEmail(prefillEmail || '');
-          setShowForgotPassword(true);
-        }}
-        switchToSignup={() => {
-          setShowLogin(false);
-          setShowSignup(true);
-        }}
-        showToast={showToast}
-      />
+        {showLogin && (
+          <LoginModal
+            isOpen={true}
+            onClose={() => setShowLogin(false)}
+            onLoginSuccess={handleAuthSuccess}
+            initialEmail={loginPrefillEmail}
+            openForgotPassword={(prefillEmail) => {
+              setShowLogin(false);
+              setForgotPasswordEmail(prefillEmail || '');
+              setShowForgotPassword(true);
+            }}
+            switchToSignup={() => {
+              setShowLogin(false);
+              setShowSignup(true);
+            }}
+            showToast={showToast}
+          />
+        )}
 
-      <ForgotPasswordModal
-        isOpen={showForgotPassword}
-        onClose={() => setShowForgotPassword(false)}
-        initialEmail={forgotPasswordEmail}
-        switchToLogin={(prefillEmail) => {
-          setShowForgotPassword(false);
-          setLoginPrefillEmail(prefillEmail || '');
-          setShowLogin(true);
-        }}
-        showToast={showToast}
-      />
+        {showForgotPassword && (
+          <ForgotPasswordModal
+            isOpen={true}
+            onClose={() => setShowForgotPassword(false)}
+            initialEmail={forgotPasswordEmail}
+            switchToLogin={(prefillEmail) => {
+              setShowForgotPassword(false);
+              setLoginPrefillEmail(prefillEmail || '');
+              setShowLogin(true);
+            }}
+            showToast={showToast}
+          />
+        )}
 
-      <SignupModal
-        isOpen={showSignup}
-        onClose={() => setShowSignup(false)}
-        onSignupSuccess={handleAuthSuccess}
-        switchToLogin={() => {
-          setShowSignup(false);
-          setShowLogin(true);
-        }}
-        showToast={showToast}
-      />
+        {showSignup && (
+          <SignupModal
+            isOpen={true}
+            onClose={() => setShowSignup(false)}
+            onSignupSuccess={handleAuthSuccess}
+            switchToLogin={() => {
+              setShowSignup(false);
+              setShowLogin(true);
+            }}
+            showToast={showToast}
+          />
+        )}
 
-      <LogoutConfirmModal
-        isOpen={showLogoutConfirm}
-        onClose={() => setShowLogoutConfirm(false)}
-        onConfirm={confirmLogout}
-        userName={currentUser?.name}
-      />
+        {showLogoutConfirm && (
+          <LogoutConfirmModal
+            isOpen={true}
+            onClose={() => setShowLogoutConfirm(false)}
+            onConfirm={confirmLogout}
+            userName={currentUser?.name}
+          />
+        )}
 
-      <ToastNotification toast={toast} />
-
-      {/* Global AI Chatbot Agent */}
-      <ChatbotAgent currentUser={currentUser} setActiveTab={setActiveTab} events={events} />
+        {/* Global AI Chatbot Agent */}
+        <ChatbotAgent currentUser={currentUser} setActiveTab={setActiveTab} events={events} />
+      </React.Suspense>
     </div>
   );
 }

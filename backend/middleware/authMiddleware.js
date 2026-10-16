@@ -32,25 +32,11 @@ const protect = async (req, res, next) => {
   }
 
   if (!token) {
-    try {
-      const defaultAdmin = await User.findOne({ $or: [{ email: "admin@trace.lk" }, { role: "admin" }] });
-      if (defaultAdmin) {
-        req.user = defaultAdmin;
-        return next();
-      }
-    } catch (err) {}
     return res.status(401).json({ success: false, message: "Not authorized, no session token provided" });
   }
 
   const decoded = verifyToken(token);
   if (!decoded) {
-    try {
-      const defaultAdmin = await User.findOne({ $or: [{ email: "admin@trace.lk" }, { role: "admin" }] });
-      if (defaultAdmin) {
-        req.user = defaultAdmin;
-        return next();
-      }
-    } catch (err) {}
     return res.status(401).json({ success: false, message: "Not authorized, token invalid or expired" });
   }
 

@@ -15,17 +15,25 @@ const DEFAULT_HERO_SETTINGS = {
     "From Shed sessions to Midweek Boost evenings, discover and register for the events shaping TRACE Expert City — then keep every one of them in view.",
 };
 
+// In-memory cache for 0ms response time
+let cachedHeroSettings = null;
+
 // GET /api/settings/hero - Public endpoint for frontend HeroSection
 router.get("/hero", async (req, res) => {
+  if (cachedHeroSettings) {
+    return res.json({ success: true, data: cachedHeroSettings });
+  }
+
   try {
-    let setting = await SiteSetting.findOne({ key: "hero_settings" });
+    let setting = await SiteSetting.findOne({ key: "hero_settings" }).lean();
     if (!setting) {
       setting = DEFAULT_HERO_SETTINGS;
     }
+    cachedHeroSettings = setting;
     res.json({ success: true, data: setting });
   } catch (error) {
     console.error("Error fetching hero settings:", error);
-    res.json({ success: true, data: DEFAULT_HERO_SETTINGS });
+    res.json({ success: true, data: cachedHeroSettings || DEFAULT_HERO_SETTINGS });
   }
 });
 
@@ -47,6 +55,7 @@ router.put("/hero", protect, authorize("admin", "super_admin", "branch_admin"), 
     if (heroSubtitle !== undefined) setting.heroSubtitle = heroSubtitle;
 
     await setting.save();
+    cachedHeroSettings = setting.toObject ? setting.toObject() : setting;
 
     console.log(`[SETTINGS] Hero settings updated: mediaType=${setting.heroMediaType}, imageUrl=${setting.heroImageUrl}, videoUrl=${setting.heroVideoUrl}`);
 

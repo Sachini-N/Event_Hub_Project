@@ -55,8 +55,12 @@ const { seedInitialVenueBookings } = require("./controlers/venueBookingControlle
 
 const helmet = require("helmet");
 const cors = require("cors");
+const compression = require("compression");
 
 const app = express();
+
+// High Performance Gzip / Brotli response compression
+app.use(compression());
 
 // Security Headers with Helmet
 app.use(
@@ -97,7 +101,12 @@ const connectDB = async () => {
   }
 
   dbConnectionPromise = mongoose
-    .connect(process.env.MONGO_URI)
+    .connect(process.env.MONGO_URI, {
+      maxPoolSize: 20,
+      minPoolSize: 2,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    })
     .then(async () => {
       console.log("Connected to MongoDB successfully!");
       await seedInitialEvents();
@@ -142,8 +151,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static public files
-app.use(express.static(path.join(__dirname, "public")));
+// Serve static public files with 1-day browser caching
+app.use(
+  express.static(path.join(__dirname, "public"), {
+    maxAge: "1d",
+    etag: true,
+  })
+);
 
 // Fallback to index.html for non-API single page navigation
 app.use((req, res) => {
