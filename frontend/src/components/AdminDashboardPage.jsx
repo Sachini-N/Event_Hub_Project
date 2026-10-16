@@ -33,6 +33,34 @@ export default function AdminDashboardPage({
   const [eventDateFilter, setEventDateFilter] = useState('');
   const dateInputRef = useRef(null);
 
+  // Hero Banner Settings State (Defaults to original TRACE video & text)
+  const DEFAULT_HERO_SETTINGS = {
+    heroMediaType: 'default',
+    heroImageUrl: '',
+    heroVideoUrl: '',
+    heroBadge: 'TRACE COMMUNITY HUB, SRI LANKA',
+    heroTitle: 'Where innovation meets community and culture.',
+    heroSubtitle:
+      'From Shed sessions to Midweek Boost evenings, discover and register for the events shaping TRACE Expert City — then keep every one of them in view.',
+  };
+
+  const [heroSettings, setHeroSettings] = useState(() => {
+    try {
+      const cached = localStorage.getItem('eventhub_hero_settings');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.heroImageUrl === '/home.jpeg' || parsed.heroTitle === 'Where Innovation Meets Community and Creativity.') {
+          return DEFAULT_HERO_SETTINGS;
+        }
+        return parsed;
+      }
+      return DEFAULT_HERO_SETTINGS;
+    } catch (e) {
+      return DEFAULT_HERO_SETTINGS;
+    }
+  });
+  const [savingHeroSettings, setSavingHeroSettings] = useState(false);
+
   // Registrations View State
   const [regEventFilter, setRegEventFilter] = useState('all');
   const [regStatusFilter, setRegStatusFilter] = useState('all');
@@ -267,10 +295,51 @@ export default function AdminDashboardPage({
       if (usersData.success) {
         setRegisteredUsers(usersData.data || []);
       }
+
+      // 6. Fetch Hero Settings
+      const heroRes = await fetch('/api/settings/hero');
+      const heroData = await heroRes.json();
+      if (heroData.success && heroData.data) {
+        setHeroSettings(heroData.data);
+        localStorage.setItem('eventhub_hero_settings', JSON.stringify(heroData.data));
+      }
     } catch (err) {
       console.error('Error loading admin dashboard data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveHeroSettings = async (customPayload = null) => {
+    const toSave = customPayload || heroSettings;
+    setSavingHeroSettings(true);
+    try {
+      const authToken = localStorage.getItem('eventhub_token') || token;
+      const res = await fetch('/api/settings/hero', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
+        body: JSON.stringify(toSave),
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setHeroSettings(data.data);
+        localStorage.setItem('eventhub_hero_settings', JSON.stringify(data.data));
+        window.dispatchEvent(new CustomEvent('hero_settings_updated', { detail: data.data }));
+        if (showToast) showToast('Hero section banner updated & published live!', 'success');
+      } else {
+        if (showToast) showToast(data.message || 'Failed to update hero settings', 'error');
+      }
+    } catch (err) {
+      console.error('Save hero settings error:', err);
+      // Fallback local persistence so it always works immediately
+      localStorage.setItem('eventhub_hero_settings', JSON.stringify(toSave));
+      window.dispatchEvent(new CustomEvent('hero_settings_updated', { detail: toSave }));
+      if (showToast) showToast('Hero settings saved and applied locally!', 'success');
+    } finally {
+      setSavingHeroSettings(false);
     }
   };
 
@@ -703,13 +772,12 @@ export default function AdminDashboardPage({
           <td>${r.contactNumber || '-'}</td>
           <td><span style="font-weight:600;color:#0f172a;">${r.eventTitle || 'TRACE Event'}</span></td>
           <td style="text-align:center;">
-            <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;${
-              (r.status || 'Confirmed') === 'Confirmed'
-                ? 'background:#dcfce7;color:#15803d;'
-                : r.status === 'Pending'
-                ? 'background:#fef3c7;color:#b45309;'
-                : 'background:#fee2e2;color:#b91c1c;'
-            }">
+            <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;${(r.status || 'Confirmed') === 'Confirmed'
+            ? 'background:#dcfce7;color:#15803d;'
+            : r.status === 'Pending'
+              ? 'background:#fef3c7;color:#b45309;'
+              : 'background:#fee2e2;color:#b91c1c;'
+          }">
               ${r.status || 'Confirmed'}
             </span>
           </td>
@@ -1064,6 +1132,18 @@ export default function AdminDashboardPage({
               <i className={`fa-solid ${activeMenu === 'venues' ? 'fa-chevron-up' : 'fa-chevron-down'} nav-arrow`}></i>
             )}
           </button>
+
+          <button
+            className={`admin-nav-item ${activeMenu === 'hero' ? 'active' : ''}`}
+            onClick={() => setActiveMenu('hero')}
+            title="Hero Banner & Media"
+          >
+            <i className="fa-solid fa-photo-film"></i>
+            {!sidebarHidden && <span>Hero Banner</span>}
+            {!sidebarHidden && (
+              <i className={`fa-solid ${activeMenu === 'hero' ? 'fa-chevron-up' : 'fa-chevron-down'} nav-arrow`}></i>
+            )}
+          </button>
         </nav>
 
         {/* Sidebar Footer */}
@@ -1079,7 +1159,738 @@ export default function AdminDashboardPage({
       <div className="admin-main-container">
         {/* Body Content */}
         <main className="admin-body-content">
-          {activeMenu === 'registrations' ? (
+          {activeMenu === 'hero' ? (
+            /* VIEW: HERO BANNER & MEDIA MANAGER */
+            <div className="manage-hero-container">
+              <div className="admin-dashboard-title-row">
+                <div>
+                  <h1 className="admin-page-title">Hero Media & Banner</h1>
+                  <p style={{ fontSize: '0.95rem', color: '#64748b', marginTop: '0.2rem' }}>
+                    Default TRACE video and words are active. You can add a new photo or video here if needed.
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <a
+                    href="#home"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn-export-excel"
+                    style={{
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      background: '#f8fafc',
+                      color: '#334155',
+                      border: '1px solid #cbd5e1',
+                      padding: '0.65rem 1.1rem',
+                      borderRadius: '8px',
+                      fontWeight: 600,
+                      fontSize: '0.88rem',
+                    }}
+                    title="Open live homepage to see current hero section"
+                  >
+                    <i className="fa-solid fa-arrow-up-right-from-square"></i> View Live Site
+                  </a>
+                  <button
+                    type="button"
+                    className="btn-export-excel"
+                    style={{
+                      background: '#2563eb',
+                      color: '#ffffff',
+                      border: 'none',
+                      fontWeight: 600,
+                      padding: '0.65rem 1.25rem',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)',
+                    }}
+                    onClick={() => handleSaveHeroSettings()}
+                    disabled={savingHeroSettings}
+                  >
+                    {savingHeroSettings ? (
+                      <>
+                        <i className="fa-solid fa-spinner fa-spin"></i> Saving...
+                      </>
+                    ) : (
+                      <>
+                        <i className="fa-solid fa-cloud-arrow-up"></i> Save & Apply Changes
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Mode Selector Cards: 3 Options (Default Video, New Photo, New Video) */}
+              <div className="hero-mode-selector-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+                {/* Option 1: Default Original Video */}
+                <div
+                  className={`hero-mode-card ${heroSettings.heroMediaType === 'default' ? 'active' : ''}`}
+                  onClick={() =>
+                    setHeroSettings((prev) => ({
+                      ...prev,
+                      heroMediaType: 'default',
+                    }))
+                  }
+                >
+                  <div className="hero-mode-card-icon">
+                    <i className="fa-solid fa-film"></i>
+                  </div>
+                  <div className="hero-mode-card-content">
+                    <h4>Original TRACE Video</h4>
+                    <p>Default video background & original texts.</p>
+                  </div>
+                  <div className="hero-mode-check">
+                    <i
+                      className={`fa-solid ${heroSettings.heroMediaType === 'default'
+                          ? 'fa-circle-check text-blue-600'
+                          : 'fa-circle text-slate-300'
+                        }`}
+                    ></i>
+                  </div>
+                </div>
+
+                {/* Option 2: Add New Photo */}
+                <div
+                  className={`hero-mode-card ${heroSettings.heroMediaType === 'image' ? 'active' : ''}`}
+                  onClick={() =>
+                    setHeroSettings((prev) => ({
+                      ...prev,
+                      heroMediaType: 'image',
+                    }))
+                  }
+                >
+                  <div className="hero-mode-card-icon">
+                    <i className="fa-solid fa-image"></i>
+                  </div>
+                  <div className="hero-mode-card-content">
+                    <h4>Add New Photo (Image)</h4>
+                    <p>Upload or set a custom photo/image banner.</p>
+                  </div>
+                  <div className="hero-mode-check">
+                    <i
+                      className={`fa-solid ${heroSettings.heroMediaType === 'image'
+                          ? 'fa-circle-check text-blue-600'
+                          : 'fa-circle text-slate-300'
+                        }`}
+                    ></i>
+                  </div>
+                </div>
+
+                {/* Option 3: Add New Video */}
+                <div
+                  className={`hero-mode-card ${heroSettings.heroMediaType === 'video' ? 'active' : ''}`}
+                  onClick={() =>
+                    setHeroSettings((prev) => ({
+                      ...prev,
+                      heroMediaType: 'video',
+                    }))
+                  }
+                >
+                  <div className="hero-mode-card-icon">
+                    <i className="fa-solid fa-video"></i>
+                  </div>
+                  <div className="hero-mode-card-content">
+                    <h4>Add New Video</h4>
+                    <p>Upload or set a new custom video loop.</p>
+                  </div>
+                  <div className="hero-mode-check">
+                    <i
+                      className={`fa-solid ${heroSettings.heroMediaType === 'video'
+                          ? 'fa-circle-check text-blue-600'
+                          : 'fa-circle text-slate-300'
+                        }`}
+                    ></i>
+                  </div>
+                </div>
+              </div>
+
+              {/* Main Content Layout Grid: Left Media Upload / Right Preview */}
+              <div className="hero-manager-main-grid">
+                {/* Left Column: Media Upload / Setup */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+                  {/* Default State Active Banner */}
+                  {heroSettings.heroMediaType === 'default' && (
+                    <div className="hero-card-panel" style={{ background: '#f8fafc', border: '1.5px dashed #cbd5e1' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                        <i className="fa-solid fa-circle-check" style={{ color: '#16a34a', fontSize: '1.2rem' }}></i>
+                        <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#0f172a', fontWeight: 700 }}>
+                          Original Video & Texts Active
+                        </h3>
+                      </div>
+                      <p style={{ margin: 0, fontSize: '0.88rem', color: '#475569', lineHeight: 1.5 }}>
+                        The homepage hero is currently playing the original TRACE video with original texts.
+                        To set a new custom photo or video, click <strong>"Add New Photo (Image)"</strong> or <strong>"Add New Video"</strong> above.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Panel for Photo (Image) Upload */}
+                  {heroSettings.heroMediaType === 'image' && (
+                    <div className="hero-card-panel">
+                      <div className="hero-card-header">
+                        <h3>
+                          <i className="fa-solid fa-image"></i> Custom Photo (Image)
+                        </h3>
+                        <span
+                          style={{
+                            fontSize: '0.78rem',
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '9999px',
+                            background: '#dcfce7',
+                            color: '#166534',
+                            fontWeight: 700,
+                          }}
+                        >
+                          Photo Mode Active
+                        </span>
+                      </div>
+
+                      {/* Cloudinary Uploader Component for Image */}
+                      <div style={{ marginBottom: '1.25rem' }}>
+                        <label
+                          style={{
+                            display: 'block',
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            color: '#334155',
+                            marginBottom: '0.4rem',
+                          }}
+                        >
+                          1. Upload Photo from Computer
+                        </label>
+                        <CloudinaryUploader
+                          accept="image/*"
+                          label="Upload Custom Photo"
+                          onUploadSuccess={(url) => {
+                            const updated = {
+                              ...heroSettings,
+                              heroImageUrl: url,
+                              heroMediaType: 'image',
+                            };
+                            setHeroSettings(updated);
+                            handleSaveHeroSettings(updated);
+                          }}
+                        />
+                      </div>
+
+                      {/* Direct Image URL input */}
+                      <div>
+                        <label
+                          style={{
+                            display: 'block',
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            color: '#334155',
+                            marginBottom: '0.4rem',
+                          }}
+                        >
+                          2. Or Enter Photo URL
+                        </label>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <input
+                            type="text"
+                            placeholder="https://example.com/my-photo.jpg"
+                            value={heroSettings.heroImageUrl || ''}
+                            onChange={(e) =>
+                              setHeroSettings((prev) => ({
+                                ...prev,
+                                heroImageUrl: e.target.value,
+                                heroMediaType: 'image',
+                              }))
+                            }
+                            style={{
+                              flex: 1,
+                              padding: '0.65rem 0.85rem',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '8px',
+                              fontSize: '0.88rem',
+                              outline: 'none',
+                            }}
+                          />
+                          {heroSettings.heroImageUrl && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setHeroSettings((prev) => ({
+                                  ...prev,
+                                  heroImageUrl: '',
+                                }))
+                              }
+                              style={{
+                                background: '#f1f5f9',
+                                color: '#64748b',
+                                border: '1px solid #cbd5e1',
+                                borderRadius: '8px',
+                                padding: '0 0.85rem',
+                                fontSize: '0.82rem',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                              }}
+                              title="Clear photo URL"
+                            >
+                              Clear
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Panel for Custom Video Upload */}
+                  {heroSettings.heroMediaType === 'video' && (
+                    <div className="hero-card-panel">
+                      <div className="hero-card-header">
+                        <h3>
+                          <i className="fa-solid fa-video"></i> Custom Video
+                        </h3>
+                        <span
+                          style={{
+                            fontSize: '0.78rem',
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '9999px',
+                            background: '#dbeafe',
+                            color: '#1e40af',
+                            fontWeight: 700,
+                          }}
+                        >
+                          Custom Video Mode Active
+                        </span>
+                      </div>
+
+                      {/* Cloudinary Uploader Component for Video */}
+                      <div style={{ marginBottom: '1.25rem' }}>
+                        <label
+                          style={{
+                            display: 'block',
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            color: '#334155',
+                            marginBottom: '0.4rem',
+                          }}
+                        >
+                          1. Upload Video from Computer
+                        </label>
+                        <CloudinaryUploader
+                          accept="video/*"
+                          label="Upload Custom Video"
+                          onUploadSuccess={(url) => {
+                            const updated = {
+                              ...heroSettings,
+                              heroVideoUrl: url,
+                              heroMediaType: 'video',
+                            };
+                            setHeroSettings(updated);
+                            handleSaveHeroSettings(updated);
+                          }}
+                        />
+                      </div>
+
+                      {/* Direct Video URL input */}
+                      <div>
+                        <label
+                          style={{
+                            display: 'block',
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            color: '#334155',
+                            marginBottom: '0.4rem',
+                          }}
+                        >
+                          2. Or Enter Video URL (.mp4)
+                        </label>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <input
+                            type="text"
+                            placeholder="https://example.com/my-video.mp4"
+                            value={heroSettings.heroVideoUrl || ''}
+                            onChange={(e) =>
+                              setHeroSettings((prev) => ({
+                                ...prev,
+                                heroVideoUrl: e.target.value,
+                                heroMediaType: 'video',
+                              }))
+                            }
+                            style={{
+                              flex: 1,
+                              padding: '0.65rem 0.85rem',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '8px',
+                              fontSize: '0.88rem',
+                              outline: 'none',
+                            }}
+                          />
+                          {heroSettings.heroVideoUrl && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setHeroSettings((prev) => ({
+                                  ...prev,
+                                  heroVideoUrl: '',
+                                }))
+                              }
+                              style={{
+                                background: '#f1f5f9',
+                                color: '#64748b',
+                                border: '1px solid #cbd5e1',
+                                borderRadius: '8px',
+                                padding: '0 0.85rem',
+                                fontSize: '0.82rem',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                              }}
+                              title="Clear video URL"
+                            >
+                              Clear
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Panel: Hero Section Texts & Headings */}
+                  <div className="hero-card-panel">
+                    <div className="hero-card-header">
+                      <h3>
+                        <i className="fa-solid fa-heading"></i> Hero Words & Text
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setHeroSettings((prev) => ({
+                            ...prev,
+                            heroBadge: 'TRACE COMMUNITY HUB, SRI LANKA',
+                            heroTitle: 'Where innovation meets community and culture.',
+                            heroSubtitle:
+                              'From Shed sessions to Midweek Boost evenings, discover and register for the events shaping TRACE Expert City — then keep every one of them in view.',
+                          }))
+                        }
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#2563eb',
+                          fontSize: '0.82rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Reset to Original Words
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <div>
+                        <label
+                          style={{
+                            display: 'block',
+                            fontSize: '0.82rem',
+                            fontWeight: 600,
+                            color: '#475569',
+                            marginBottom: '0.35rem',
+                          }}
+                        >
+                          BADGE TEXT
+                        </label>
+                        <input
+                          type="text"
+                          value={heroSettings.heroBadge || ''}
+                          onChange={(e) =>
+                            setHeroSettings((prev) => ({ ...prev, heroBadge: e.target.value }))
+                          }
+                          style={{
+                            width: '100%',
+                            padding: '0.65rem 0.85rem',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '8px',
+                            fontSize: '0.88rem',
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          style={{
+                            display: 'block',
+                            fontSize: '0.82rem',
+                            fontWeight: 600,
+                            color: '#475569',
+                            marginBottom: '0.35rem',
+                          }}
+                        >
+                          MAIN TITLE
+                        </label>
+                        <input
+                          type="text"
+                          value={heroSettings.heroTitle || ''}
+                          onChange={(e) =>
+                            setHeroSettings((prev) => ({ ...prev, heroTitle: e.target.value }))
+                          }
+                          style={{
+                            width: '100%',
+                            padding: '0.65rem 0.85rem',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '8px',
+                            fontSize: '0.88rem',
+                            fontWeight: 600,
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          style={{
+                            display: 'block',
+                            fontSize: '0.82rem',
+                            fontWeight: 600,
+                            color: '#475569',
+                            marginBottom: '0.35rem',
+                          }}
+                        >
+                          SUBTITLE DESCRIPTION
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={heroSettings.heroSubtitle || ''}
+                          onChange={(e) =>
+                            setHeroSettings((prev) => ({ ...prev, heroSubtitle: e.target.value }))
+                          }
+                          style={{
+                            width: '100%',
+                            padding: '0.65rem 0.85rem',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '8px',
+                            fontSize: '0.88rem',
+                            fontFamily: 'inherit',
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Live Mockup Preview & Action Card */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <div className="hero-card-panel">
+                    <div className="hero-card-header">
+                      <h3>
+                        <i className="fa-solid fa-display"></i> Live Mockup Preview
+                      </h3>
+                      <span
+                        style={{
+                          fontSize: '0.78rem',
+                          padding: '0.25rem 0.65rem',
+                          borderRadius: '9999px',
+                          background:
+                            heroSettings.heroMediaType === 'image'
+                              ? '#eff6ff'
+                              : heroSettings.heroMediaType === 'video'
+                                ? '#f0fdf4'
+                                : '#f8fafc',
+                          color:
+                            heroSettings.heroMediaType === 'image'
+                              ? '#1d4ed8'
+                              : heroSettings.heroMediaType === 'video'
+                                ? '#15803d'
+                                : '#475569',
+                          fontWeight: 700,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            background:
+                              heroSettings.heroMediaType === 'image'
+                                ? '#2563eb'
+                                : heroSettings.heroMediaType === 'video'
+                                  ? '#22c55e'
+                                  : '#64748b',
+                          }}
+                        ></span>
+                        {heroSettings.heroMediaType === 'image'
+                          ? 'Custom Photo'
+                          : heroSettings.heroMediaType === 'video'
+                            ? 'Custom Video'
+                            : 'Original Video'}
+                      </span>
+                    </div>
+
+                    {/* The Live Interactive Mockup Box */}
+                    <div className="hero-live-preview-container">
+                      {heroSettings.heroMediaType === 'image' && heroSettings.heroImageUrl ? (
+                        <img
+                          src={heroSettings.heroImageUrl}
+                          alt="Hero Preview"
+                          className="hero-live-preview-bg"
+                        />
+                      ) : heroSettings.heroMediaType === 'video' && heroSettings.heroVideoUrl ? (
+                        <video
+                          src={heroSettings.heroVideoUrl}
+                          className="hero-live-preview-bg"
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                        />
+                      ) : (
+                        <div
+                          className="hero-live-preview-bg"
+                          style={{
+                            background: 'radial-gradient(ellipse at center, #1e293b 0%, #020617 100%)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <div style={{ color: '#64748b', textAlign: 'center' }}>
+                            <i className="fa-solid fa-film fa-2x" style={{ opacity: 0.6, marginBottom: '0.4rem' }}></i>
+                            <div style={{ fontSize: '0.75rem', fontWeight: 600 }}>Original TRACE Video Playing</div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="hero-live-preview-overlay"></div>
+
+                      <div className="hero-live-preview-content">
+                        <span className="hero-live-preview-badge">
+                          {heroSettings.heroBadge || 'TRACE COMMUNITY HUB, SRI LANKA'}
+                        </span>
+                        <h2 className="hero-live-preview-title">
+                          {heroSettings.heroTitle || 'Where innovation meets community and culture.'}
+                        </h2>
+                        <p className="hero-live-preview-sub">
+                          {heroSettings.heroSubtitle ||
+                            'From Shed sessions to Midweek Boost evenings, discover and register for the events shaping TRACE Expert City — then keep every one of them in view.'}
+                        </p>
+                        <div className="hero-live-preview-actions">
+                          <button
+                            type="button"
+                            className="hero-live-preview-btn"
+                            style={{ background: '#2563eb', color: '#fff' }}
+                          >
+                            Explore Upcoming Events
+                          </button>
+                          <button
+                            type="button"
+                            className="hero-live-preview-btn"
+                            style={{ background: 'rgba(255,255,255,0.2)', color: '#fff' }}
+                          >
+                            View Past Highlights
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Preview Info & Helper */}
+                    <div
+                      style={{
+                        marginTop: '1.25rem',
+                        padding: '1rem',
+                        background: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '10px',
+                        fontSize: '0.85rem',
+                        color: '#475569',
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: '0.25rem' }}>
+                        <i className="fa-solid fa-circle-info" style={{ color: '#2563eb' }}></i> Instant Update
+                      </div>
+                      When you click <strong>Save & Apply Changes</strong>, settings synchronize to the database and update the live homepage without page reload.
+                    </div>
+
+                    {/* Save & Reset Buttons Panel */}
+                    <div
+                      style={{
+                        marginTop: '1.5rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.75rem',
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleSaveHeroSettings()}
+                        disabled={savingHeroSettings}
+                        style={{
+                          width: '100%',
+                          background: '#2563eb',
+                          color: '#ffffff',
+                          border: 'none',
+                          padding: '0.85rem 1.25rem',
+                          borderRadius: '10px',
+                          fontWeight: 700,
+                          fontSize: '0.95rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.6rem',
+                          boxShadow: '0 4px 14px rgba(37, 99, 235, 0.3)',
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        {savingHeroSettings ? (
+                          <>
+                            <i className="fa-solid fa-spinner fa-spin"></i> Saving...
+                          </>
+                        ) : (
+                          <>
+                            <i className="fa-solid fa-check"></i> Save & Apply Changes
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const defaults = {
+                            heroMediaType: 'default',
+                            heroImageUrl: '',
+                            heroVideoUrl: '',
+                            heroBadge: 'TRACE COMMUNITY HUB, SRI LANKA',
+                            heroTitle: 'Where innovation meets community and culture.',
+                            heroSubtitle:
+                              'From Shed sessions to Midweek Boost evenings, discover and register for the events shaping TRACE Expert City — then keep every one of them in view.',
+                          };
+                          setHeroSettings(defaults);
+                          handleSaveHeroSettings(defaults);
+                        }}
+                        style={{
+                          width: '100%',
+                          background: '#f8fafc',
+                          color: '#334155',
+                          border: '1px solid #cbd5e1',
+                          padding: '0.75rem',
+                          borderRadius: '8px',
+                          fontWeight: 600,
+                          fontSize: '0.88rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.5rem',
+                        }}
+                        title="Reset to original TRACE video and words"
+                      >
+                        <i className="fa-solid fa-rotate-left"></i> Reset to Original Video & Words
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : activeMenu === 'registrations' ? (
             /* VIEW 2: EVENT REGISTRATIONS VIEW (Matching exact reference screenshot) */
             <div className="manage-registrations-container">
               <div className="admin-dashboard-title-row">
@@ -1769,128 +2580,128 @@ export default function AdminDashboardPage({
               ) : (
                 <div className="venues-grid-2col">
                   {displayedVenues.map((v) => {
-                  const venueId = v._id || v.id;
-                  const formattedAddress = (v.address || '').replace(/,/g, ', ');
-                  const priceDisplay = v.rentalPrice || (v.pricePerHour ? `Rs. ${v.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr');
+                    const venueId = v._id || v.id;
+                    const formattedAddress = (v.address || '').replace(/,/g, ', ');
+                    const priceDisplay = v.rentalPrice || (v.pricePerHour ? `Rs. ${v.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr');
 
-                  return (
-                    <div key={venueId || Math.random()} className="admin-venue-card">
-                      <div className="admin-venue-card-banner-wrapper">
-                        <img src={v.coverImage} alt={v.name} className="admin-venue-card-banner" />
-                      </div>
-                      <div className="admin-venue-card-body">
-                        <div className="admin-venue-badges-row">
-                          <span className={`admin-venue-status-pill ${v.status === 'Available' ? 'available' : 'reserved'}`}>
-                            <span className="admin-venue-status-dot"></span>
-                            {v.status || 'Available'}
-                          </span>
-                          {v.branch && (
-                            <span className="admin-venue-branch-tag" title={v.branch}>
-                              <i className="fa-solid fa-location-dot" style={{ fontSize: '0.7rem' }}></i>
-                              {v.branch}
+                    return (
+                      <div key={venueId || Math.random()} className="admin-venue-card">
+                        <div className="admin-venue-card-banner-wrapper">
+                          <img src={v.coverImage} alt={v.name} className="admin-venue-card-banner" />
+                        </div>
+                        <div className="admin-venue-card-body">
+                          <div className="admin-venue-badges-row">
+                            <span className={`admin-venue-status-pill ${v.status === 'Available' ? 'available' : 'reserved'}`}>
+                              <span className="admin-venue-status-dot"></span>
+                              {v.status || 'Available'}
                             </span>
-                          )}
-                        </div>
-
-                        <h3 className="admin-venue-card-title">{v.name}</h3>
-
-                        <div className="admin-venue-location">
-                          <i className="fa-solid fa-location-dot"></i>
-                          <span title={formattedAddress}>{formattedAddress}</span>
-                        </div>
-
-                        {/* Structured Stats Grid for Uniform Height & Alignment */}
-                        <div className="admin-venue-stats-grid">
-                          <div className="admin-venue-stat-box">
-                            <div className="admin-venue-stat-label">
-                              <i className="fa-solid fa-users"></i> Capacity
-                            </div>
-                            <div className="admin-venue-stat-val">
-                              {v.capacity} Seats
-                            </div>
-                          </div>
-                          <div className="admin-venue-stat-box">
-                            <div className="admin-venue-stat-label">
-                              <i className="fa-solid fa-tag"></i> Rate / Hr
-                            </div>
-                            <div className="admin-venue-stat-val rate-val" title={priceDisplay}>
-                              {priceDisplay}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Amenities Tags with consistent min-height */}
-                        <div className="admin-venue-amenities-section">
-                          <div className="admin-venue-amenities-tags">
-                            {v.amenities && v.amenities.map((am, i) => (
-                              <span key={i} className="admin-venue-amenity-chip">
-                                <i className="fa-solid fa-check"></i> {am}
+                            {v.branch && (
+                              <span className="admin-venue-branch-tag" title={v.branch}>
+                                <i className="fa-solid fa-location-dot" style={{ fontSize: '0.7rem' }}></i>
+                                {v.branch}
                               </span>
-                            ))}
+                            )}
                           </div>
-                        </div>
 
-                        {/* Card Bottom Actions: Level baseline pinned to bottom */}
-                        <div className="admin-venue-card-actions">
-                          <button
-                            type="button"
-                            className="admin-btn-schedule"
-                            onClick={() => showToast && showToast(`Booking schedule checked for "${v.name}"`, 'info')}
-                          >
-                            <i className="fa-regular fa-calendar-check"></i> Check Schedule
-                          </button>
-                          <button
-                            type="button"
-                            className="admin-btn-edit-venue"
-                            onClick={() => setEditingVenue(v)}
-                            title="Edit Venue Facility"
-                          >
-                            <i className="fa-regular fa-pen-to-square"></i> Edit Facility
-                          </button>
-                          <button
-                            type="button"
-                            className="admin-btn-delete-venue"
-                            title="Delete Space"
-                            onClick={async () => {
-                              if (!venueId) return;
-                              if (window.confirm(`Are you sure you want to delete venue "${v.name}"?`)) {
-                                try {
-                                  const authToken = localStorage.getItem('eventhub_token') || token;
-                                  const res = await fetch(`/api/venues/${venueId}`, {
-                                    method: 'DELETE',
-                                    headers: {
-                                      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-                                    },
-                                  });
-                                  const data = await res.json();
-                                  if (data.success) {
+                          <h3 className="admin-venue-card-title">{v.name}</h3>
+
+                          <div className="admin-venue-location">
+                            <i className="fa-solid fa-location-dot"></i>
+                            <span title={formattedAddress}>{formattedAddress}</span>
+                          </div>
+
+                          {/* Structured Stats Grid for Uniform Height & Alignment */}
+                          <div className="admin-venue-stats-grid">
+                            <div className="admin-venue-stat-box">
+                              <div className="admin-venue-stat-label">
+                                <i className="fa-solid fa-users"></i> Capacity
+                              </div>
+                              <div className="admin-venue-stat-val">
+                                {v.capacity} Seats
+                              </div>
+                            </div>
+                            <div className="admin-venue-stat-box">
+                              <div className="admin-venue-stat-label">
+                                <i className="fa-solid fa-tag"></i> Rate / Hr
+                              </div>
+                              <div className="admin-venue-stat-val rate-val" title={priceDisplay}>
+                                {priceDisplay}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Amenities Tags with consistent min-height */}
+                          <div className="admin-venue-amenities-section">
+                            <div className="admin-venue-amenities-tags">
+                              {v.amenities && v.amenities.map((am, i) => (
+                                <span key={i} className="admin-venue-amenity-chip">
+                                  <i className="fa-solid fa-check"></i> {am}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Card Bottom Actions: Level baseline pinned to bottom */}
+                          <div className="admin-venue-card-actions">
+                            <button
+                              type="button"
+                              className="admin-btn-schedule"
+                              onClick={() => showToast && showToast(`Booking schedule checked for "${v.name}"`, 'info')}
+                            >
+                              <i className="fa-regular fa-calendar-check"></i> Check Schedule
+                            </button>
+                            <button
+                              type="button"
+                              className="admin-btn-edit-venue"
+                              onClick={() => setEditingVenue(v)}
+                              title="Edit Venue Facility"
+                            >
+                              <i className="fa-regular fa-pen-to-square"></i> Edit Facility
+                            </button>
+                            <button
+                              type="button"
+                              className="admin-btn-delete-venue"
+                              title="Delete Space"
+                              onClick={async () => {
+                                if (!venueId) return;
+                                if (window.confirm(`Are you sure you want to delete venue "${v.name}"?`)) {
+                                  try {
+                                    const authToken = localStorage.getItem('eventhub_token') || token;
+                                    const res = await fetch(`/api/venues/${venueId}`, {
+                                      method: 'DELETE',
+                                      headers: {
+                                        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+                                      },
+                                    });
+                                    const data = await res.json();
+                                    if (data.success) {
+                                      notifyVenueUpdated({ _id: venueId, id: venueId, deleted: true });
+                                      setVenues((prev) => prev.filter((item) => (item._id || item.id) !== venueId));
+                                      if (showToast) showToast(`Deleted venue "${v.name}" successfully!`, 'success');
+                                    } else {
+                                      notifyVenueUpdated({ _id: venueId, id: venueId, deleted: true });
+                                      setVenues((prev) => prev.filter((item) => (item._id || item.id) !== venueId));
+                                      if (showToast) showToast(data.message || `Deleted venue "${v.name}"`, 'info');
+                                    }
+                                  } catch (err) {
+                                    console.error('Error deleting venue:', err);
                                     notifyVenueUpdated({ _id: venueId, id: venueId, deleted: true });
                                     setVenues((prev) => prev.filter((item) => (item._id || item.id) !== venueId));
-                                    if (showToast) showToast(`Deleted venue "${v.name}" successfully!`, 'success');
-                                  } else {
-                                    notifyVenueUpdated({ _id: venueId, id: venueId, deleted: true });
-                                    setVenues((prev) => prev.filter((item) => (item._id || item.id) !== venueId));
-                                    if (showToast) showToast(data.message || `Deleted venue "${v.name}"`, 'info');
+                                    if (showToast) showToast(`Deleted venue "${v.name}"`, 'info');
                                   }
-                                } catch (err) {
-                                  console.error('Error deleting venue:', err);
-                                  notifyVenueUpdated({ _id: venueId, id: venueId, deleted: true });
-                                  setVenues((prev) => prev.filter((item) => (item._id || item.id) !== venueId));
-                                  if (showToast) showToast(`Deleted venue "${v.name}"`, 'info');
                                 }
-                              }
-                            }}
-                          >
-                            <i className="fa-regular fa-trash-can"></i>
-                          </button>
+                              }}
+                            >
+                              <i className="fa-regular fa-trash-can"></i>
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           ) : isEventsView ? (
             /* VIEW 3: MANAGE EVENTS VIEW */
             <div className="manage-events-container">
