@@ -11,8 +11,6 @@ export default function ProfilePage({
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [avatar, setAvatar] = useState('');
-  const [eventReminders, setEventReminders] = useState(true);
-  const [emailNotifications, setEmailNotifications] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const getInitialsAvatar = (cleanName) => {
@@ -267,77 +265,6 @@ export default function ProfilePage({
                       placeholder="+94 77 123 4567"
                     />
                   </div>
-                </div>
-              </div>
-
-              {/* Card 2: Notification Preferences */}
-              <div className="profile-card-box">
-                <div className="profile-card-header">
-                  <i className="fa-regular fa-bell header-icon"></i>
-                  <h3>Notification Preferences</h3>
-                </div>
-
-                <div className="preferences-list">
-                  <div className="preference-item-row">
-                    <div className="pref-text">
-                      <h4>Event Reminders</h4>
-                      <p>Get notified before an event starts.</p>
-                    </div>
-                    <label className="toggle-switch">
-                      <input
-                        type="checkbox"
-                        checked={eventReminders}
-                        onChange={(e) => setEventReminders(e.target.checked)}
-                      />
-                      <span className="slider round"></span>
-                    </label>
-                  </div>
-
-                  <div className="preference-item-row">
-                    <div className="pref-text">
-                      <h4>Email Notifications</h4>
-                      <p>Receive weekly digests and updates.</p>
-                    </div>
-                    <label className="toggle-switch">
-                      <input
-                        type="checkbox"
-                        checked={emailNotifications}
-                        onChange={(e) => setEmailNotifications(e.target.checked)}
-                      />
-                      <span className="slider round"></span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 3: Calendar Integration */}
-              <div className="profile-card-box">
-                <div className="profile-card-header">
-                  <i className="fa-regular fa-calendar header-icon"></i>
-                  <h3>Calendar Integration</h3>
-                </div>
-
-                <div className="integration-item-box">
-                  <div className="integration-info">
-                    <div className="gcal-icon-wrapper">
-                      <i className="fa-brands fa-google gcal-icon"></i>
-                    </div>
-                    <div className="gcal-text">
-                      <h4>Google Calendar</h4>
-                      <span className="connected-status">
-                        <i className="fa-solid fa-circle-check"></i> Connected
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="btn-manage-outline"
-                    onClick={() =>
-                      showToast && showToast('Google Calendar settings managed.', 'info')
-                    }
-                  >
-                    Manage
-                  </button>
                 </div>
               </div>
 
