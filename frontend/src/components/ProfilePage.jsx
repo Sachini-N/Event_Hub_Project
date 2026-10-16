@@ -13,6 +13,15 @@ export default function ProfilePage({
   const [avatar, setAvatar] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Password Change State
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+
   const getInitialsAvatar = (cleanName) => {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName || 'User')}&background=5d4df6&color=fff&size=200`;
   };
@@ -157,6 +166,61 @@ export default function ProfilePage({
     }
   };
 
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+
+    if (!currentPassword) {
+      if (showToast) showToast('Please enter your current password.', 'error');
+      return;
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      if (showToast) showToast('New password must be at least 6 characters long.', 'error');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      if (showToast) showToast('New passwords do not match. Please verify.', 'error');
+      return;
+    }
+
+    setChangingPassword(true);
+    const authToken = token || localStorage.getItem('eventhub_token');
+
+    try {
+      const response = await fetch('/api/auth/change-password', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        if (showToast) showToast('Password changed successfully!', 'success');
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setShowCurrentPassword(false);
+        setShowNewPassword(false);
+        setShowConfirmPassword(false);
+      } else {
+        if (showToast) showToast(data.message || 'Failed to change password', 'error');
+      }
+    } catch (err) {
+      console.error('Password change error:', err);
+      if (showToast) showToast('Network error while changing password', 'error');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   return (
     <div className="profile-page">
       <div className="section-container">
@@ -285,6 +349,158 @@ export default function ProfilePage({
                 </button>
               </div>
             </form>
+
+            {/* Card 2: Change Password Section */}
+            <div className="profile-card-box" style={{ marginTop: '1.75rem' }}>
+              <div className="profile-card-header">
+                <i className="fa-solid fa-shield-halved header-icon"></i>
+                <h3>Change Password</h3>
+              </div>
+
+              <form onSubmit={handleChangePassword}>
+                <div className="account-info-grid">
+                  {/* Current Password */}
+                  <div className="profile-form-group full-width">
+                    <label htmlFor="prof-current-pass">Current Password *</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showCurrentPassword ? 'text' : 'password'}
+                        id="prof-current-pass"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder="Enter your current password"
+                        required
+                        style={{ paddingRight: '2.5rem' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        style={{
+                          position: 'absolute',
+                          right: '12px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          color: '#94a3b8',
+                          cursor: 'pointer',
+                          fontSize: '0.9rem',
+                          padding: 0,
+                        }}
+                        title={showCurrentPassword ? 'Hide password' : 'Show password'}
+                      >
+                        <i className={`fa-regular ${showCurrentPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* New Password */}
+                  <div className="profile-form-group">
+                    <label htmlFor="prof-new-pass">
+                      New Password * <span style={{ fontSize: '0.75rem', fontWeight: '400', color: '#64748b' }}>(min. 6 characters)</span>
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showNewPassword ? 'text' : 'password'}
+                        id="prof-new-pass"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Enter new strong password"
+                        required
+                        style={{ paddingRight: '2.5rem' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        style={{
+                          position: 'absolute',
+                          right: '12px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          color: '#94a3b8',
+                          cursor: 'pointer',
+                          fontSize: '0.9rem',
+                          padding: 0,
+                        }}
+                        title={showNewPassword ? 'Hide password' : 'Show password'}
+                      >
+                        <i className={`fa-regular ${showNewPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Confirm New Password */}
+                  <div className="profile-form-group">
+                    <label htmlFor="prof-confirm-pass">Confirm New Password *</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        id="prof-confirm-pass"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Re-enter new password"
+                        required
+                        style={{
+                          paddingRight: '2.5rem',
+                          borderColor: confirmPassword && confirmPassword !== newPassword ? '#f43f5e' : undefined,
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        style={{
+                          position: 'absolute',
+                          right: '12px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          color: '#94a3b8',
+                          cursor: 'pointer',
+                          fontSize: '0.9rem',
+                          padding: 0,
+                        }}
+                        title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                      >
+                        <i className={`fa-regular ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                      </button>
+                    </div>
+                    {confirmPassword && confirmPassword !== newPassword && (
+                      <span style={{ color: '#e11d48', fontSize: '0.75rem', fontWeight: '600', marginTop: '0.2rem' }}>
+                        Passwords do not match
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Submit Change Password Button */}
+                <div className="profile-save-row" style={{ marginTop: '1.25rem' }}>
+                  <button
+                    type="submit"
+                    className="btn-save-changes-blue"
+                    disabled={changingPassword || (confirmPassword && confirmPassword !== newPassword)}
+                    style={{
+                      background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                    }}
+                  >
+                    {changingPassword ? (
+                      <>
+                        <i className="fa-solid fa-spinner fa-spin"></i> Updating Password...
+                      </>
+                    ) : (
+                      <>
+                        <i className="fa-solid fa-key"></i> Update Password
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </div>

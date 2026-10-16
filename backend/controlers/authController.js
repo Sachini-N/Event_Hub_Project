@@ -155,6 +155,45 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
+// PUT /api/auth/change-password (Change password for logged-in user)
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: "Please provide both Current Password and New Password." });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: "New password must be at least 6 characters long." });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User account not found." });
+    }
+
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: "Incorrect current password. Please try again." });
+    }
+
+    // Set new password (the pre-save hook in User.js automatically hashes it with bcrypt)
+    user.password = newPassword;
+    await user.save();
+
+    console.log(`[AUTH] Password changed successfully for ${user.email}`);
+
+    res.json({
+      success: true,
+      message: "Password changed successfully!",
+    });
+  } catch (error) {
+    console.error("Change password error:", error);
+    res.status(500).json({ success: false, message: "Failed to change password", error: error.message });
+  }
+};
+
 // Seed default Admin User if none exists
 const seedAdminUser = async () => {
   try {
@@ -631,5 +670,6 @@ module.exports = {
   forgotPassword,
   verifyResetOtp,
   resetPassword,
+  changePassword,
 };
 

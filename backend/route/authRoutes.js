@@ -14,6 +14,7 @@ const {
   forgotPassword,
   verifyResetOtp,
   resetPassword,
+  changePassword,
 } = require("../controlers/authController");
 const { protect, authorize } = require("../middleware/authMiddleware");
 
@@ -52,6 +53,9 @@ router.get("/me", protect, getMe);
 
 // PUT /api/auth/profile
 router.put("/profile", protect, updateUserProfile);
+
+// PUT /api/auth/change-password (Logged-in user password change)
+router.put("/change-password", protect, changePassword);
 
 // GET /api/auth/users (All registered users - Admin only)
 router.get("/users", protect, authorize("admin", "super_admin", "branch_admin"), getAllUsers);
