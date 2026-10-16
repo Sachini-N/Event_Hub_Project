@@ -528,7 +528,6 @@ const forgotPassword = async (req, res) => {
       success: true,
       message: `A 6-digit verification code has been sent to ${user.email}.`,
       previewUrl: emailResult.previewUrl || null,
-      devOtp: process.env.NODE_ENV !== "production" ? otp : undefined,
     });
   } catch (error) {
     console.error("Forgot password error:", error);
