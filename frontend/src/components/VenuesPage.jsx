@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import FormattedText from './FormattedText';
 import ImageCarouselSlider from './ImageCarouselSlider';
 import { optimizeImageUrl } from '../utils/eventUtils';
+import AddVenueModal from './modals/AddVenueModal';
 
 // TRACE Branch metadata definition for rich display & badges
 const TRACE_BRANCHES_META = [
@@ -141,6 +142,23 @@ export default function VenuesPage({ showToast }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [spaceTypeFilter, setSpaceTypeFilter] = useState('All');
+  const [showAddSpaceModal, setShowAddSpaceModal] = useState(false);
+
+  const currentUser = (() => {
+    try {
+      const u = localStorage.getItem('eventhub_user');
+      return u ? JSON.parse(u) : null;
+    } catch (e) {
+      return null;
+    }
+  })();
+  const isAdmin = currentUser && (
+    currentUser.role === 'admin' ||
+    currentUser.role === 'super_admin' ||
+    currentUser.role === 'branch_admin' ||
+    currentUser.email === 'admin@trace.lk' ||
+    currentUser.isAdmin
+  );
 
   // Helper function to derive space type (Meeting Room, Co-working, Auditorium, etc.)
   const getSpaceType = (v) => {
@@ -478,11 +496,23 @@ export default function VenuesPage({ showToast }) {
       {/* Main Content Area */}
       <div className="section-container">
         {/* Page Title & Subtitle Header */}
-        <div className="page-header">
-          <h1 className="page-title">Spaces & Facilities</h1>
-          <p className="page-subtitle">
-            Explore world-class auditoriums, technology labs, and facilities stationed across TRACE branches.
-          </p>
+        <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <h1 className="page-title">Spaces & Facilities</h1>
+            <p className="page-subtitle">
+              Explore world-class auditoriums, technology labs, and facilities stationed across TRACE branches.
+            </p>
+          </div>
+          {isAdmin && (
+            <button
+              type="button"
+              className="btn-create-event-blue"
+              onClick={() => setShowAddSpaceModal(true)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '0.75rem 1.4rem', borderRadius: '12px', fontWeight: '700', fontSize: '0.92rem', boxShadow: '0 4px 14px rgba(93, 77, 246, 0.35)', cursor: 'pointer', background: 'linear-gradient(135deg, #5d4df6 0%, #4f46e5 100%)', color: '#fff', border: 'none' }}
+            >
+              <i className="fa-solid fa-plus"></i> Add New Space
+            </button>
+          )}
         </div>
 
         {/* Single Horizontal Tab Spaces Filter Bar */}
@@ -1017,6 +1047,18 @@ export default function VenuesPage({ showToast }) {
           </div>
         </div>
       )}
+
+      {/* Add New Space Modal */}
+      <AddVenueModal
+        isOpen={showAddSpaceModal}
+        onClose={() => setShowAddSpaceModal(false)}
+        token={localStorage.getItem('eventhub_token')}
+        onVenueCreated={(newVenue) => {
+          setVenues((prev) => [newVenue, ...prev]);
+          if (showToast) showToast(`Space "${newVenue.name}" published successfully!`, 'success');
+        }}
+        showToast={showToast}
+      />
     </div>
   );
 }

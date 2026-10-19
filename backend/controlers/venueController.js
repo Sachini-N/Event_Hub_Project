@@ -1,4 +1,5 @@
 const Venue = require("../model/Venue");
+const mongoose = require("mongoose");
 
 // Resilient in-memory cache for instantaneous (0ms) responses & network fault tolerance
 let venuesCache = [];
@@ -58,8 +59,9 @@ const createVenue = async (req, res) => {
       ? images 
       : [coverImage || "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80"];
 
+    const newVenueId = new mongoose.Types.ObjectId();
     const venueObj = {
-      _id: new require("mongoose").Types.ObjectId(),
+      _id: newVenueId,
       name,
       branch: branch || "TRACE Expert City (Colombo)",
       city: city || "Colombo, Sri Lanka",
@@ -79,11 +81,15 @@ const createVenue = async (req, res) => {
     };
 
     // Update in-memory cache instantly
-    venuesCache = [venueObj, ...venuesCache.filter(v => (v._id || v.id) !== venueObj._id)];
+    venuesCache = [venueObj, ...venuesCache.filter(v => String(v._id || v.id) !== String(newVenueId))];
 
-    // Persist to MongoDB in background or await
-    const venue = new Venue(venueObj);
-    venue.save().catch(e => console.warn("Background venue save notice:", e.message));
+    // Persist to MongoDB
+    try {
+      const venue = new Venue(venueObj);
+      await venue.save();
+    } catch (dbErr) {
+      console.warn("MongoDB venue save notice (cached in memory):", dbErr.message);
+    }
 
     res.status(201).json({ success: true, message: "Venue added successfully!", data: venueObj });
   } catch (error) {
@@ -128,8 +134,12 @@ const updateVenue = async (req, res) => {
       return v;
     });
 
-    const venue = await Venue.findByIdAndUpdate(req.params.id, updateFields, { returnDocument: 'after', runValidators: true });
-    res.json({ success: true, message: "Venue updated successfully!", data: venue || updateFields });
+    try {
+      const venue = await Venue.findByIdAndUpdate(req.params.id, updateFields, { returnDocument: 'after', runValidators: true });
+      return res.json({ success: true, message: "Venue updated successfully!", data: venue || updateFields });
+    } catch (dbErr) {
+      return res.json({ success: true, message: "Venue updated successfully!", data: updateFields });
+    }
   } catch (error) {
     // If DB is slow, still confirm update from cache
     res.json({ success: true, message: "Venue updated successfully!", data: req.body });
@@ -140,7 +150,7 @@ const updateVenue = async (req, res) => {
 const deleteVenue = async (req, res) => {
   try {
     venuesCache = venuesCache.filter(v => String(v._id || v.id) !== String(req.params.id));
-    Venue.findByIdAndDelete(req.params.id).catch(() => {});
+    await Venue.findByIdAndDelete(req.params.id);
     res.json({ success: true, message: "Venue deleted successfully" });
   } catch (error) {
     venuesCache = venuesCache.filter(v => String(v._id || v.id) !== String(req.params.id));

@@ -1,4 +1,5 @@
 const Event = require("../model/Event");
+const mongoose = require("mongoose");
 
 // Helper function to calculate exact end date and time of an event
 const getEventEndDateTime = (dateVal, timeStr) => {
@@ -175,7 +176,7 @@ const createEvent = async (req, res) => {
       eventData.status = now > endDateTime ? "past" : "upcoming";
     }
 
-    eventData._id = eventData._id || new require("mongoose").Types.ObjectId();
+    eventData._id = eventData._id || new mongoose.Types.ObjectId();
     eventData.createdAt = new Date().toISOString();
     eventData.updatedAt = new Date().toISOString();
 
