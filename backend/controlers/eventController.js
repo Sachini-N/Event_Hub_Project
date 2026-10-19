@@ -62,9 +62,9 @@ const getEventEndDateTime = (dateVal, timeStr) => {
   return new Date(year, month, day, hours, minutes, seconds);
 };
 
-// Seed initial data if database is empty - Sample events removed per request
 // Resilient in-memory cache for instantaneous (0ms) responses & network fault tolerance
 let eventsCache = [];
+let isEventsCacheLoaded = false;
 
 const getEventsCache = () => eventsCache;
 
@@ -90,16 +90,17 @@ const processEventsList = (list, status, category, now = new Date()) => {
   return processed;
 };
 
-// Seed initial data if database is empty - Sample events removed per request
+// Prime in-memory events cache on server boot
 const seedInitialEvents = async () => {
-  // Silent background initial fetch
-  Event.find().lean()
-    .then((docs) => {
-      if (Array.isArray(docs) && docs.length > 0) {
-        eventsCache = docs;
-      }
-    })
-    .catch(() => {});
+  try {
+    const docs = await Event.find().select("-gallery.url").lean();
+    if (Array.isArray(docs) && docs.length > 0) {
+      eventsCache = docs;
+      isEventsCacheLoaded = true;
+    }
+  } catch (err) {
+    console.warn("Initial events cache load notice:", err.message);
+  }
 };
 
 // GET /api/events?status=upcoming|past
@@ -107,13 +108,13 @@ const getEvents = async (req, res) => {
   res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   const { status, category } = req.query;
 
-  // 1. If cache has items, return immediately for instant UI, then refresh in background
-  if (eventsCache.length > 0) {
+  // 1. If cache is loaded, return immediately for instant 0ms UI, then refresh in background
+  if (isEventsCacheLoaded && eventsCache.length > 0) {
     const result = processEventsList(eventsCache, status, category);
     res.json({ success: true, count: result.length, data: result });
 
     // Background silent refresh
-    Event.find().lean()
+    Event.find().select("-gallery.url").lean()
       .then((fresh) => {
         if (Array.isArray(fresh) && fresh.length > 0) {
           eventsCache = fresh;
@@ -123,16 +124,12 @@ const getEvents = async (req, res) => {
     return;
   }
 
-  // 2. If cache empty, query DB with 2.5s timeout
+  // 2. If cache not loaded yet, query DB directly
   try {
-    const fetchPromise = Event.find().lean();
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Database response timeout")), 2500)
-    );
-
-    const events = await Promise.race([fetchPromise, timeoutPromise]);
-    if (Array.isArray(events)) {
+    const events = await Event.find().select("-gallery.url").lean();
+    if (Array.isArray(events) && events.length > 0) {
       eventsCache = events;
+      isEventsCacheLoaded = true;
     }
     const result = processEventsList(eventsCache, status, category);
     return res.json({ success: true, count: result.length, data: result });
@@ -152,17 +149,13 @@ const getEventById = async (req, res) => {
   }
 
   try {
-    const fetchPromise = Event.findById(req.params.id).lean();
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Timeout")), 2500)
-    );
-    const event = await Promise.race([fetchPromise, timeoutPromise]);
+    const event = await Event.findById(req.params.id).lean();
     if (event) {
       return res.json({ success: true, data: event });
     }
     return res.status(404).json({ success: false, message: "Event not found" });
   } catch (error) {
-    return res.status(404).json({ success: false, message: "Event not found or network slow" });
+    return res.status(404).json({ success: false, message: "Event not found" });
   }
 };
 
@@ -182,6 +175,7 @@ const createEvent = async (req, res) => {
 
     // Update in-memory cache instantly
     eventsCache = [eventData, ...eventsCache.filter(e => String(e._id || e.id) !== String(eventData._id))];
+    isEventsCacheLoaded = true;
 
     // Background/async save to MongoDB
     const newEvent = new Event(eventData);

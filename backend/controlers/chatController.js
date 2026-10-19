@@ -244,8 +244,8 @@ const handleChatMessage = async (req, res) => {
     let allDbEvents = getEventsCache();
     if (!allDbEvents || allDbEvents.length === 0) {
       try {
-        const fetchPromise = Event.find({ status: { $ne: "draft" } }).sort({ date: 1 }).lean();
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 2000));
+        const fetchPromise = Event.find({ status: { $ne: "draft" } }).select("-gallery").sort({ date: 1 }).lean();
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000));
         allDbEvents = await Promise.race([fetchPromise, timeoutPromise]);
       } catch (e) {
         allDbEvents = getEventsCache() || [];
@@ -260,7 +260,7 @@ const handleChatMessage = async (req, res) => {
     if (!venues || venues.length === 0) {
       try {
         const fetchPromise = Venue.find({ status: "Available" }).limit(10).lean();
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 2000));
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 5000));
         venues = await Promise.race([fetchPromise, timeoutPromise]);
       } catch (e) {
         venues = getVenuesCache() || [];

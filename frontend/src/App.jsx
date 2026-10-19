@@ -266,6 +266,10 @@ export default function App() {
       const result = await response.json();
       if (result.success && result.data) {
         setCurrentUser(result.data);
+        const u = result.data;
+        if (u.role === 'admin' || u.role === 'super_admin' || u.role === 'branch_admin' || u.email === 'admin@trace.lk' || u.isAdmin) {
+          prefetchAdminData(authToken);
+        }
       } else {
         setToken(null);
         setCurrentUser(null);
@@ -277,6 +281,41 @@ export default function App() {
       setCurrentUser(null);
       localStorage.removeItem('eventhub_token');
     }
+  };
+
+  const prefetchAdminData = async (authToken) => {
+    if (!authToken) return;
+    try {
+      const headers = { Authorization: `Bearer ${authToken}` };
+      Promise.allSettled([
+        fetch('/api/events', { headers }).then(r => r.json()).then(d => {
+          if (d.success && Array.isArray(d.data)) {
+            sessionStorage.setItem('eventhub_admin_cached_events', JSON.stringify(d.data));
+            sessionStorage.setItem('eventhub_cached_events', JSON.stringify(d.data));
+          }
+        }),
+        fetch('/api/registrations', { headers }).then(r => r.json()).then(d => {
+          if (d.success && Array.isArray(d.data)) {
+            sessionStorage.setItem('eventhub_admin_cached_registrations', JSON.stringify(d.data));
+          }
+        }),
+        fetch('/api/venues', { headers }).then(r => r.json()).then(d => {
+          if (d.success && Array.isArray(d.data)) {
+            sessionStorage.setItem('eventhub_cached_venues', JSON.stringify(d.data));
+          }
+        }),
+        fetch('/api/venue-bookings', { headers }).then(r => r.json()).then(d => {
+          if (d.success && Array.isArray(d.data)) {
+            sessionStorage.setItem('eventhub_admin_cached_bookings', JSON.stringify(d.data));
+          }
+        }),
+        fetch('/api/auth/users', { headers }).then(r => r.json()).then(d => {
+          if (d.success && Array.isArray(d.data)) {
+            sessionStorage.setItem('eventhub_admin_cached_users', JSON.stringify(d.data));
+          }
+        }),
+      ]);
+    } catch (e) {}
   };
 
   useEffect(() => {
@@ -301,6 +340,7 @@ export default function App() {
     );
 
     if (isAdmin) {
+      prefetchAdminData(data.token);
       setActiveTab('admin');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {

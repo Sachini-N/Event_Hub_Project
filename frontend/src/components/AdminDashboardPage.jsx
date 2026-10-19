@@ -22,10 +22,32 @@ export default function AdminDashboardPage({
   const [adminPassword, setAdminPassword] = useState('');
   const [loggingIn, setLoggingIn] = useState(false);
 
-  // Dashboard Data & Navigation State
-  const [events, setEvents] = useState([]);
-  const [registrations, setRegistrations] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Dashboard Data & Navigation State (Pre-populated from cache for instant 0ms load)
+  const [events, setEvents] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem('eventhub_admin_cached_events') || sessionStorage.getItem('eventhub_cached_events');
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [registrations, setRegistrations] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem('eventhub_admin_cached_registrations');
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      const hasEvents = sessionStorage.getItem('eventhub_admin_cached_events') || sessionStorage.getItem('eventhub_cached_events');
+      const hasRegs = sessionStorage.getItem('eventhub_admin_cached_registrations');
+      return !(hasEvents || hasRegs);
+    } catch (e) {
+      return true;
+    }
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [activeMenu, setActiveMenu] = useState('dashboard');
   const [eventTab, setEventTab] = useState('all'); // 'all', 'upcoming', 'past'
@@ -76,7 +98,14 @@ export default function AdminDashboardPage({
   const [editingVenue, setEditingVenue] = useState(null);
 
   // Registered Users & Branch Admins State
-  const [registeredUsers, setRegisteredUsers] = useState([]);
+  const [registeredUsers, setRegisteredUsers] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem('eventhub_admin_cached_users');
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [userRoleFilter, setUserRoleFilter] = useState('all'); // 'all', 'admins', 'users'
   const [showAddBranchAdminModal, setShowAddBranchAdminModal] = useState(false);
   const [editingAdminUser, setEditingAdminUser] = useState(null);
@@ -207,42 +236,25 @@ export default function AdminDashboardPage({
     }
   };
 
-  // Venues State
-  const [venues, setVenues] = useState([
-    {
-      id: 1,
-      name: 'TRACE Main Auditorium',
-      city: 'Colombo 10, Sri Lanka',
-      address: 'Bay 5, TRACE Expert City, Maradana Rd',
-      capacity: 250,
-      status: 'Available',
-      coverImage: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80',
-      amenities: ['4K Projectors', 'High-Speed WiFi', 'Live Streaming AV', 'Air Conditioned', 'Stage Lighting'],
-    },
-    {
-      id: 2,
-      name: 'Innovation Center Tech Lab',
-      city: 'Colombo 10, Sri Lanka',
-      address: 'Building B, TRACE Expert City',
-      capacity: 120,
-      status: 'Available',
-      coverImage: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80',
-      amenities: ['Interactive Whiteboards', 'Power Outlets at Desk', 'Dual Monitors', 'Catering Station'],
-    },
-    {
-      id: 3,
-      name: 'TRACE Hub Meeting Hall 4',
-      city: 'Colombo 10, Sri Lanka',
-      address: 'Bay 2, TRACE Expert City',
-      capacity: 60,
-      status: 'Reserved',
-      coverImage: 'https://images.unsplash.com/photo-1431540015161-0bf868a2d407?auto=format&fit=crop&w=800&q=80',
-      amenities: ['Conference Cam', 'Surround Audio', 'Whiteboard Wall'],
-    },
-  ]);
+  // Venues State (Pre-populated from cache for instant 0ms load)
+  const [venues, setVenues] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem('eventhub_cached_venues');
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
 
   const [showAddVenueModal, setShowAddVenueModal] = useState(false);
-  const [venueBookings, setVenueBookings] = useState([]);
+  const [venueBookings, setVenueBookings] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem('eventhub_admin_cached_bookings');
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [inquirySearchQuery, setInquirySearchQuery] = useState('');
   const [inquiryBranchFilter, setInquiryBranchFilter] = useState('all');
   const [inquiryStatusFilter, setInquiryStatusFilter] = useState('all');
@@ -255,53 +267,81 @@ export default function AdminDashboardPage({
 
   const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'super_admin' || currentUser.role === 'branch_admin' || currentUser.email === 'admin@trace.lk' || currentUser.isAdmin);
 
-  const fetchDashboardData = async () => {
-    setLoading(true);
+  const fetchDashboardData = async (silent = false) => {
+    // Only show blocking spinner if cache is completely empty
+    if (!silent && events.length === 0 && registrations.length === 0) {
+      setLoading(true);
+    }
+
     try {
       const authToken = localStorage.getItem('eventhub_token') || token;
       const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
 
-      // 1. Fetch Events
-      const eventsRes = await fetch('/api/events', { headers });
-      const eventsData = await eventsRes.json();
-      if (eventsData.success) {
-        setEvents(eventsData.data || []);
+      // Execute all 6 dashboard fetches in parallel for instant 0ms/fast load
+      const [eventsResult, regsResult, venuesResult, bookingsResult, usersResult, heroResult] =
+        await Promise.allSettled([
+          fetch('/api/events', { headers }).then((r) => r.json()),
+          fetch('/api/registrations', { headers }).then((r) => r.json()),
+          fetch('/api/venues', { headers }).then((r) => r.json()),
+          fetch('/api/venue-bookings', { headers }).then((r) => r.json()),
+          fetch('/api/auth/users', { headers }).then((r) => r.json()),
+          fetch('/api/settings/hero').then((r) => r.json()),
+        ]);
+
+      // 1. Events
+      if (eventsResult.status === 'fulfilled' && eventsResult.value?.success) {
+        const data = eventsResult.value.data || [];
+        setEvents(data);
+        try {
+          sessionStorage.setItem('eventhub_admin_cached_events', JSON.stringify(data));
+          sessionStorage.setItem('eventhub_cached_events', JSON.stringify(data));
+        } catch (e) {}
       }
 
-      // 2. Fetch Registrations
-      const regsRes = await fetch('/api/registrations', { headers });
-      const regsData = await regsRes.json();
-      if (regsData.success) {
-        setRegistrations(regsData.data || []);
+      // 2. Registrations
+      if (regsResult.status === 'fulfilled' && regsResult.value?.success) {
+        const data = regsResult.value.data || [];
+        setRegistrations(data);
+        try {
+          sessionStorage.setItem('eventhub_admin_cached_registrations', JSON.stringify(data));
+        } catch (e) {}
       }
 
-      // 3. Fetch Venues
-      const venuesRes = await fetch('/api/venues', { headers });
-      const venuesData = await venuesRes.json();
-      if (venuesData.success && venuesData.data && venuesData.data.length > 0) {
-        setVenues(venuesData.data);
+      // 3. Venues
+      if (venuesResult.status === 'fulfilled' && venuesResult.value?.success) {
+        const data = venuesResult.value.data || [];
+        if (data.length > 0) {
+          setVenues(data);
+          try {
+            sessionStorage.setItem('eventhub_cached_venues', JSON.stringify(data));
+          } catch (e) {}
+        }
       }
 
-      // 4. Fetch Venue Booking Inquiries
-      const bookingsRes = await fetch('/api/venue-bookings', { headers });
-      const bookingsData = await bookingsRes.json();
-      if (bookingsData.success) {
-        setVenueBookings(bookingsData.data || []);
+      // 4. Venue Booking Inquiries
+      if (bookingsResult.status === 'fulfilled' && bookingsResult.value?.success) {
+        const data = bookingsResult.value.data || [];
+        setVenueBookings(data);
+        try {
+          sessionStorage.setItem('eventhub_admin_cached_bookings', JSON.stringify(data));
+        } catch (e) {}
       }
 
-      // 5. Fetch Registered Users
-      const usersRes = await fetch('/api/auth/users', { headers });
-      const usersData = await usersRes.json();
-      if (usersData.success) {
-        setRegisteredUsers(usersData.data || []);
+      // 5. Registered Users
+      if (usersResult.status === 'fulfilled' && usersResult.value?.success) {
+        const data = usersResult.value.data || [];
+        setRegisteredUsers(data);
+        try {
+          sessionStorage.setItem('eventhub_admin_cached_users', JSON.stringify(data));
+        } catch (e) {}
       }
 
-      // 6. Fetch Hero Settings
-      const heroRes = await fetch('/api/settings/hero');
-      const heroData = await heroRes.json();
-      if (heroData.success && heroData.data) {
-        setHeroSettings(heroData.data);
-        localStorage.setItem('eventhub_hero_settings', JSON.stringify(heroData.data));
+      // 6. Hero Settings
+      if (heroResult.status === 'fulfilled' && heroResult.value?.success && heroResult.value?.data) {
+        setHeroSettings(heroResult.value.data);
+        try {
+          localStorage.setItem('eventhub_hero_settings', JSON.stringify(heroResult.value.data));
+        } catch (e) {}
       }
     } catch (err) {
       console.error('Error loading admin dashboard data:', err);
@@ -345,7 +385,8 @@ export default function AdminDashboardPage({
 
   useEffect(() => {
     if (isAdmin) {
-      fetchDashboardData();
+      const hasCached = events.length > 0 || registrations.length > 0;
+      fetchDashboardData(hasCached);
     }
   }, [isAdmin]);
 

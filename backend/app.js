@@ -5,34 +5,6 @@ try {
   // Ignore in environments where setting DNS servers is restricted
 }
 
-// Monkey-patch dns.lookup for MongoDB Atlas clusters when local OS DNS fails
-const originalLookup = dns.lookup;
-dns.lookup = function (hostname, options, callback) {
-  if (typeof options === "function") {
-    callback = options;
-    options = {};
-  }
-  originalLookup(hostname, options, (err, address, family) => {
-    if (
-      err &&
-      (err.code === "ENOTFOUND" || err.code === "EAI_AGAIN") &&
-      (hostname.includes("mongodb.net") || hostname.includes("cluster0"))
-    ) {
-      dns.resolve4(hostname, (resolveErr, addresses) => {
-        if (!resolveErr && addresses && addresses.length > 0) {
-          if (options && options.all) {
-            return callback(null, addresses.map((ip) => ({ address: ip, family: 4 })));
-          }
-          return callback(null, addresses[0], 4);
-        }
-        callback(err, address, family);
-      });
-    } else {
-      callback(err, address, family);
-    }
-  });
-};
-
 require("dotenv").config();
 
 const express = require("express");
@@ -90,45 +62,81 @@ app.use(
 app.use(express.json({ limit: "25mb" }));
 app.use(express.urlencoded({ limit: "25mb", extended: true }));
 
-// Serverless-friendly cached MongoDB connection helper
+// Direct replica set fallback URI for MongoDB Atlas (bypasses Windows DNS SRV lookup issues)
+const DIRECT_REPLICA_URI =
+  "mongodb://admin:3fg96tRd1iREyBza@ac-eyehwbw-shard-00-00.tkag7mg.mongodb.net:27017,ac-eyehwbw-shard-00-01.tkag7mg.mongodb.net:27017,ac-eyehwbw-shard-00-02.tkag7mg.mongodb.net:27017/eventhub?ssl=true&replicaSet=atlas-112dlm-shard-0&authSource=admin&retryWrites=true&w=majority";
+
+const tryConnect = async (uri) => {
+  return mongoose.connect(uri, {
+    maxPoolSize: 20,
+    minPoolSize: 2,
+    serverSelectionTimeoutMS: 15000,
+    connectTimeoutMS: 15000,
+    socketTimeoutMS: 45000,
+  });
+};
+
+// Serverless-friendly cached MongoDB connection helper with automatic fallback
 let dbConnectionPromise = null;
+let isConnecting = false;
+let lastConnectAttempt = 0;
+
 const connectDB = async () => {
-  if (mongoose.connection.readyState === 1) return;
+  if (mongoose.connection.readyState === 1) return mongoose.connection;
   if (dbConnectionPromise) return dbConnectionPromise;
 
-  if (!process.env.MONGO_URI) {
-    throw new Error("MONGO_URI is not defined in environment variables.");
-  }
+  const primaryUri = process.env.MONGO_URI || DIRECT_REPLICA_URI;
 
-  dbConnectionPromise = mongoose
-    .connect(process.env.MONGO_URI, {
-      maxPoolSize: 20,
-      minPoolSize: 2,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-    })
-    .then(async () => {
+  dbConnectionPromise = (async () => {
+    isConnecting = true;
+    lastConnectAttempt = Date.now();
+    try {
+      await tryConnect(primaryUri);
       console.log("Connected to MongoDB successfully!");
-      await seedInitialEvents();
-      await seedAdminUser();
-      await seedInitialVenues();
-      await seedInitialVenueBookings();
-    })
-    .catch((err) => {
-      dbConnectionPromise = null;
-      console.error("MongoDB Connection Error:", err.message);
-      throw err;
-    });
+    } catch (err) {
+      if (primaryUri !== DIRECT_REPLICA_URI) {
+        console.warn(`Primary MongoDB URI failed (${err.message}). Retrying with direct replica set connection...`);
+        try {
+          await tryConnect(DIRECT_REPLICA_URI);
+          console.log("Connected to MongoDB successfully via direct replica set fallback!");
+        } catch (fallbackErr) {
+          dbConnectionPromise = null;
+          isConnecting = false;
+          console.error("MongoDB Connection Error:", fallbackErr.message);
+          throw fallbackErr;
+        }
+      } else {
+        dbConnectionPromise = null;
+        isConnecting = false;
+        console.error("MongoDB Connection Error:", err.message);
+        throw err;
+      }
+    }
+
+    isConnecting = false;
+
+    // Seed data asynchronously without crashing the server if an error occurs
+    try {
+      await Promise.allSettled([
+        seedInitialEvents(),
+        seedAdminUser(),
+        seedInitialVenues(),
+        seedInitialVenueBookings(),
+      ]);
+    } catch (seedErr) {
+      console.warn("Database initial seed notice:", seedErr.message);
+    }
+
+    return mongoose.connection;
+  })();
 
   return dbConnectionPromise;
 };
 
-// Non-blocking connection trigger so API callers get instant responses
+// Non-blocking connection trigger with debouncing (avoids spamming reconnect attempts)
 app.use((req, res, next) => {
-  if (mongoose.connection.readyState !== 1) {
-    connectDB().catch((err) => {
-      console.warn("Background DB reconnect notice:", err.message);
-    });
+  if (mongoose.connection.readyState !== 1 && !isConnecting && (Date.now() - lastConnectAttempt > 10000)) {
+    connectDB().catch(() => {});
   }
   next();
 });

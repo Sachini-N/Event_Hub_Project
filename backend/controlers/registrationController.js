@@ -73,6 +73,7 @@ const registerForEvent = async (req, res) => {
 
     try {
       await registration.save();
+      registrationsCache = [registration.toObject ? registration.toObject() : registration, ...registrationsCache];
     } catch (saveErr) {
       // Revert reservation on failure
       await Event.findByIdAndUpdate(eventId, { $inc: { registeredCount: -1 } });
@@ -126,17 +127,34 @@ const getEventRegistrations = async (req, res) => {
   }
 };
 
+// In-memory cache for instantaneous (0ms) response times
+let registrationsCache = [];
+
 // GET /api/registrations (All registrations for Admin Dashboard)
 const getAllRegistrations = async (req, res) => {
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+
+  if (registrationsCache.length > 0) {
+    res.json({ success: true, count: registrationsCache.length, data: registrationsCache });
+    // Silent background refresh
+    Registration.find().populate("eventId").sort({ createdAt: -1 }).lean()
+      .then((fresh) => {
+        if (Array.isArray(fresh)) registrationsCache = fresh;
+      })
+      .catch(() => {});
+    return;
+  }
+
   try {
-    const registrations = await Registration.find().populate("eventId").sort({ createdAt: -1 });
+    const registrations = await Registration.find().populate("eventId").sort({ createdAt: -1 }).lean();
+    if (Array.isArray(registrations)) {
+      registrationsCache = registrations;
+    }
     res.json({ success: true, count: registrations.length, data: registrations });
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to fetch registrations", error: error.message });
   }
 };
-
-
 
 // PUT /api/registrations/:id (Update status / notes)
 const updateRegistration = async (req, res) => {
@@ -151,6 +169,13 @@ const updateRegistration = async (req, res) => {
     if (notes !== undefined) registration.notes = notes;
 
     await registration.save();
+
+    // Update in-memory cache
+    registrationsCache = registrationsCache.map(r =>
+      String(r._id) === String(req.params.id)
+        ? { ...r, status: status || r.status, notes: notes !== undefined ? notes : r.notes }
+        : r
+    );
 
     res.json({ success: true, message: "Registration updated successfully", data: registration });
   } catch (error) {

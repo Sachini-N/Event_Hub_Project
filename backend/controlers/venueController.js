@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 
 // Resilient in-memory cache for instantaneous (0ms) responses & network fault tolerance
 let venuesCache = [];
+let isVenuesCacheLoaded = false;
 
 const getVenuesCache = () => venuesCache;
 
@@ -22,8 +23,8 @@ const sanitizeVenueOutput = (v) => {
 const getVenues = async (req, res) => {
   res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 
-  // If memory cache already has venues, return immediately to make UI instant, then refresh in background
-  if (venuesCache.length > 0) {
+  // If memory cache is loaded, return immediately to make UI instant (0ms), then refresh in background
+  if (isVenuesCacheLoaded && venuesCache.length > 0) {
     const sanitizedCache = venuesCache.map(sanitizeVenueOutput);
     res.json({ success: true, count: sanitizedCache.length, data: sanitizedCache });
     
@@ -38,16 +39,12 @@ const getVenues = async (req, res) => {
     return;
   }
 
-  // If cache is empty, attempt DB query with a 2.5-second timeout
+  // If cache is empty, query DB directly
   try {
-    const fetchPromise = Venue.find().sort({ createdAt: -1 }).lean();
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Database response timeout")), 2500)
-    );
-
-    const venues = await Promise.race([fetchPromise, timeoutPromise]);
+    const venues = await Venue.find().sort({ createdAt: -1 }).lean();
     if (Array.isArray(venues) && venues.length > 0) {
       venuesCache = venues.map(sanitizeVenueOutput);
+      isVenuesCacheLoaded = true;
     }
     const sanitized = venuesCache.map(sanitizeVenueOutput);
     return res.json({ success: true, count: sanitized.length, data: sanitized });
@@ -106,6 +103,7 @@ const createVenue = async (req, res) => {
 
     // Update in-memory cache instantly
     venuesCache = [venueObj, ...venuesCache.filter(v => String(v._id || v.id) !== String(newVenueId))];
+    isVenuesCacheLoaded = true;
 
     // Persist to MongoDB
     try {
@@ -334,8 +332,15 @@ const seedInitialVenues = async () => {
       await Venue.insertMany(sampleVenues);
       console.log("Sample multi-branch venues seeded successfully!");
     }
+
+    // Always prime in-memory cache for 0ms response time
+    const freshVenues = await Venue.find().sort({ createdAt: -1 }).lean();
+    if (Array.isArray(freshVenues)) {
+      venuesCache = freshVenues.map(sanitizeVenueOutput);
+      isVenuesCacheLoaded = true;
+    }
   } catch (err) {
-    console.error("Error seeding venues:", err);
+    console.error("Error seeding/caching venues:", err);
   }
 };
 

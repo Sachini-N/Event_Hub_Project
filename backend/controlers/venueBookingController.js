@@ -1,10 +1,29 @@
 const VenueBooking = require("../model/VenueBooking");
 const { sendEmail } = require("../config/emailHelper");
 
+// In-memory cache for instantaneous (0ms) response times
+let venueBookingsCache = [];
+
 // GET /api/venue-bookings (Fetch all venue booking inquiries)
 const getAllVenueBookings = async (req, res) => {
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+
+  if (venueBookingsCache.length > 0) {
+    res.json({ success: true, count: venueBookingsCache.length, data: venueBookingsCache });
+    // Silent background refresh
+    VenueBooking.find().sort({ createdAt: -1 }).lean()
+      .then((fresh) => {
+        if (Array.isArray(fresh)) venueBookingsCache = fresh;
+      })
+      .catch(() => {});
+    return;
+  }
+
   try {
-    const bookings = await VenueBooking.find().sort({ createdAt: -1 });
+    const bookings = await VenueBooking.find().sort({ createdAt: -1 }).lean();
+    if (Array.isArray(bookings)) {
+      venueBookingsCache = bookings;
+    }
     res.json({ success: true, count: bookings.length, data: bookings });
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to fetch venue bookings", error: error.message });
@@ -64,6 +83,7 @@ const createVenueBooking = async (req, res) => {
     });
 
     await booking.save();
+    venueBookingsCache = [booking.toObject ? booking.toObject() : booking, ...venueBookingsCache];
 
     // 1. Dispatch Instant Real-Time Email Notification to connect@trace.lk
     const adminEmailSubject = `🏢 New Venue Booking Inquiry [${bookingRef}]: ${venueName} - ${name}`;
@@ -229,6 +249,11 @@ const updateVenueBookingStatus = async (req, res) => {
     if (notes !== undefined) booking.notes = notes;
 
     await booking.save();
+    venueBookingsCache = venueBookingsCache.map(b =>
+      String(b._id) === String(req.params.id)
+        ? { ...b, status: status || b.status, notes: notes !== undefined ? notes : b.notes }
+        : b
+    );
     res.json({ success: true, message: "Booking status updated successfully!", data: booking });
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to update booking status", error: error.message });
@@ -242,6 +267,7 @@ const deleteVenueBooking = async (req, res) => {
     if (!booking) {
       return res.status(404).json({ success: false, message: "Booking inquiry not found" });
     }
+    venueBookingsCache = venueBookingsCache.filter(b => String(b._id) !== String(req.params.id));
     res.json({ success: true, message: "Booking deleted successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to delete booking", error: error.message });
@@ -288,8 +314,14 @@ const seedInitialVenueBookings = async () => {
       await VenueBooking.insertMany(sampleBookings);
       console.log("Sample venue bookings seeded successfully!");
     }
+
+    // Always prime cache on boot for 0ms response time
+    const freshBookings = await VenueBooking.find().sort({ createdAt: -1 }).lean();
+    if (Array.isArray(freshBookings)) {
+      venueBookingsCache = freshBookings;
+    }
   } catch (err) {
-    console.error("Error seeding venue bookings:", err);
+    console.error("Error seeding/caching venue bookings:", err);
   }
 };
 

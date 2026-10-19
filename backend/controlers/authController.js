@@ -215,10 +215,28 @@ const seedAdminUser = async () => {
   }
 };
 
+// In-memory cache for registered users (Admin Portal)
+let usersCache = [];
+
 // GET /api/auth/users (Get all registered users for Admin)
 const getAllUsers = async (req, res) => {
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+
+  if (usersCache.length > 0) {
+    res.json({ success: true, count: usersCache.length, data: usersCache });
+    User.find().select("-password -resetPasswordOtp -resetPasswordOtpExpires").sort({ createdAt: -1 }).lean()
+      .then((fresh) => {
+        if (Array.isArray(fresh)) usersCache = fresh;
+      })
+      .catch(() => {});
+    return;
+  }
+
   try {
-    const users = await User.find().select("-password -resetPasswordOtp -resetPasswordOtpExpires").sort({ createdAt: -1 });
+    const users = await User.find().select("-password -resetPasswordOtp -resetPasswordOtpExpires").sort({ createdAt: -1 }).lean();
+    if (Array.isArray(users)) {
+      usersCache = users;
+    }
     res.json({ success: true, count: users.length, data: users });
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to fetch registered users", error: error.message });
@@ -232,6 +250,7 @@ const deleteUser = async (req, res) => {
     if (!deletedUser) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
+    usersCache = usersCache.filter(u => String(u._id) !== String(req.params.id));
     res.json({ success: true, message: "User account deleted successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to delete user", error: error.message });
