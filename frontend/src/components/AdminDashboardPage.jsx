@@ -2587,7 +2587,27 @@ export default function AdminDashboardPage({
                     return (
                       <div key={venueId || Math.random()} className="admin-venue-card">
                         <div className="admin-venue-card-banner-wrapper">
-                          <img src={v.coverImage} alt={v.name} className="admin-venue-card-banner" />
+                          {v.coverImage && typeof v.coverImage === 'string' && v.coverImage.trim().length > 0 && !v.coverImage.includes('photo-1517457373958-b7bdd4587205') && !v.coverImage.includes('photo-1540575467063-178a50c2df87') ? (
+                            <img
+                              src={v.coverImage}
+                              alt={v.name}
+                              className="admin-venue-card-banner"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                const fallback = e.currentTarget.parentElement?.querySelector('.admin-venue-no-image-banner');
+                                if (fallback) fallback.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          <div
+                            className="admin-venue-no-image-banner"
+                            style={{
+                              display: v.coverImage && typeof v.coverImage === 'string' && v.coverImage.trim().length > 0 && !v.coverImage.includes('photo-1517457373958-b7bdd4587205') && !v.coverImage.includes('photo-1540575467063-178a50c2df87') ? 'none' : 'flex'
+                            }}
+                          >
+                            <i className="fa-regular fa-image" style={{ fontSize: '1.75rem', color: '#94a3b8' }}></i>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b' }}>No Photo</span>
+                          </div>
                         </div>
                         <div className="admin-venue-card-body">
                           <div className="admin-venue-badges-row">

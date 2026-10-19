@@ -6,19 +6,32 @@ let venuesCache = [];
 
 const getVenuesCache = () => venuesCache;
 
+const sanitizeVenueOutput = (v) => {
+  if (!v) return v;
+  let cover = v.coverImage;
+  if (cover && typeof cover === 'string' && (cover.includes('photo-1517457373958-b7bdd4587205') || cover.includes('photo-1540575467063-178a50c2df87'))) {
+    cover = "";
+  }
+  let images = Array.isArray(v.images)
+    ? v.images.filter(img => typeof img === 'string' && !img.includes('photo-1517457373958-b7bdd4587205') && !img.includes('photo-1540575467063-178a50c2df87'))
+    : [];
+  return { ...v, coverImage: cover || "", images };
+};
+
 // GET /api/venues (Fetch all venues)
 const getVenues = async (req, res) => {
   res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 
   // If memory cache already has venues, return immediately to make UI instant, then refresh in background
   if (venuesCache.length > 0) {
-    res.json({ success: true, count: venuesCache.length, data: venuesCache });
+    const sanitizedCache = venuesCache.map(sanitizeVenueOutput);
+    res.json({ success: true, count: sanitizedCache.length, data: sanitizedCache });
     
     // Background silent refresh from DB if connected
     Venue.find().sort({ createdAt: -1 }).lean()
       .then((freshVenues) => {
         if (Array.isArray(freshVenues) && freshVenues.length > 0) {
-          venuesCache = freshVenues;
+          venuesCache = freshVenues.map(sanitizeVenueOutput);
         }
       })
       .catch(() => {});
@@ -34,12 +47,14 @@ const getVenues = async (req, res) => {
 
     const venues = await Promise.race([fetchPromise, timeoutPromise]);
     if (Array.isArray(venues) && venues.length > 0) {
-      venuesCache = venues;
+      venuesCache = venues.map(sanitizeVenueOutput);
     }
-    return res.json({ success: true, count: venuesCache.length, data: venuesCache });
+    const sanitized = venuesCache.map(sanitizeVenueOutput);
+    return res.json({ success: true, count: sanitized.length, data: sanitized });
   } catch (error) {
     console.warn("Serving venues from resilient fallback cache:", error.message);
-    return res.json({ success: true, count: venuesCache.length, data: venuesCache });
+    const sanitized = venuesCache.map(sanitizeVenueOutput);
+    return res.json({ success: true, count: sanitized.length, data: sanitized });
   }
 };
 
@@ -55,9 +70,18 @@ const createVenue = async (req, res) => {
     const numericPrice = pricePerHour ? Number(pricePerHour) : 25000;
     const formattedPrice = rentalPrice || `Rs. ${numericPrice.toLocaleString()} / hr`;
 
-    const venueImages = Array.isArray(images) && images.length > 0 
-      ? images 
-      : [coverImage || "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80"];
+    const isCleanPhoto = (img) => {
+      if (!img || typeof img !== 'string') return false;
+      const trimmed = img.trim();
+      if (trimmed.length === 0) return false;
+      if (trimmed.includes('photo-1517457373958-b7bdd4587205') || trimmed.includes('photo-1540575467063-178a50c2df87')) return false;
+      return true;
+    };
+
+    const validImages = Array.isArray(images) ? images.filter(isCleanPhoto) : [];
+    const validCoverImage = isCleanPhoto(coverImage)
+      ? coverImage.trim()
+      : (validImages[0] || "");
 
     const newVenueId = new mongoose.Types.ObjectId();
     const venueObj = {
@@ -72,8 +96,8 @@ const createVenue = async (req, res) => {
       pricePerHour: numericPrice,
       status: status || "Available",
       type: type || "Meeting Room",
-      coverImage: venueImages[0],
-      images: venueImages,
+      coverImage: validCoverImage,
+      images: validImages,
       amenities: Array.isArray(amenities) ? amenities : (amenities ? amenities.split(",").map(a => a.trim()) : ["High-Speed WiFi", "Air Conditioned"]),
       description: description || "",
       createdAt: new Date().toISOString(),
@@ -116,8 +140,15 @@ const updateVenue = async (req, res) => {
     if (formattedPrice !== undefined) updateFields.rentalPrice = formattedPrice;
     if (status !== undefined) updateFields.status = status;
     if (type !== undefined) updateFields.type = type;
-    if (coverImage !== undefined) updateFields.coverImage = coverImage;
-    if (images !== undefined) updateFields.images = images;
+    if (coverImage !== undefined) {
+      const isClean = typeof coverImage === 'string' && coverImage.trim().length > 0 && !coverImage.includes('photo-1517457373958-b7bdd4587205') && !coverImage.includes('photo-1540575467063-178a50c2df87');
+      updateFields.coverImage = isClean ? coverImage.trim() : "";
+    }
+    if (images !== undefined) {
+      updateFields.images = Array.isArray(images)
+        ? images.filter(img => typeof img === 'string' && img.trim().length > 0 && !img.includes('photo-1517457373958-b7bdd4587205') && !img.includes('photo-1540575467063-178a50c2df87'))
+        : [];
+    }
     if (amenities !== undefined) {
       updateFields.amenities = Array.isArray(amenities)
         ? amenities
@@ -175,7 +206,7 @@ const seedInitialVenues = async () => {
           pricePerHour: 45000,
           status: "Available",
           type: "Auditorium & Hall",
-          coverImage: "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80",
+          coverImage: "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?auto=format&fit=crop&w=800&q=80",
           amenities: ["4K Cinema Projector", "Gigabit Fiber WiFi", "Stage Sound & Lighting", "Air Conditioned", "VIP Lounge Access"],
           description: "Premier enterprise auditorium equipped for tech summit keynotes, hackathons, and product launch events.",
         },

@@ -235,25 +235,35 @@ export default function VenuesPage({ showToast }) {
   });
   const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
 
+  // Helper to check if a photo URL is valid and not a placeholder stock crowd image
+  const isRealVenuePhoto = (url) => {
+    if (!url || typeof url !== 'string') return false;
+    const trimmed = url.trim();
+    if (trimmed.length === 0) return false;
+    // Exclude unintended default crowd/party photos
+    if (trimmed.includes('photo-1517457373958-b7bdd4587205') || trimmed.includes('photo-1540575467063-178a50c2df87')) {
+      return false;
+    }
+    return true;
+  };
+
   // Helper to get database uploaded images ONLY for the venue space
   const getModalImages = (venue) => {
     if (!venue) return [];
     
     // 1. Array of images uploaded to database
     if (Array.isArray(venue.images) && venue.images.length > 0) {
-      const validDbImages = venue.images.filter(img => typeof img === 'string' && img.trim().length > 0);
+      const validDbImages = venue.images.filter(isRealVenuePhoto);
       if (validDbImages.length > 0) return validDbImages;
     }
 
     // 2. Single cover image uploaded to database
-    if (venue.coverImage && typeof venue.coverImage === 'string' && venue.coverImage.trim().length > 0) {
+    if (isRealVenuePhoto(venue.coverImage)) {
       return [venue.coverImage.trim()];
     }
 
-    // 3. Single fallback image if database has no photos uploaded
-    return [
-      'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=1200&q=80',
-    ];
+    // 3. No fallback image - return empty list so "No Photo" placeholder is displayed
+    return [];
   };
 
   // Automatic photo rotation every 4.5 seconds for spaces modal
@@ -680,17 +690,27 @@ export default function VenuesPage({ showToast }) {
                 >
                   {/* Card Banner Image */}
                   <div className="venue-banner-wrapper">
-                    <img
-                      src={optimizeImageUrl(
-                        v.coverImage ||
-                        'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=75',
-                        800
-                      )}
-                      alt={v.name}
-                      className="venue-card-image"
-                      loading="lazy"
-                      decoding="async"
-                    />
+                    {isRealVenuePhoto(v.coverImage) ? (
+                      <img
+                        src={optimizeImageUrl(v.coverImage.trim(), 800)}
+                        alt={v.name}
+                        className="venue-card-image"
+                        loading="lazy"
+                        decoding="async"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const fallback = e.currentTarget.parentElement?.querySelector('.venue-card-no-image');
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div
+                      className="venue-card-no-image"
+                      style={{ display: isRealVenuePhoto(v.coverImage) ? 'none' : 'flex' }}
+                    >
+                      <i className="fa-regular fa-image no-image-icon"></i>
+                      <span className="no-image-text">No Photo</span>
+                    </div>
                     <div className="venue-card-overlay-badges">
                       {/* Availability Tag */}
                       <span
@@ -828,6 +848,16 @@ export default function VenuesPage({ showToast }) {
                   const modalImages = getModalImages(activeVenueModal);
                   const currentImg = modalImages[modalActivePhotoIndex] || modalImages[0];
 
+                  if (!currentImg || !isRealVenuePhoto(currentImg)) {
+                    return (
+                      <div className="venue-modal-no-image-box">
+                        <i className="fa-regular fa-image no-image-icon-large"></i>
+                        <span className="no-image-title">No Photo Available</span>
+                        <span className="no-image-subtitle">No facility photos have been uploaded for this space.</span>
+                      </div>
+                    );
+                  }
+
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', height: '100%', flex: 1 }}>
                       {/* Main Active Photo View */}
@@ -838,6 +868,19 @@ export default function VenuesPage({ showToast }) {
                           alt={`${activeVenueModal.name} view ${modalActivePhotoIndex + 1}`}
                           loading="lazy"
                           decoding="async"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const parent = e.currentTarget.parentElement;
+                            if (parent) {
+                              parent.innerHTML = `
+                                <div class="venue-modal-no-image-box" style="min-height: 480px; width: 100%; border: none;">
+                                  <i class="fa-regular fa-image no-image-icon-large"></i>
+                                  <span class="no-image-title">No Photo Available</span>
+                                  <span class="no-image-subtitle">Photo could not be loaded.</span>
+                                </div>
+                              `;
+                            }
+                          }}
                           style={{
                             width: '100%',
                             height: '100%',

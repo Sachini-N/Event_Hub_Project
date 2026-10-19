@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 export default function ImageCarouselSlider({
   images = [],
-  fallbackImage = 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80',
+  fallbackImage = '',
   alt = 'Banner',
   className = '',
   style = {},
@@ -11,13 +11,28 @@ export default function ImageCarouselSlider({
   // Extract and normalize image list
   let imgList = [];
   if (Array.isArray(images) && images.length > 0) {
-    imgList = images.filter(Boolean);
+    imgList = images.filter(img => typeof img === 'string' && img.trim().length > 0 && !img.includes('photo-1517457373958-b7bdd4587205') && !img.includes('photo-1540575467063-178a50c2df87'));
   } else if (typeof images === 'string' && images.trim()) {
-    imgList = [images.trim()];
+    const trimmed = images.trim();
+    if (!trimmed.includes('photo-1517457373958-b7bdd4587205') && !trimmed.includes('photo-1540575467063-178a50c2df87')) {
+      imgList = [trimmed];
+    }
   }
 
   if (imgList.length === 0) {
-    imgList = [fallbackImage];
+    if (fallbackImage && !fallbackImage.includes('photo-1517457373958-b7bdd4587205') && !fallbackImage.includes('photo-1540575467063-178a50c2df87')) {
+      imgList = [fallbackImage];
+    } else {
+      return (
+        <div className={`carousel-slider-container ${className}`} style={{ ...style, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)', color: '#94a3b8', minHeight: '200px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+            <i className="fa-regular fa-image" style={{ fontSize: '2rem', color: '#64748b' }}></i>
+            <span style={{ fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#cbd5e1' }}>No Photo</span>
+          </div>
+          {children}
+        </div>
+      );
+    }
   }
 
   const [currentIndex, setCurrentIndex] = useState(0);

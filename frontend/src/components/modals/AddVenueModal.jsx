@@ -209,9 +209,9 @@ export default function AddVenueModal({
     const url = isEdit ? `/api/venues/${venueId}` : '/api/venues';
     const method = isEdit ? 'PUT' : 'POST';
 
-    const finalImages = imageList.length > 0 ? imageList : [coverImage].filter(Boolean);
-    const primaryCover = finalImages[0] || coverImage || 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80';
-    const payloadImages = finalImages.length > 0 ? finalImages : [primaryCover];
+    const finalImages = imageList.length > 0 ? imageList.filter(Boolean) : (coverImage && coverImage.trim() ? [coverImage.trim()] : []);
+    const primaryCover = finalImages[0] || (coverImage && coverImage.trim()) || '';
+    const payloadImages = finalImages;
 
     const payload = {
       name,
