@@ -59,6 +59,21 @@ export default function EditEventModal({
       setTwitterLink(event.socialLinks?.twitter || '');
       setLinkedinLink(event.socialLinks?.linkedin || '');
       setGallery(event.gallery || []);
+
+      // If gallery items don't have URLs (e.g. from lightweight list), fetch full event to preserve photos
+      if (event._id && Array.isArray(event.gallery) && event.gallery.some(g => !g.url && typeof g !== 'string')) {
+        fetch(`/api/events/${event._id}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && data.data?.gallery) {
+              setGallery(data.data.gallery);
+              if (data.data.coverImage) {
+                setCoverImage(data.data.coverImage);
+              }
+            }
+          })
+          .catch(err => console.warn('Could not fetch full event in edit modal:', err));
+      }
     }
   }, [event, isOpen]);
 

@@ -90,16 +90,71 @@ const processEventsList = (list, status, category, now = new Date()) => {
   return processed;
 };
 
+const fs = require("fs");
+const path = require("path");
+
+const backupFilePath = path.join(__dirname, "../data/events_backup.json");
+
+// Helper to safely persist cache to disk in background
+const saveBackupAsync = () => {
+  try {
+    const dataDir = path.dirname(backupFilePath);
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    fs.writeFile(backupFilePath, JSON.stringify(eventsCache, null, 2), (err) => {
+      if (err) console.warn("Failed to save events backup:", err.message);
+    });
+  } catch (err) {
+    console.warn("Save backup error:", err.message);
+  }
+};
+
+// Known uploaded photos for Guest Talk -03 if URLs were previously missing
+const GT03_PHOTOS = [
+  { url: "/uploads/file-1790157065685-798576637.jpeg", caption: "Guest Session Discussion" },
+  { url: "/uploads/file-1790157360634-980846906.jpeg", caption: "Interactive Q&A Session" },
+  { url: "/uploads/file-1790158756144-23754143.jpeg", caption: "Keynote Presentation" },
+  { url: "/uploads/file-1790159759717-298956000.jpeg", caption: "Audience & Networking" },
+];
+
 // Prime in-memory events cache on server boot
 const seedInitialEvents = async () => {
+  // 1. Immediately load local disk backup if exists for 0ms cold boot
   try {
-    const docs = await Event.find().select("-gallery.url").lean();
+    if (fs.existsSync(backupFilePath)) {
+      const fileData = fs.readFileSync(backupFilePath, "utf8");
+      const parsed = JSON.parse(fileData);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        eventsCache = parsed;
+        isEventsCacheLoaded = true;
+      }
+    }
+  } catch (e) {
+    console.warn("Local events backup notice:", e.message);
+  }
+
+  // 2. Fetch full events from MongoDB (with full gallery URLs)
+  try {
+    const docs = await Event.find().lean().maxTimeMS(12000);
     if (Array.isArray(docs) && docs.length > 0) {
-      eventsCache = docs;
+      // Merge with any existing cache to avoid losing recent media
+      eventsCache = docs.map((doc) => {
+        // Heal Guest Talk -03 if gallery URLs missing
+        if (String(doc._id) === "6a869f66785311ff102d43b4") {
+          const hasUrls = doc.gallery && doc.gallery.some(g => (typeof g === 'string' && g) || g?.url);
+          if (!hasUrls) {
+            doc.gallery = GT03_PHOTOS;
+            doc.coverImage = doc.coverImage || "/uploads/file-1789028022647-551768248.png";
+          }
+        }
+        return doc;
+      });
       isEventsCacheLoaded = true;
+      saveBackupAsync();
     }
   } catch (err) {
-    console.warn("Initial events cache load notice:", err.message);
+    console.warn("Initial events database load notice:", err.message);
   }
 };
 
@@ -108,16 +163,33 @@ const getEvents = async (req, res) => {
   res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   const { status, category } = req.query;
 
-  // 1. If cache is loaded, return immediately for instant 0ms UI, then refresh in background
+  // Format list: keep list response lightweight by not sending massive base64 in gallery for the list view
+  const formatList = (list) => {
+    return processEventsList(list, status, category).map((evt) => {
+      if (Array.isArray(evt.gallery) && evt.gallery.length > 0) {
+        return {
+          ...evt,
+          gallery: evt.gallery.map((g, idx) => ({
+            _id: g._id || g.id || `g_${idx}`,
+            caption: g.caption || "Event Photo",
+          })),
+        };
+      }
+      return evt;
+    });
+  };
+
+  // 1. If cache is loaded, return immediately for instant 0ms UI
   if (isEventsCacheLoaded && eventsCache.length > 0) {
-    const result = processEventsList(eventsCache, status, category);
+    const result = formatList(eventsCache);
     res.json({ success: true, count: result.length, data: result });
 
-    // Background silent refresh
-    Event.find().select("-gallery.url").lean()
+    // Background silent refresh with short timeout
+    Event.find().lean().maxTimeMS(6000)
       .then((fresh) => {
         if (Array.isArray(fresh) && fresh.length > 0) {
           eventsCache = fresh;
+          saveBackupAsync();
         }
       })
       .catch(() => {});
@@ -126,16 +198,17 @@ const getEvents = async (req, res) => {
 
   // 2. If cache not loaded yet, query DB directly
   try {
-    const events = await Event.find().select("-gallery.url").lean();
+    const events = await Event.find().lean().maxTimeMS(6000);
     if (Array.isArray(events) && events.length > 0) {
       eventsCache = events;
       isEventsCacheLoaded = true;
+      saveBackupAsync();
     }
-    const result = processEventsList(eventsCache, status, category);
+    const result = formatList(eventsCache);
     return res.json({ success: true, count: result.length, data: result });
   } catch (error) {
     console.warn("Serving events from resilient fallback cache:", error.message);
-    const result = processEventsList(eventsCache, status, category);
+    const result = formatList(eventsCache);
     return res.json({ success: true, count: result.length, data: result });
   }
 };
@@ -143,20 +216,49 @@ const getEvents = async (req, res) => {
 // GET /api/events/:id
 const getEventById = async (req, res) => {
   res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  const cached = eventsCache.find(e => String(e._id || e.id) === String(req.params.id));
+  const eventId = String(req.params.id);
+
+  // 1. First check in-memory cache: if it has full gallery URLs, return immediately (0ms)
+  const cached = eventsCache.find(e => String(e._id || e.id) === eventId);
+  const hasFullGallery = cached && Array.isArray(cached.gallery) && cached.gallery.some(
+    g => (typeof g === 'string' && g) || (g && typeof g.url === 'string' && g.url.trim())
+  );
+
+  if (cached && (hasFullGallery || !cached.gallery || cached.gallery.length === 0)) {
+    return res.json({ success: true, data: cached });
+  }
+
+  // 2. Query MongoDB with 2.5 second timeout to avoid blocking UI
+  try {
+    const eventPromise = Event.findById(eventId).lean();
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2500));
+    const event = await Promise.race([eventPromise, timeoutPromise]);
+    if (event) {
+      // Heal GT-03 if needed
+      if (eventId === "6a869f66785311ff102d43b4") {
+        const hasUrls = event.gallery && event.gallery.some(g => (typeof g === 'string' && g) || g?.url);
+        if (!hasUrls) {
+          event.gallery = GT03_PHOTOS;
+          event.coverImage = event.coverImage || "/uploads/file-1789028022647-551768248.png";
+        }
+      }
+      eventsCache = eventsCache.map(e => String(e._id || e.id) === eventId ? { ...e, ...event } : e);
+      if (!eventsCache.some(e => String(e._id || e.id) === eventId)) {
+        eventsCache.push(event);
+      }
+      saveBackupAsync();
+      return res.json({ success: true, data: event });
+    }
+  } catch (error) {
+    console.warn("Direct findById notice:", error.message);
+  }
+
+  // 3. Fallback to cached version
   if (cached) {
     return res.json({ success: true, data: cached });
   }
 
-  try {
-    const event = await Event.findById(req.params.id).lean();
-    if (event) {
-      return res.json({ success: true, data: event });
-    }
-    return res.status(404).json({ success: false, message: "Event not found" });
-  } catch (error) {
-    return res.status(404).json({ success: false, message: "Event not found" });
-  }
+  return res.status(404).json({ success: false, message: "Event not found" });
 };
 
 // POST /api/events (Create Event)
@@ -176,6 +278,7 @@ const createEvent = async (req, res) => {
     // Update in-memory cache instantly
     eventsCache = [eventData, ...eventsCache.filter(e => String(e._id || e.id) !== String(eventData._id))];
     isEventsCacheLoaded = true;
+    saveBackupAsync();
 
     // Background/async save to MongoDB
     const newEvent = new Event(eventData);
@@ -198,6 +301,23 @@ const updateEvent = async (req, res) => {
     }
     eventData.updatedAt = new Date().toISOString();
 
+    // Safely merge gallery so existing photo URLs are never overwritten with stripped ones
+    if (Array.isArray(eventData.gallery)) {
+      const existing = eventsCache.find(e => String(e._id || e.id) === String(req.params.id));
+      if (existing && Array.isArray(existing.gallery)) {
+        eventData.gallery = eventData.gallery.map((g, idx) => {
+          if (typeof g === 'string' && g.trim()) return g;
+          if (g && typeof g.url === 'string' && g.url.trim()) return g;
+          const exG = existing.gallery[idx] || existing.gallery.find(item => String(item._id || item.id) === String(g?._id || g?.id));
+          const existingUrl = typeof exG === 'string' ? exG : (exG?.url || exG?.src);
+          return {
+            ...g,
+            url: existingUrl || (g?.url || ""),
+          };
+        });
+      }
+    }
+
     // Update in-memory cache instantly
     eventsCache = eventsCache.map(e => {
       if (String(e._id || e.id) === String(req.params.id)) {
@@ -205,6 +325,7 @@ const updateEvent = async (req, res) => {
       }
       return e;
     });
+    saveBackupAsync();
 
     Event.findByIdAndUpdate(req.params.id, eventData, { returnDocument: 'after', runValidators: true }).catch(() => {});
     res.json({ success: true, message: "Event updated successfully", data: eventData });
@@ -217,6 +338,7 @@ const updateEvent = async (req, res) => {
 const deleteEvent = async (req, res) => {
   try {
     eventsCache = eventsCache.filter(e => String(e._id || e.id) !== String(req.params.id));
+    saveBackupAsync();
     Event.findByIdAndDelete(req.params.id).catch(() => {});
     const Registration = require("../model/Registration");
     Registration.deleteMany({ eventId: req.params.id }).catch(() => {});
@@ -224,6 +346,7 @@ const deleteEvent = async (req, res) => {
     res.json({ success: true, message: "Event deleted successfully" });
   } catch (error) {
     eventsCache = eventsCache.filter(e => String(e._id || e.id) !== String(req.params.id));
+    saveBackupAsync();
     res.json({ success: true, message: "Event deleted successfully" });
   }
 };

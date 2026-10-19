@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import FormattedText from './FormattedText';
 
+export const getPhotoUrl = (item) => {
+  if (!item) return '';
+  if (typeof item === 'string' && item.trim()) return item.trim();
+  if (typeof item.url === 'string' && item.url.trim()) return item.url.trim();
+  if (typeof item.src === 'string' && item.src.trim()) return item.src.trim();
+  return '';
+};
+
 export default function PastEventDetailsPage({
   event: initialEvent,
   onBack,
@@ -11,32 +19,41 @@ export default function PastEventDetailsPage({
   const [loadingEvent, setLoadingEvent] = useState(!initialEvent);
   const [isPlayingVideo, setIsPlayingVideo] = useState(false);
 
-  // Keep activeEvent in sync when initialEvent prop changes
+  // Keep activeEvent in sync and fetch full event data if gallery URLs are missing
   React.useEffect(() => {
+    const eventId = initialEvent?._id || initialEvent?.id || (() => {
+      const hash = window.location.hash || '';
+      const match = hash.match(/[?&]id=([^&]+)/);
+      return match ? match[1] : sessionStorage.getItem('eventhub_past_event_id');
+    })();
+
     if (initialEvent) {
       setActiveEvent(initialEvent);
-      setLoadingEvent(false);
-      return;
+      // Check if gallery items exist but lack full URLs (e.g. from lightweight list API)
+      const hasMissingUrls = Array.isArray(initialEvent.gallery) &&
+        initialEvent.gallery.length > 0 &&
+        initialEvent.gallery.some(g => !getPhotoUrl(g));
+
+      if (!hasMissingUrls) {
+        setLoadingEvent(false);
+        return;
+      }
     }
 
-    const hash = window.location.hash || '';
-    const match = hash.match(/[?&]id=([^&]+)/);
-    const eventId = match ? match[1] : sessionStorage.getItem('eventhub_past_event_id');
-
     if (eventId) {
-      setLoadingEvent(true);
+      if (!initialEvent) setLoadingEvent(true);
       fetch(`/api/events/${eventId}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.success && data.data) {
             setActiveEvent(data.data);
-          } else {
+          } else if (!initialEvent) {
             setActiveEvent(null);
           }
         })
         .catch((err) => {
-          console.error('Error fetching past event on reload:', err);
-          setActiveEvent(null);
+          console.error('Error fetching past event details:', err);
+          if (!initialEvent) setActiveEvent(null);
         })
         .finally(() => setLoadingEvent(false));
     } else {
@@ -128,9 +145,13 @@ export default function PastEventDetailsPage({
 
   const pastEvent = activeEvent;
   const hasVideoUrl = Boolean(pastEvent.videoUrl && pastEvent.videoUrl.trim());
-  const galleryList = (pastEvent.gallery && pastEvent.gallery.length > 0)
-    ? pastEvent.gallery
-    : (pastEvent.coverImage ? [pastEvent.coverImage] : []);
+
+  // Filter gallery to only valid image URLs to prevent broken [object Object] boxes
+  const rawGallery = pastEvent.gallery || [];
+  const validPhotos = rawGallery.filter(item => Boolean(getPhotoUrl(item)));
+  const galleryList = validPhotos.length > 0
+    ? validPhotos
+    : (getPhotoUrl(pastEvent.coverImage) ? [pastEvent.coverImage] : []);
 
   const handleCopyShareLink = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -379,7 +400,8 @@ export default function PastEventDetailsPage({
                 </h2>
                 <div className="past-gallery-sidebar-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.85rem' }}>
                   {galleryList.map((item, gIdx) => {
-                    const imgUrl = typeof item === 'string' ? item : (item.url || item);
+                    const imgUrl = getPhotoUrl(item);
+                    if (!imgUrl) return null;
                     return (
                       <div
                         key={gIdx}
@@ -517,7 +539,8 @@ export default function PastEventDetailsPage({
                 </h3>
                 <div className="past-gallery-sidebar-grid">
                   {galleryList.map((item, gIdx) => {
-                    const imgUrl = typeof item === 'string' ? item : (item.url || item);
+                    const imgUrl = getPhotoUrl(item);
+                    if (!imgUrl) return null;
                     return (
                       <div
                         key={gIdx}
