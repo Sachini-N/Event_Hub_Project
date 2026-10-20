@@ -2679,12 +2679,12 @@ export default function AdminDashboardPage({
                                 <i className="fa-solid fa-users"></i> Capacity
                               </div>
                               <div className="admin-venue-stat-val">
-                                {v.capacity} Seats
+                                {v.capacity && v.capacity > 0 ? `${v.capacity} Seats` : 'Flexible'}
                               </div>
                             </div>
                             <div className="admin-venue-stat-box">
                               <div className="admin-venue-stat-label">
-                                <i className="fa-solid fa-tag"></i> Rate / Hr
+                                <i className="fa-solid fa-tag"></i> {typeof priceDisplay === 'string' && priceDisplay.includes('/ day') ? 'Rate / Day' : (isDemand ? 'Rate' : 'Rate / Hr')}
                               </div>
                               <div
                                 className="admin-venue-stat-val rate-val"

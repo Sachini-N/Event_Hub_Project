@@ -69,7 +69,7 @@ const createVenue = async (req, res) => {
   try {
     const { name, branch, city, province, address, capacity, rentalPrice, pricePerHour, isOnDemand, status, type, coverImage, images, amenities, description } = req.body;
 
-    if (!name || !address || !capacity) {
+    if (!name || !address || capacity === undefined || capacity === null || String(capacity).trim() === '') {
       return res.status(400).json({ success: false, message: "Please provide Venue Name, Address, and Capacity." });
     }
 

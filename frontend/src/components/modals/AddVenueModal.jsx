@@ -32,6 +32,8 @@ export default function AddVenueModal({
   const [province, setProvince] = useState('Western Province');
   const [address, setAddress] = useState('');
   const [capacity, setCapacity] = useState('150');
+  const [isFlexibleCapacity, setIsFlexibleCapacity] = useState(false);
+  const [priceRateType, setPriceRateType] = useState('per_hour'); // 'per_hour' | 'per_day' | 'on_demand'
   const [pricePerHour, setPricePerHour] = useState('25000');
   const [isOnDemand, setIsOnDemand] = useState(false);
   const [status, setStatus] = useState('Available');
@@ -94,17 +96,37 @@ export default function AddVenueModal({
       }
       setProvince(editingVenue.province || getProvinceForBranch(b));
       setAddress(editingVenue.address || '');
-      setCapacity(editingVenue.capacity ? String(editingVenue.capacity) : '150');
+
+      const rawCap = editingVenue.capacity;
+      if (rawCap === 0 || rawCap === '0' || !rawCap) {
+        setIsFlexibleCapacity(true);
+        setCapacity('');
+      } else {
+        setIsFlexibleCapacity(false);
+        setCapacity(String(rawCap));
+      }
 
       const isDemandVenue = Boolean(
         editingVenue.isOnDemand ||
         (typeof editingVenue.rentalPrice === 'string' && editingVenue.rentalPrice.toLowerCase().includes('demand')) ||
         editingVenue.pricePerHour === 0
       );
-      setIsOnDemand(isDemandVenue);
+      const isDailyVenue = typeof editingVenue.rentalPrice === 'string' && editingVenue.rentalPrice.toLowerCase().includes('day');
+
       if (isDemandVenue) {
+        setPriceRateType('on_demand');
+        setIsOnDemand(true);
         setPricePerHour('');
+      } else if (isDailyVenue) {
+        setPriceRateType('per_day');
+        setIsOnDemand(false);
+        const numPrice = editingVenue.pricePerHour
+          ? String(editingVenue.pricePerHour)
+          : (editingVenue.rentalPrice ? String(editingVenue.rentalPrice).replace(/[^0-9]/g, '') : '50000');
+        setPricePerHour(numPrice || '50000');
       } else {
+        setPriceRateType('per_hour');
+        setIsOnDemand(false);
         const numPrice = editingVenue.pricePerHour
           ? String(editingVenue.pricePerHour)
           : (editingVenue.rentalPrice ? String(editingVenue.rentalPrice).replace(/[^0-9]/g, '') : '25000');
@@ -128,6 +150,8 @@ export default function AddVenueModal({
       setProvince('Western Province');
       setAddress('');
       setCapacity('150');
+      setIsFlexibleCapacity(false);
+      setPriceRateType('per_hour');
       setPricePerHour('25000');
       setIsOnDemand(false);
       setStatus('Available');
@@ -290,9 +314,18 @@ export default function AddVenueModal({
       return;
     }
 
-    const isDemand = isOnDemand || !pricePerHour || String(pricePerHour).trim() === '' || Number(pricePerHour) <= 0;
+    const finalCapacity = isFlexibleCapacity || !capacity || Number(capacity) <= 0 ? 0 : Number(capacity);
+
+    const isDemand = priceRateType === 'on_demand' || isOnDemand || !pricePerHour || String(pricePerHour).trim() === '' || Number(pricePerHour) <= 0;
     const numPrice = isDemand ? 0 : Number(pricePerHour);
-    const formattedRentalPrice = isDemand ? 'On Demand' : `Rs. ${numPrice.toLocaleString()} / hr`;
+    let formattedRentalPrice = 'On Demand';
+    if (!isDemand) {
+      if (priceRateType === 'per_day') {
+        formattedRentalPrice = `Rs. ${numPrice.toLocaleString()} / day`;
+      } else {
+        formattedRentalPrice = `Rs. ${numPrice.toLocaleString()} / hr`;
+      }
+    }
 
     const isEdit = Boolean(editingVenue);
     const venueId = editingVenue?._id || editingVenue?.id;
@@ -308,7 +341,7 @@ export default function AddVenueModal({
       branch: finalBranch,
       province,
       address,
-      capacity: Number(capacity),
+      capacity: finalCapacity,
       rentalPrice: formattedRentalPrice,
       pricePerHour: numPrice,
       isOnDemand: isDemand,
@@ -601,26 +634,12 @@ export default function AddVenueModal({
               <h3>Space Capacity & Rental Pricing</h3>
             </div>
 
-            <div className="time-row-grid">
-              <div className="profile-form-group">
-                <label htmlFor="venue-capacity">
-                  Seating Capacity (Guests) *
-                </label>
-                <input
-                  type="number"
-                  id="venue-capacity"
-                  required
-                  min="10"
-                  placeholder="250"
-                  value={capacity}
-                  onChange={(e) => setCapacity(e.target.value)}
-                />
-              </div>
-
+            <div className="time-row-grid" style={{ alignItems: 'flex-start' }}>
+              {/* Left Column: Seating Capacity */}
               <div className="profile-form-group">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '4px' }}>
-                  <label htmlFor="venue-price" style={{ margin: 0, fontWeight: 600, fontSize: '0.88rem', color: '#1e293b' }}>
-                    Rental Price (LKR per hour) {isOnDemand ? '' : '*'}
+                  <label htmlFor="venue-capacity" style={{ margin: 0, fontWeight: 600, fontSize: '0.88rem', color: '#1e293b' }}>
+                    Seating Capacity (Guests) {isFlexibleCapacity ? '' : '*'}
                   </label>
                   <label
                     style={{
@@ -630,42 +649,42 @@ export default function AddVenueModal({
                       fontSize: '0.78rem',
                       cursor: 'pointer',
                       fontWeight: 700,
-                      color: isOnDemand ? '#2563eb' : '#64748b',
-                      background: isOnDemand ? '#eff6ff' : '#f8fafc',
+                      color: isFlexibleCapacity ? '#059669' : '#64748b',
+                      background: isFlexibleCapacity ? '#ecfdf5' : '#f8fafc',
                       padding: '2px 8px',
                       borderRadius: '6px',
-                      border: `1px solid ${isOnDemand ? '#93c5fd' : '#cbd5e1'}`,
+                      border: `1px solid ${isFlexibleCapacity ? '#a7f3d0' : '#cbd5e1'}`,
                       transition: 'all 0.15s ease',
                       userSelect: 'none',
                     }}
-                    title="Check if space price is customized upon inquiry"
+                    title="Check if seat capacity is flexible or unknown"
                   >
                     <input
                       type="checkbox"
-                      id="venue-on-demand-toggle"
-                      checked={isOnDemand}
+                      id="venue-capacity-flexible-toggle"
+                      checked={isFlexibleCapacity}
                       onChange={(e) => {
                         const checked = e.target.checked;
-                        setIsOnDemand(checked);
+                        setIsFlexibleCapacity(checked);
                         if (checked) {
-                          setPricePerHour('');
-                        } else if (!pricePerHour) {
-                          setPricePerHour('25000');
+                          setCapacity('');
+                        } else if (!capacity) {
+                          setCapacity('100');
                         }
                       }}
-                      style={{ cursor: 'pointer', width: '13px', height: '13px', margin: 0, accentColor: '#10b981' }}
+                      style={{ cursor: 'pointer', width: '13px', height: '13px', margin: 0, accentColor: '#059669' }}
                     />
-                    <span>On Demand</span>
+                    <span>Flexible / Not Fixed</span>
                   </label>
                 </div>
 
-                {isOnDemand ? (
+                {isFlexibleCapacity ? (
                   <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                     <input
                       type="text"
-                      id="venue-price"
+                      id="venue-capacity"
                       readOnly
-                      value="On Demand"
+                      value="Flexible / Custom Setup (Upon Inquiry)"
                       style={{
                         backgroundColor: '#ecfdf5',
                         color: '#059669',
@@ -676,13 +695,14 @@ export default function AddVenueModal({
                         cursor: 'default',
                         width: '100%',
                         boxShadow: 'none',
+                        fontSize: '0.84rem',
                       }}
                     />
                     <button
                       type="button"
                       onClick={() => {
-                        setIsOnDemand(false);
-                        setPricePerHour('25000');
+                        setIsFlexibleCapacity(false);
+                        setCapacity('100');
                       }}
                       style={{
                         position: 'absolute',
@@ -696,57 +716,258 @@ export default function AddVenueModal({
                         fontWeight: 600,
                         cursor: 'pointer',
                       }}
-                      title="Click to enter a fixed numeric price"
+                      title="Click to enter fixed guest count"
                     >
-                      Enter Fixed Price
+                      Set Seats
                     </button>
                   </div>
                 ) : (
                   <div>
                     <input
                       type="number"
-                      id="venue-price"
-                      min="0"
-                      placeholder="e.g. 25000 (or leave empty for On Demand)"
-                      value={pricePerHour}
-                      onChange={(e) => {
-                        setPricePerHour(e.target.value);
-                      }}
+                      id="venue-capacity"
+                      required={!isFlexibleCapacity}
+                      min="1"
+                      placeholder="e.g. 150"
+                      value={capacity}
+                      onChange={(e) => setCapacity(e.target.value)}
                       style={{ width: '100%' }}
                     />
-                    {(!pricePerHour || String(pricePerHour).trim() === '' || pricePerHour === '0') ? (
-                      <div style={{ marginTop: '5px', fontSize: '0.78rem', color: '#2563eb', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600 }}>
-                        <i className="fa-solid fa-circle-info"></i>
-                        Price not entered — will be displayed as <strong>"On Demand"</strong>
+                  </div>
+                )}
+
+                {/* Quick Presets for Capacity */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '6px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>Presets:</span>
+                  {[25, 50, 100, 250, 500].map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => {
+                        setIsFlexibleCapacity(false);
+                        setCapacity(String(num));
+                      }}
+                      style={{
+                        padding: '2px 7px',
+                        fontSize: '0.72rem',
+                        fontWeight: 600,
+                        borderRadius: '12px',
+                        border: !isFlexibleCapacity && capacity === String(num) ? '1px solid #0284c7' : '1px solid #e2e8f0',
+                        background: !isFlexibleCapacity && capacity === String(num) ? '#e0f2fe' : '#ffffff',
+                        color: !isFlexibleCapacity && capacity === String(num) ? '#0369a1' : '#475569',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {num}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsFlexibleCapacity(true);
+                      setCapacity('');
+                    }}
+                    style={{
+                      padding: '2px 8px',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      borderRadius: '12px',
+                      border: isFlexibleCapacity ? '1px solid #a7f3d0' : '1px solid #e2e8f0',
+                      background: isFlexibleCapacity ? '#ecfdf5' : '#ffffff',
+                      color: isFlexibleCapacity ? '#059669' : '#475569',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    ✨ Flexible
+                  </button>
+                </div>
+              </div>
+
+              {/* Right Column: Rental Price & Rate Selector */}
+              <div className="profile-form-group">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '4px' }}>
+                  <label htmlFor="venue-price-rate-type" style={{ margin: 0, fontWeight: 600, fontSize: '0.88rem', color: '#1e293b' }}>
+                    Pricing Structure & Rate {priceRateType === 'on_demand' ? '' : '*'}
+                  </label>
+                  <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+                    Select rate structure
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {/* Dropdown to select Rate Type */}
+                  <div style={{ position: 'relative' }}>
+                    <select
+                      id="venue-price-rate-type"
+                      value={priceRateType}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setPriceRateType(val);
+                        if (val === 'on_demand') {
+                          setIsOnDemand(true);
+                          setPricePerHour('');
+                        } else {
+                          setIsOnDemand(false);
+                          if (!pricePerHour || pricePerHour === '0') {
+                            setPricePerHour(val === 'per_day' ? '50000' : '25000');
+                          }
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '0.6rem 0.85rem',
+                        borderRadius: '8px',
+                        border: '1px solid #cbd5e1',
+                        fontWeight: 700,
+                        fontSize: '0.86rem',
+                        color: '#1e293b',
+                        background: '#f8fafc',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <option value="per_hour">⏱️ Per Hour Rate (LKR / hr)</option>
+                      <option value="per_day">📅 Per Day Rate (LKR / day)</option>
+                      <option value="on_demand">🏷️ On Demand (Quote upon inquiry)</option>
+                    </select>
+                  </div>
+
+                  {/* Based on Rate Type: Show price input or On Demand badge */}
+                  {priceRateType === 'on_demand' || isOnDemand ? (
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        backgroundColor: '#ecfdf5',
+                        color: '#059669',
+                        fontWeight: 700,
+                        border: '1.5px dashed #a7f3d0',
+                        borderRadius: '8px',
+                        padding: '0.65rem 0.85rem',
+                        fontSize: '0.84rem',
+                        boxShadow: 'none',
+                      }}
+                    >
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <i className="fa-solid fa-tag"></i> On Demand (Price quoted upon inquiry)
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPriceRateType('per_hour');
+                          setIsOnDemand(false);
+                          setPricePerHour('25000');
+                        }}
+                        style={{
+                          background: '#ffffff',
+                          color: '#475569',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '5px',
+                          padding: '3px 8px',
+                          fontSize: '0.74rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Set Fixed Rate
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <span
+                          style={{
+                            position: 'absolute',
+                            left: '12px',
+                            color: '#64748b',
+                            fontWeight: 700,
+                            fontSize: '0.85rem',
+                            pointerEvents: 'none',
+                          }}
+                        >
+                          Rs.
+                        </span>
+                        <input
+                          type="number"
+                          id="venue-price"
+                          min="0"
+                          placeholder={priceRateType === 'per_day' ? 'e.g. 50000' : 'e.g. 8500'}
+                          value={pricePerHour}
+                          onChange={(e) => setPricePerHour(e.target.value)}
+                          style={{
+                            width: '100%',
+                            paddingLeft: '2.5rem',
+                            paddingRight: '4.8rem',
+                          }}
+                        />
+                        <span
+                          style={{
+                            position: 'absolute',
+                            right: '12px',
+                            color: '#64748b',
+                            fontWeight: 700,
+                            fontSize: '0.78rem',
+                            pointerEvents: 'none',
+                            background: '#f1f5f9',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                          }}
+                        >
+                          {priceRateType === 'per_day' ? '/ day' : '/ hr'}
+                        </span>
                       </div>
-                    ) : (
-                      <div style={{ marginTop: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <small style={{ color: '#64748b', fontSize: '0.76rem' }}>
-                          Rs. {Number(pricePerHour).toLocaleString()} / hr
-                        </small>
+
+                      {/* Live preview badge & quick switch to On Demand */}
+                      <div style={{ marginTop: '5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                        {(!pricePerHour || String(pricePerHour).trim() === '' || pricePerHour === '0') ? (
+                          <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <i className="fa-solid fa-circle-info"></i> No price entered — will show as "On Demand"
+                          </span>
+                        ) : (
+                          <span
+                            style={{
+                              fontSize: '0.76rem',
+                              fontWeight: 700,
+                              color: '#059669',
+                              background: '#ecfdf5',
+                              border: '1px solid #a7f3d0',
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            <i className="fa-solid fa-bolt"></i> Preview: Rs. {Number(pricePerHour).toLocaleString()} {priceRateType === 'per_day' ? '/ day' : '/ hr'}
+                          </span>
+                        )}
+
                         <button
                           type="button"
                           onClick={() => {
+                            setPriceRateType('on_demand');
                             setIsOnDemand(true);
                             setPricePerHour('');
                           }}
                           style={{
                             background: 'none',
                             border: 'none',
-                            color: '#2563eb',
+                            color: '#059669',
                             fontSize: '0.75rem',
-                            fontWeight: 600,
+                            fontWeight: 700,
                             cursor: 'pointer',
                             padding: 0,
                             textDecoration: 'underline',
                           }}
                         >
-                          Set as On Demand
+                          Switch to On Demand
                         </button>
                       </div>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
