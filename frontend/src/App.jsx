@@ -672,21 +672,6 @@ export default function App() {
             setActiveTab('my-events');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
-          notifications={notifications}
-          unreadCount={unreadCount}
-          onMarkAsRead={(id) => {
-            const updated = markAsRead(id);
-            setNotifications(updated);
-          }}
-          onMarkAllAsRead={() => {
-            const updated = markAllAsRead();
-            setNotifications(updated);
-          }}
-          onClearAll={() => {
-            const updated = clearAllNotifications();
-            setNotifications(updated);
-          }}
-          onNotificationClick={handleNotificationClick}
         />
       )}
 
