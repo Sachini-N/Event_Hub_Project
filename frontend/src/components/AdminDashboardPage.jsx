@@ -2679,7 +2679,13 @@ export default function AdminDashboardPage({
                                 <i className="fa-solid fa-users"></i> Capacity
                               </div>
                               <div className="admin-venue-stat-val">
-                                {v.capacity && v.capacity > 0 ? `${v.capacity} Seats` : 'Flexible'}
+                                {typeof v.capacity === 'number' && v.capacity > 0
+                                  ? `${v.capacity} Seats`
+                                  : !isNaN(Number(v.capacity)) && Number(v.capacity) > 0
+                                  ? `${Number(v.capacity)} Seats`
+                                  : (v.capacity && String(v.capacity).trim() !== '' && v.capacity !== 0 && v.capacity !== '0'
+                                      ? v.capacity
+                                      : 'Custom Setup')}
                               </div>
                             </div>
                             <div className="admin-venue-stat-box">

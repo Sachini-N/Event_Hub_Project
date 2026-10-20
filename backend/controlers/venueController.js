@@ -98,6 +98,11 @@ const createVenue = async (req, res) => {
       ? coverImage.trim()
       : (validImages[0] || "");
 
+    const capNum = Number(capacity);
+    const parsedCapacity = (!isNaN(capNum) && String(capacity).trim() !== '' && capNum > 0)
+      ? capNum
+      : (String(capacity).trim() || 'Custom Setup');
+
     const newVenueId = new mongoose.Types.ObjectId();
     const venueObj = {
       _id: newVenueId,
@@ -106,7 +111,7 @@ const createVenue = async (req, res) => {
       city: city || "Colombo, Sri Lanka",
       province: province || "Western Province",
       address,
-      capacity: Number(capacity),
+      capacity: parsedCapacity,
       rentalPrice: formattedPrice,
       pricePerHour: numericPrice,
       isOnDemand: isDemand,
@@ -173,7 +178,13 @@ const updateVenue = async (req, res) => {
     if (city !== undefined) updateFields.city = city;
     if (province !== undefined) updateFields.province = province;
     if (address !== undefined) updateFields.address = address;
-    if (capacity !== undefined) updateFields.capacity = Number(capacity);
+    if (capacity !== undefined) {
+      const capTrimmed = String(capacity).trim();
+      const capNum = Number(capTrimmed);
+      updateFields.capacity = (!isNaN(capNum) && capTrimmed !== '' && capNum > 0)
+        ? capNum
+        : (capTrimmed || 'Custom Setup');
+    }
     if (numericPrice !== undefined) updateFields.pricePerHour = numericPrice;
     if (formattedPrice !== undefined) updateFields.rentalPrice = formattedPrice;
     if (isOnDemand !== undefined || isDemand) updateFields.isOnDemand = isDemand;

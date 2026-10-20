@@ -761,7 +761,14 @@ export default function VenuesPage({ showToast }) {
 
                       {/* Capacity Pill */}
                       <span className="venue-capacity-pill">
-                        <i className="fa-solid fa-users"></i> {v.capacity && v.capacity > 0 ? `${v.capacity} Seats` : 'Flexible'}
+                        <i className="fa-solid fa-users"></i>{' '}
+                        {typeof v.capacity === 'number' && v.capacity > 0
+                          ? `${v.capacity} Seats`
+                          : !isNaN(Number(v.capacity)) && Number(v.capacity) > 0
+                          ? `${Number(v.capacity)} Seats`
+                          : (v.capacity && String(v.capacity).trim() !== '' && v.capacity !== 0 && v.capacity !== '0'
+                              ? v.capacity
+                              : 'Custom Setup')}
                       </span>
                     </div>
                   </div>
@@ -1095,7 +1102,14 @@ export default function VenuesPage({ showToast }) {
                       📍 {getSpaceProvince(activeVenueModal)}
                     </span>
                     <span style={{ fontSize: '0.76rem', fontWeight: '700', color: '#0052cc', background: '#e0f2fe', border: '1px solid #bae6fd', padding: '0.25rem 0.65rem', borderRadius: '20px' }}>
-                      👥 Capacity: {activeVenueModal.capacity && activeVenueModal.capacity > 0 ? `${activeVenueModal.capacity} Guests` : 'Flexible Setup'}
+                      👥 Capacity:{' '}
+                      {typeof activeVenueModal.capacity === 'number' && activeVenueModal.capacity > 0
+                        ? `${activeVenueModal.capacity} Guests`
+                        : !isNaN(Number(activeVenueModal.capacity)) && Number(activeVenueModal.capacity) > 0
+                        ? `${Number(activeVenueModal.capacity)} Guests`
+                        : (activeVenueModal.capacity && String(activeVenueModal.capacity).trim() !== '' && activeVenueModal.capacity !== 0 && activeVenueModal.capacity !== '0'
+                            ? activeVenueModal.capacity
+                            : 'Custom Setup')}
                     </span>
                     <span style={{ fontSize: '0.82rem', color: '#475569', fontWeight: '600' }}>
                       <i className="fa-solid fa-location-dot" style={{ color: '#64748b', marginRight: '4px' }}></i>

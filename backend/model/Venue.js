@@ -27,7 +27,7 @@ const venueSchema = new mongoose.Schema(
       trim: true,
     },
     capacity: {
-      type: Number,
+      type: mongoose.Schema.Types.Mixed,
       required: true,
       default: 100,
     },

@@ -98,12 +98,14 @@ export default function AddVenueModal({
       setAddress(editingVenue.address || '');
 
       const rawCap = editingVenue.capacity;
-      if (rawCap === 0 || rawCap === '0' || !rawCap) {
-        setIsFlexibleCapacity(true);
-        setCapacity('');
+      if (rawCap !== undefined && rawCap !== null && String(rawCap).trim() !== '') {
+        if (rawCap === 0 || rawCap === '0') {
+          setCapacity('Custom Setup');
+        } else {
+          setCapacity(String(rawCap));
+        }
       } else {
-        setIsFlexibleCapacity(false);
-        setCapacity(String(rawCap));
+        setCapacity('150');
       }
 
       const isDemandVenue = Boolean(
@@ -314,7 +316,11 @@ export default function AddVenueModal({
       return;
     }
 
-    const finalCapacity = isFlexibleCapacity || !capacity || Number(capacity) <= 0 ? 0 : Number(capacity);
+    const trimmedCap = String(capacity || '').trim();
+    const capNum = Number(trimmedCap);
+    const finalCapacity = (!isNaN(capNum) && trimmedCap !== '' && capNum > 0)
+      ? capNum
+      : (trimmedCap || 'Custom Setup');
 
     const isDemand = priceRateType === 'on_demand' || isOnDemand || !pricePerHour || String(pricePerHour).trim() === '' || Number(pricePerHour) <= 0;
     const numPrice = isDemand ? 0 : Number(pricePerHour);
@@ -639,9 +645,17 @@ export default function AddVenueModal({
               <div className="profile-form-group">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '4px' }}>
                   <label htmlFor="venue-capacity" style={{ margin: 0, fontWeight: 600, fontSize: '0.88rem', color: '#1e293b' }}>
-                    Seating Capacity (Guests) {isFlexibleCapacity ? '' : '*'}
+                    Seating Capacity (Guests) *
                   </label>
-                  <label
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (String(capacity).toLowerCase().includes('custom')) {
+                        setCapacity('150');
+                      } else {
+                        setCapacity('Custom Setup');
+                      }
+                    }}
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -649,139 +663,95 @@ export default function AddVenueModal({
                       fontSize: '0.78rem',
                       cursor: 'pointer',
                       fontWeight: 700,
-                      color: isFlexibleCapacity ? '#059669' : '#64748b',
-                      background: isFlexibleCapacity ? '#ecfdf5' : '#f8fafc',
+                      color: String(capacity).toLowerCase().includes('custom') ? '#059669' : '#475569',
+                      background: String(capacity).toLowerCase().includes('custom') ? '#ecfdf5' : '#f8fafc',
                       padding: '2px 8px',
                       borderRadius: '6px',
-                      border: `1px solid ${isFlexibleCapacity ? '#a7f3d0' : '#cbd5e1'}`,
+                      border: `1px solid ${String(capacity).toLowerCase().includes('custom') ? '#a7f3d0' : '#cbd5e1'}`,
                       transition: 'all 0.15s ease',
                       userSelect: 'none',
                     }}
-                    title="Check if seat capacity is flexible or unknown"
+                    title="Click to quickly insert 'Custom Setup'"
                   >
-                    <input
-                      type="checkbox"
-                      id="venue-capacity-flexible-toggle"
-                      checked={isFlexibleCapacity}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        setIsFlexibleCapacity(checked);
-                        if (checked) {
-                          setCapacity('');
-                        } else if (!capacity) {
-                          setCapacity('100');
-                        }
-                      }}
-                      style={{ cursor: 'pointer', width: '13px', height: '13px', margin: 0, accentColor: '#059669' }}
-                    />
-                    <span>Flexible / Not Fixed</span>
-                  </label>
+                    <i className="fa-solid fa-pen-to-square"></i>
+                    <span>{String(capacity).toLowerCase().includes('custom') ? 'Custom Setup Selected' : 'Set as "Custom Setup"'}</span>
+                  </button>
                 </div>
 
-                {isFlexibleCapacity ? (
-                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                    <input
-                      type="text"
-                      id="venue-capacity"
-                      readOnly
-                      value="Flexible / Custom Setup (Upon Inquiry)"
-                      style={{
-                        backgroundColor: '#ecfdf5',
-                        color: '#059669',
-                        fontWeight: 700,
-                        border: '1.5px dashed #a7f3d0',
-                        borderRadius: '8px',
-                        padding: '0.65rem 0.85rem',
-                        cursor: 'default',
-                        width: '100%',
-                        boxShadow: 'none',
-                        fontSize: '0.84rem',
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsFlexibleCapacity(false);
-                        setCapacity('100');
-                      }}
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    id="venue-capacity"
+                    required
+                    placeholder="e.g. 150 or Custom Setup"
+                    value={capacity}
+                    onChange={(e) => setCapacity(e.target.value)}
+                    style={{
+                      width: '100%',
+                      fontWeight: String(capacity).toLowerCase().includes('custom') ? 700 : 500,
+                      color: String(capacity).toLowerCase().includes('custom') ? '#059669' : '#1e293b',
+                      backgroundColor: String(capacity).toLowerCase().includes('custom') ? '#f0fdf4' : '#ffffff',
+                      borderColor: String(capacity).toLowerCase().includes('custom') ? '#86efac' : '#cbd5e1',
+                    }}
+                  />
+                  {String(capacity).toLowerCase().includes('custom') && (
+                    <span
                       style={{
                         position: 'absolute',
-                        right: '8px',
-                        background: '#ffffff',
-                        color: '#475569',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '5px',
-                        padding: '3px 8px',
+                        right: '10px',
+                        fontSize: '0.74rem',
+                        fontWeight: 700,
+                        color: '#059669',
+                        background: '#dcfce7',
+                        padding: '2px 7px',
+                        borderRadius: '4px',
+                        pointerEvents: 'none',
+                      }}
+                    >
+                      Custom
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ marginTop: '5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                  <small style={{ color: '#64748b', fontSize: '0.75rem' }}>
+                    Type a number (e.g. 80) or custom text (e.g. <em>Custom Setup</em>)
+                  </small>
+                  {String(capacity).toLowerCase().includes('custom') ? (
+                    <button
+                      type="button"
+                      onClick={() => setCapacity('150')}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#2563eb',
                         fontSize: '0.74rem',
                         fontWeight: 600,
                         cursor: 'pointer',
+                        padding: 0,
+                        textDecoration: 'underline',
                       }}
-                      title="Click to enter fixed guest count"
                     >
-                      Set Seats
+                      Reset to 150 Seats
                     </button>
-                  </div>
-                ) : (
-                  <div>
-                    <input
-                      type="number"
-                      id="venue-capacity"
-                      required={!isFlexibleCapacity}
-                      min="1"
-                      placeholder="e.g. 150"
-                      value={capacity}
-                      onChange={(e) => setCapacity(e.target.value)}
-                      style={{ width: '100%' }}
-                    />
-                  </div>
-                )}
-
-                {/* Quick Presets for Capacity */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '6px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>Presets:</span>
-                  {[25, 50, 100, 250, 500].map((num) => (
+                  ) : (
                     <button
-                      key={num}
                       type="button"
-                      onClick={() => {
-                        setIsFlexibleCapacity(false);
-                        setCapacity(String(num));
-                      }}
+                      onClick={() => setCapacity('Custom Setup')}
                       style={{
-                        padding: '2px 7px',
-                        fontSize: '0.72rem',
-                        fontWeight: 600,
-                        borderRadius: '12px',
-                        border: !isFlexibleCapacity && capacity === String(num) ? '1px solid #0284c7' : '1px solid #e2e8f0',
-                        background: !isFlexibleCapacity && capacity === String(num) ? '#e0f2fe' : '#ffffff',
-                        color: !isFlexibleCapacity && capacity === String(num) ? '#0369a1' : '#475569',
+                        background: 'none',
+                        border: 'none',
+                        color: '#059669',
+                        fontSize: '0.74rem',
+                        fontWeight: 700,
                         cursor: 'pointer',
-                        transition: 'all 0.15s ease',
+                        padding: 0,
+                        textDecoration: 'underline',
                       }}
                     >
-                      {num}
+                      Type "Custom Setup"
                     </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsFlexibleCapacity(true);
-                      setCapacity('');
-                    }}
-                    style={{
-                      padding: '2px 8px',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      borderRadius: '12px',
-                      border: isFlexibleCapacity ? '1px solid #a7f3d0' : '1px solid #e2e8f0',
-                      background: isFlexibleCapacity ? '#ecfdf5' : '#ffffff',
-                      color: isFlexibleCapacity ? '#059669' : '#475569',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    ✨ Flexible
-                  </button>
+                  )}
                 </div>
               </div>
 
