@@ -653,7 +653,7 @@ export default function AddVenueModal({
                           setPricePerHour('25000');
                         }
                       }}
-                      style={{ cursor: 'pointer', width: '13px', height: '13px', margin: 0, accentColor: '#2563eb' }}
+                      style={{ cursor: 'pointer', width: '13px', height: '13px', margin: 0, accentColor: '#10b981' }}
                     />
                     <span>On Demand</span>
                   </label>
@@ -667,10 +667,10 @@ export default function AddVenueModal({
                       readOnly
                       value="On Demand"
                       style={{
-                        backgroundColor: '#eff6ff',
-                        color: '#2563eb',
+                        backgroundColor: '#ecfdf5',
+                        color: '#059669',
                         fontWeight: 700,
-                        border: '1.5px dashed #93c5fd',
+                        border: '1.5px dashed #a7f3d0',
                         borderRadius: '8px',
                         padding: '0.65rem 0.85rem',
                         cursor: 'default',

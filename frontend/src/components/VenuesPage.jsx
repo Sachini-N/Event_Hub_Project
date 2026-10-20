@@ -784,7 +784,7 @@ export default function VenuesPage({ showToast }) {
                       </div>
                       <span
                         className="venue-card-price-tag"
-                        style={isVenuePriceOnDemand(v) ? { color: '#2563eb', background: '#eff6ff', borderColor: '#bfdbfe', fontWeight: '800' } : {}}
+                        style={isVenuePriceOnDemand(v) ? { color: '#059669', background: '#ecfdf5', borderColor: '#a7f3d0', fontWeight: '800' } : {}}
                       >
                         <i className="fa-solid fa-tag"></i> {getVenuePriceText(v)}
                       </span>
@@ -1072,9 +1072,9 @@ export default function VenuesPage({ showToast }) {
                       style={{
                         fontSize: '0.82rem',
                         fontWeight: '800',
-                        color: isVenuePriceOnDemand(activeVenueModal) ? '#2563eb' : '#059669',
-                        background: isVenuePriceOnDemand(activeVenueModal) ? '#eff6ff' : '#ecfdf5',
-                        border: `1px solid ${isVenuePriceOnDemand(activeVenueModal) ? '#bfdbfe' : '#a7f3d0'}`,
+                        color: '#059669',
+                        background: '#ecfdf5',
+                        border: '1px solid #a7f3d0',
                         padding: '0.25rem 0.65rem',
                         borderRadius: '6px',
                         display: 'inline-flex',

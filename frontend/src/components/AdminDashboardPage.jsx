@@ -2688,7 +2688,7 @@ export default function AdminDashboardPage({
                               </div>
                               <div
                                 className="admin-venue-stat-val rate-val"
-                                style={isDemand ? { color: '#2563eb', fontWeight: 800 } : {}}
+                                style={isDemand ? { color: '#059669', fontWeight: 800 } : {}}
                                 title={priceDisplay}
                               >
                                 {priceDisplay}
