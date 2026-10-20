@@ -4,7 +4,7 @@ export default function WhyJoinSection() {
   return (
     <section className="features-section">
       <div className="section-container">
-        <h2 className="features-title">Why Join TRACE Events?</h2>
+        <h2 className="features-title">Why TRACE Events and Spaces?</h2>
         <div className="features-grid">
 
           {/* Card 1 */}

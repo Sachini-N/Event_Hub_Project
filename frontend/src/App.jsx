@@ -212,15 +212,20 @@ export default function App() {
     };
     window.addEventListener('storage', handleStorage);
 
+    const handleVenueCustomEvent = () => prefetchVenues();
+    window.addEventListener('eventhub_venues_updated', handleVenueCustomEvent);
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         fetchEvents(true);
+        prefetchVenues();
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.removeEventListener('eventhub_events_updated', handleCustomEvent);
+      window.removeEventListener('eventhub_venues_updated', handleVenueCustomEvent);
       window.removeEventListener('storage', handleStorage);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (bc) bc.close();

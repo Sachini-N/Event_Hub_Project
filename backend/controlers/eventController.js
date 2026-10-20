@@ -240,6 +240,15 @@ const getEvents = async (req, res) => {
     Event.find().lean().maxTimeMS(5000)
       .then((fresh) => {
         if (Array.isArray(fresh) && fresh.length > 0) {
+          const freshMap = new Map(fresh.map(d => [String(d._id), d]));
+          const nowTime = Date.now();
+          eventsCache.forEach(cached => {
+            const id = String(cached._id || cached.id);
+            const isRecent = cached.createdAt && (nowTime - new Date(cached.createdAt).getTime() < 30000);
+            if (isRecent && !freshMap.has(id)) {
+              fresh.unshift(cached);
+            }
+          });
           eventsCache = fresh.map(sanitizeEvent);
           saveBackupAsync();
         }
@@ -312,9 +321,13 @@ const createEvent = async (req, res) => {
     isEventsCacheLoaded = true;
     saveBackupAsync();
 
-    // Background/async save to MongoDB
+    // Persist to MongoDB
     const newEvent = new Event(eventData);
-    newEvent.save().catch(e => console.warn("Background event save notice:", e.message));
+    try {
+      await newEvent.save();
+    } catch (saveErr) {
+      console.warn("MongoDB event save notice (cached in memory):", saveErr.message);
+    }
 
     res.status(201).json({ success: true, message: "Event created successfully", data: eventData });
   } catch (error) {
@@ -357,9 +370,11 @@ const updateEvent = async (req, res) => {
     saveBackupAsync();
 
     // Persist to MongoDB
-    Event.findByIdAndUpdate(eventId, eventData, { returnDocument: 'after', runValidators: true }).catch((err) => {
-      console.warn("MongoDB update event notice:", err.message);
-    });
+    try {
+      await Event.findByIdAndUpdate(eventId, eventData, { returnDocument: 'after', runValidators: true });
+    } catch (updateErr) {
+      console.warn("MongoDB update event notice:", updateErr.message);
+    }
 
     const fullUpdated = eventsCache.find(e => String(e._id || e.id) === eventId) || eventData;
     return res.json({ success: true, message: "Event updated successfully", data: fullUpdated });
@@ -374,9 +389,13 @@ const deleteEvent = async (req, res) => {
   try {
     eventsCache = eventsCache.filter(e => String(e._id || e.id) !== String(req.params.id));
     saveBackupAsync();
-    Event.findByIdAndDelete(req.params.id).catch(() => {});
-    const Registration = require("../model/Registration");
-    Registration.deleteMany({ eventId: req.params.id }).catch(() => {});
+    try {
+      await Event.findByIdAndDelete(req.params.id);
+      const Registration = require("../model/Registration");
+      await Registration.deleteMany({ eventId: req.params.id });
+    } catch (delErr) {
+      console.warn("MongoDB delete event notice:", delErr.message);
+    }
 
     res.json({ success: true, message: "Event deleted successfully" });
   } catch (error) {

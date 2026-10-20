@@ -323,16 +323,31 @@ export default function VenuesPage({ showToast }) {
     fetchVenues();
 
     const handleLiveVenueUpdate = (updatedVenue) => {
-      if (updatedVenue && (updatedVenue._id || updatedVenue.id)) {
-        setVenues((prev) => {
-          const id = updatedVenue._id || updatedVenue.id;
-          const exists = prev.some((v) => (v._id || v.id) === id);
-          if (exists) {
-            return prev.map((v) => ((v._id || v.id) === id ? { ...v, ...updatedVenue } : v));
-          }
-          return [updatedVenue, ...prev];
-        });
+      if (!updatedVenue) return;
+      const id = String(updatedVenue._id || updatedVenue.id || '');
+      if (!id) return;
+
+      if (updatedVenue.deleted) {
+        setVenues((prev) => prev.filter((v) => String(v._id || v.id) !== id));
+        setActiveVenueModal((prev) => (String(prev?._id || prev?.id) === id ? null : prev));
+        try {
+          sessionStorage.removeItem('eventhub_cached_venues');
+        } catch (e) {}
+        fetchVenues(true);
+        return;
       }
+
+      setVenues((prev) => {
+        const exists = prev.some((v) => String(v._id || v.id) === id);
+        if (exists) {
+          return prev.map((v) => (String(v._id || v.id) === id ? { ...v, ...updatedVenue } : v));
+        }
+        return [updatedVenue, ...prev];
+      });
+      setActiveVenueModal((prev) => (String(prev?._id || prev?.id) === id ? { ...prev, ...updatedVenue } : prev));
+      try {
+        sessionStorage.removeItem('eventhub_cached_venues');
+      } catch (e) {}
       fetchVenues(true);
     };
 

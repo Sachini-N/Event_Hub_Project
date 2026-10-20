@@ -32,6 +32,15 @@ const getVenues = async (req, res) => {
     Venue.find().sort({ createdAt: -1 }).lean()
       .then((freshVenues) => {
         if (Array.isArray(freshVenues) && freshVenues.length > 0) {
+          const freshMap = new Map(freshVenues.map(v => [String(v._id || v.id), v]));
+          const nowTime = Date.now();
+          venuesCache.forEach(cached => {
+            const id = String(cached._id || cached.id);
+            const isRecent = cached.createdAt && (nowTime - new Date(cached.createdAt).getTime() < 30000);
+            if (isRecent && !freshMap.has(id)) {
+              freshVenues.unshift(cached);
+            }
+          });
           venuesCache = freshVenues.map(sanitizeVenueOutput);
         }
       })
