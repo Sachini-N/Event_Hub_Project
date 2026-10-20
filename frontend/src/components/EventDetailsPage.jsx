@@ -106,7 +106,7 @@ export default function EventDetailsPage({
             handleUpdate(msg.data.detail);
           }
         };
-      } catch (err) {}
+      } catch (err) { }
     }
 
     const handleStorage = (e) => {
@@ -114,7 +114,7 @@ export default function EventDetailsPage({
         try {
           const parsed = JSON.parse(e.newValue);
           if (parsed?.detail) handleUpdate(parsed.detail);
-        } catch (err) {}
+        } catch (err) { }
       }
     };
     window.addEventListener('storage', handleStorage);

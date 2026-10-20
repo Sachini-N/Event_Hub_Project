@@ -269,7 +269,7 @@ export default function VenuesPage({ showToast }) {
   // Helper to get database uploaded images ONLY for the venue space
   const getModalImages = (venue) => {
     if (!venue) return [];
-    
+
     // 1. Array of images uploaded to database
     if (Array.isArray(venue.images) && venue.images.length > 0) {
       const validDbImages = venue.images.filter(isRealVenuePhoto);
@@ -309,7 +309,7 @@ export default function VenuesPage({ showToast }) {
         setVenues(data.data);
         try {
           sessionStorage.setItem('eventhub_cached_venues', JSON.stringify(data.data));
-        } catch (e) {}
+        } catch (e) { }
       }
     } catch (err) {
       console.error('Error fetching venues:', err);
@@ -332,7 +332,7 @@ export default function VenuesPage({ showToast }) {
         setActiveVenueModal((prev) => (String(prev?._id || prev?.id) === id ? null : prev));
         try {
           sessionStorage.removeItem('eventhub_cached_venues');
-        } catch (e) {}
+        } catch (e) { }
         fetchVenues(true);
         return;
       }
@@ -347,7 +347,7 @@ export default function VenuesPage({ showToast }) {
       setActiveVenueModal((prev) => (String(prev?._id || prev?.id) === id ? { ...prev, ...updatedVenue } : prev));
       try {
         sessionStorage.removeItem('eventhub_cached_venues');
-      } catch (e) {}
+      } catch (e) { }
       fetchVenues(true);
     };
 
@@ -363,7 +363,7 @@ export default function VenuesPage({ showToast }) {
             handleLiveVenueUpdate(msg.data.detail);
           }
         };
-      } catch (err) {}
+      } catch (err) { }
     }
 
     const handleStorage = (e) => {
@@ -371,7 +371,7 @@ export default function VenuesPage({ showToast }) {
         try {
           const parsed = JSON.parse(e.newValue);
           if (parsed?.detail) handleLiveVenueUpdate(parsed.detail);
-        } catch (err) {}
+        } catch (err) { }
       }
     };
     window.addEventListener('storage', handleStorage);
@@ -749,10 +749,10 @@ export default function VenuesPage({ showToast }) {
                       {/* Availability Tag */}
                       <span
                         className={`venue-status-pill ${v.status === 'Available'
-                            ? 'status-available'
-                            : v.status === 'Reserved'
-                              ? 'status-reserved'
-                              : 'status-maintenance'
+                          ? 'status-available'
+                          : v.status === 'Reserved'
+                            ? 'status-reserved'
+                            : 'status-maintenance'
                           }`}
                       >
                         <i className="fa-solid fa-circle" style={{ fontSize: '0.55rem' }}></i>{' '}
@@ -878,7 +878,7 @@ export default function VenuesPage({ showToast }) {
 
             {/* SPACE DETAILS & DATABASE PHOTO GALLERY (SIDE-BY-SIDE 2-COLUMN SPLIT) */}
             <div className="venue-split-grid" style={{ gridTemplateColumns: '1.05fr 0.95fr', minHeight: '620px', maxHeight: '92vh', height: '100%' }}>
-              
+
               {/* LEFT SIDE: DATABASE UPLOADED PHOTO GALLERY SHOWCASE */}
               <div className="venue-split-left-gallery" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', height: '100%', borderRight: '1px solid #e2e8f0', overflowY: 'auto', background: '#f8fafc' }}>
                 {(() => {
@@ -1054,7 +1054,7 @@ export default function VenuesPage({ showToast }) {
 
               {/* RIGHT SIDE: VENUE NAME, SPECIFICATIONS & DETAILS DISPLAY */}
               <div className="venue-split-right-details" style={{ padding: '2rem 2.25rem 2rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', overflowY: 'auto', background: '#ffffff', height: '100%', justifyContent: 'space-between' }}>
-                
+
                 {/* 1. SPACE NAME & TOP BADGES */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', paddingRight: '2.5rem' }}>
                   <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#0f172a', margin: 0, lineHeight: 1.2, letterSpacing: '-0.02em' }}>

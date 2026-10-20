@@ -9,10 +9,10 @@ export default function ToastNotification({ toast }) {
     type === 'success'
       ? 'fa-solid fa-circle-check'
       : type === 'error'
-      ? 'fa-solid fa-circle-exclamation'
-      : type === 'warning'
-      ? 'fa-solid fa-triangle-exclamation'
-      : 'fa-solid fa-circle-info';
+        ? 'fa-solid fa-circle-exclamation'
+        : type === 'warning'
+          ? 'fa-solid fa-triangle-exclamation'
+          : 'fa-solid fa-circle-info';
 
   return (
     <div className={`toast toast-${type}`} role="alert" aria-live="polite">

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import traceLogo from '../assets/trace-logo.png';
+import NotificationCenter from './NotificationCenter';
 
 export default function Navbar({
   activeTab,
@@ -13,6 +14,12 @@ export default function Navbar({
   openSignupModal,
   openAdminModal,
   openMyRegistrationsModal,
+  notifications = [],
+  unreadCount = 0,
+  onMarkAsRead,
+  onMarkAllAsRead,
+  onClearAll,
+  onNotificationClick,
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -44,15 +51,26 @@ export default function Navbar({
           <img src={traceLogo} alt="TRACE SPACES" className="trace-logo-img" />
         </div>
 
-        {/* Mobile Hamburger Button */}
-        <button
-          type="button"
-          className="mobile-hamburger-btn"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle Navigation Menu"
-        >
-          <i className={`fa-solid ${mobileMenuOpen ? 'fa-xmark' : 'fa-bars'}`}></i>
-        </button>
+        {/* Mobile Header Actions (Notification Bell + Hamburger Button) */}
+        <div className="mobile-header-actions">
+          <NotificationCenter
+            notifications={notifications}
+            unreadCount={unreadCount}
+            onMarkAsRead={onMarkAsRead}
+            onMarkAllAsRead={onMarkAllAsRead}
+            onClearAll={onClearAll}
+            onNotificationClick={onNotificationClick}
+            isTransparent={isTransparent}
+          />
+          <button
+            type="button"
+            className="mobile-hamburger-btn"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle Navigation Menu"
+          >
+            <i className={`fa-solid ${mobileMenuOpen ? 'fa-xmark' : 'fa-bars'}`}></i>
+          </button>
+        </div>
 
         {/* Desktop Navigation Links */}
         <nav className={`nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`}>
@@ -104,6 +122,19 @@ export default function Navbar({
               </button>
             </>
           )}
+
+          {/* Desktop Notification Center Bell */}
+          <div className="desktop-notif-bell">
+            <NotificationCenter
+              notifications={notifications}
+              unreadCount={unreadCount}
+              onMarkAsRead={onMarkAsRead}
+              onMarkAllAsRead={onMarkAllAsRead}
+              onClearAll={onClearAll}
+              onNotificationClick={onNotificationClick}
+              isTransparent={isTransparent}
+            />
+          </div>
 
           {!currentUser ? (
             <div className="nav-auth-group">

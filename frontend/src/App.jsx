@@ -7,6 +7,13 @@ import UpcomingEventsPage from './components/UpcomingEventsPage';
 import PastEventsSection from './components/PastEventsSection';
 import Footer from './components/Footer';
 import ToastNotification from './components/modals/ToastNotification';
+import {
+  getStoredNotifications,
+  addNotification,
+  markAsRead,
+  markAllAsRead,
+  clearAllNotifications,
+} from './utils/notificationUtils';
 
 // Lazy-loaded pages (reduces initial bundle size and accelerates first page load)
 const EventDetailsPage = React.lazy(() => import('./components/EventDetailsPage'));
@@ -66,7 +73,7 @@ export default function App() {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
-    } catch (e) {}
+    } catch (e) { }
     return [];
   });
   const [activeTab, setActiveTabState] = useState(() => {
@@ -107,7 +114,11 @@ export default function App() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Toast State
-  const [toast, setToast] = useState({ visible: false, message: '', type: 'info' });
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'info', onAction: null, actionText: null });
+
+  // In-App Notification Center State
+  const [notifications, setNotifications] = useState(() => getStoredNotifications());
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   // Custom function to update activeTab AND synchronize URL Hash with optional entity id
   const setActiveTab = (newTab, entityId = null) => {
@@ -160,7 +171,7 @@ export default function App() {
           try {
             localStorage.setItem('eventhub_cached_events', JSON.stringify(filtered));
             sessionStorage.setItem('eventhub_cached_events', JSON.stringify(filtered));
-          } catch (e) {}
+          } catch (e) { }
           return filtered;
         });
         setSelectedPastEvent((prev) => (String(prev?._id || prev?.id) === String(updated._id) ? null : prev));
@@ -168,13 +179,28 @@ export default function App() {
       } else if (updated._id) {
         setEvents((prev) => {
           const exists = prev.some((evt) => String(evt._id || evt.id) === String(updated._id));
+          if (!exists) {
+            showToast(
+              `🔔 New Event Announced: "${updated.title}"! Check it out!`,
+              'info',
+              () => openEventDetails(updated),
+              'View Event'
+            );
+            const updatedNotifs = addNotification({
+              type: 'event',
+              title: 'New Event Announced!',
+              message: `"${updated.title}" has just been published for ${updated.location || 'TRACE'}. Register now!`,
+              meta: { eventId: updated._id },
+            });
+            setNotifications(updatedNotifs);
+          }
           const updatedList = exists
             ? prev.map((evt) => (String(evt._id || evt.id) === String(updated._id) ? { ...evt, ...updated } : evt))
             : [updated, ...prev];
           try {
             localStorage.setItem('eventhub_cached_events', JSON.stringify(updatedList));
             sessionStorage.setItem('eventhub_cached_events', JSON.stringify(updatedList));
-          } catch (e) {}
+          } catch (e) { }
           return updatedList;
         });
         setSelectedPastEvent((prev) =>
@@ -187,8 +213,79 @@ export default function App() {
       fetchEvents(true);
     };
 
+    const handleBookingCreated = (e) => {
+      const booking = e?.detail;
+      if (!booking) return;
+      const isAdmin = Boolean(
+        currentUser?.isAdmin ||
+        currentUser?.role === 'admin' ||
+        currentUser?.role === 'super_admin' ||
+        currentUser?.role === 'branch_admin' ||
+        currentUser?.email === 'admin@trace.lk'
+      );
+      if (isAdmin) {
+        showToast(
+          `📥 New Space Booking: ${booking.name} requested "${booking.venueName || 'Workspace'}"!`,
+          'info',
+          () => {
+            setActiveTab('admin');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          },
+          'Dashboard'
+        );
+      }
+      const updatedNotifs = addNotification({
+        type: 'booking',
+        title: 'New Space Booking Inquiry',
+        message: `${booking.name} requested "${booking.venueName || 'Workspace'}" (${booking.branch || 'TRACE'}). Ref: ${booking.bookingRef || 'Pending'}`,
+        meta: { bookingRef: booking.bookingRef },
+      });
+      setNotifications(updatedNotifs);
+    };
+
+    const handleRegistrationCreated = (e) => {
+      const reg = e?.detail;
+      if (!reg) return;
+      const isAdmin = Boolean(
+        currentUser?.isAdmin ||
+        currentUser?.role === 'admin' ||
+        currentUser?.role === 'super_admin' ||
+        currentUser?.role === 'branch_admin' ||
+        currentUser?.email === 'admin@trace.lk'
+      );
+      if (isAdmin) {
+        showToast(
+          `🎟️ New Event Attendee: ${reg.name} registered for "${reg.eventTitle || 'Event'}"!`,
+          'success',
+          () => {
+            setActiveTab('admin');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          },
+          'Registrations'
+        );
+      }
+      const updatedNotifs = addNotification({
+        type: 'registration',
+        title: 'New Event Attendee Registered',
+        message: `${reg.name} (${reg.email}) registered for "${reg.eventTitle || 'Event'}".`,
+        meta: { ticketId: reg.ticketId, eventId: reg.eventId },
+      });
+      setNotifications(updatedNotifs);
+    };
+
+    const handleNotifUpdate = (e) => {
+      if (e?.detail && Array.isArray(e.detail)) {
+        setNotifications(e.detail);
+      } else {
+        setNotifications(getStoredNotifications());
+      }
+    };
+
     const handleCustomEvent = (e) => applyLiveEventUpdate(e.detail);
     window.addEventListener('eventhub_events_updated', handleCustomEvent);
+    window.addEventListener('eventhub_booking_created', handleBookingCreated);
+    window.addEventListener('eventhub_registration_created', handleRegistrationCreated);
+    window.addEventListener('eventhub_notifications_updated', handleNotifUpdate);
 
     let bc = null;
     if (typeof BroadcastChannel !== 'undefined') {
@@ -197,9 +294,15 @@ export default function App() {
         bc.onmessage = (msg) => {
           if (msg.data?.type === 'EVENT_UPDATED') {
             applyLiveEventUpdate(msg.data.detail);
+          } else if (msg.data?.type === 'BOOKING_CREATED') {
+            handleBookingCreated({ detail: msg.data.detail });
+          } else if (msg.data?.type === 'REGISTRATION_CREATED') {
+            handleRegistrationCreated({ detail: msg.data.detail });
+          } else if (msg.data?.type === 'NOTIFICATIONS_UPDATED') {
+            setNotifications(msg.data.list);
           }
         };
-      } catch (err) {}
+      } catch (err) { }
     }
 
     const handleStorage = (e) => {
@@ -207,7 +310,22 @@ export default function App() {
         try {
           const parsed = JSON.parse(e.newValue);
           if (parsed?.detail) applyLiveEventUpdate(parsed.detail);
-        } catch (err) {}
+        } catch (err) { }
+      } else if (e.key === 'eventhub_last_booking_create' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (parsed?.detail) handleBookingCreated({ detail: parsed.detail });
+        } catch (err) { }
+      } else if (e.key === 'eventhub_last_registration_create' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (parsed?.detail) handleRegistrationCreated({ detail: parsed.detail });
+        } catch (err) { }
+      } else if (e.key === 'eventhub_notifications_list' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) setNotifications(parsed);
+        } catch (err) { }
       }
     };
     window.addEventListener('storage', handleStorage);
@@ -225,6 +343,9 @@ export default function App() {
 
     return () => {
       window.removeEventListener('eventhub_events_updated', handleCustomEvent);
+      window.removeEventListener('eventhub_booking_created', handleBookingCreated);
+      window.removeEventListener('eventhub_registration_created', handleRegistrationCreated);
+      window.removeEventListener('eventhub_notifications_updated', handleNotifUpdate);
       window.removeEventListener('eventhub_venues_updated', handleVenueCustomEvent);
       window.removeEventListener('storage', handleStorage);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -232,11 +353,11 @@ export default function App() {
     };
   }, []);
 
-  const showToast = (message, type = 'info') => {
-    setToast({ visible: true, message, type });
+  const showToast = (message, type = 'info', onAction = null, actionText = null) => {
+    setToast({ visible: true, message, type, onAction, actionText });
     setTimeout(() => {
-      setToast({ visible: false, message: '', type: 'info' });
-    }, 4000);
+      setToast({ visible: false, message: '', type: 'info', onAction: null, actionText: null });
+    }, 5500);
   };
 
   const fetchEvents = async (silent = false) => {
@@ -251,7 +372,7 @@ export default function App() {
         try {
           localStorage.setItem('eventhub_cached_events', JSON.stringify(result.data));
           sessionStorage.setItem('eventhub_cached_events', JSON.stringify(result.data));
-        } catch (e) {}
+        } catch (e) { }
       } else if (!silent && events.length === 0) {
         showToast(result.message || 'Failed to load events', 'error');
       }
@@ -270,7 +391,7 @@ export default function App() {
       if (data.success && Array.isArray(data.data)) {
         sessionStorage.setItem('eventhub_cached_venues', JSON.stringify(data.data));
       }
-    } catch (e) {}
+    } catch (e) { }
   };
 
   const checkAuthStatus = async (authToken) => {
@@ -334,7 +455,7 @@ export default function App() {
           }
         }),
       ]);
-    } catch (e) {}
+    } catch (e) { }
   };
 
   useEffect(() => {
@@ -411,6 +532,123 @@ export default function App() {
     }, 100);
   };
 
+  const handleNotificationClick = async (notif) => {
+    if (!notif) return;
+    if (notif.meta?.eventId) {
+      let targetEvt = events.find((e) => String(e._id || e.id) === String(notif.meta.eventId));
+      if (!targetEvt) {
+        try {
+          const res = await fetch(`/api/events/${notif.meta.eventId}`);
+          const d = await res.json();
+          if (d.success && d.data) targetEvt = d.data;
+        } catch (err) {}
+      }
+      if (targetEvt) {
+        openEventDetails(targetEvt);
+        return;
+      }
+      setActiveTab('upcoming');
+      return;
+    }
+
+    if (notif.meta?.bookingRef || notif.type === 'booking') {
+      const isAdmin = Boolean(
+        currentUser?.isAdmin ||
+        currentUser?.role === 'admin' ||
+        currentUser?.role === 'super_admin' ||
+        currentUser?.role === 'branch_admin' ||
+        currentUser?.email === 'admin@trace.lk'
+      );
+      if (isAdmin) {
+        setActiveTab('admin');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        setActiveTab('venues-page');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      return;
+    }
+
+    if (notif.type === 'registration') {
+      const isAdmin = Boolean(
+        currentUser?.isAdmin ||
+        currentUser?.role === 'admin' ||
+        currentUser?.role === 'super_admin' ||
+        currentUser?.role === 'branch_admin' ||
+        currentUser?.email === 'admin@trace.lk'
+      );
+      if (isAdmin) {
+        setActiveTab('admin');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        setActiveTab('my-events');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      return;
+    }
+
+    if (notif.type === 'reminder') {
+      setActiveTab('my-events');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const checkUpcomingEventReminders = async (user) => {
+    if (!user?.email) return;
+    const sessionKey = `eventhub_reminded_check_${user.email}`;
+    if (sessionStorage.getItem(sessionKey)) return;
+
+    try {
+      const res = await fetch(`/api/registrations/user/${encodeURIComponent(user.email.trim())}`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+        const now = new Date();
+        const todayStr = now.toISOString().split('T')[0];
+        const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+        const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+        for (const reg of data.data) {
+          const evt = reg.eventId;
+          if (!evt || typeof evt !== 'object' || !evt.date) continue;
+          const evtDateStr =
+            typeof evt.date === 'string'
+              ? evt.date.split('T')[0]
+              : new Date(evt.date).toISOString().split('T')[0];
+
+          const isToday = evtDateStr === todayStr;
+          const isTomorrow = evtDateStr === tomorrowStr;
+
+          if (isToday || isTomorrow) {
+            const timeLabel = isToday ? 'TODAY' : 'TOMORROW';
+            showToast(
+              `⏰ Event Reminder: "${evt.title}" is happening ${timeLabel} at ${evt.time || '10:00 AM'}!`,
+              'warning',
+              () => openEventDetails(evt),
+              'View Event'
+            );
+            const updatedNotifs = addNotification({
+              type: 'reminder',
+              title: `Upcoming Event (${timeLabel})`,
+              message: `Reminder: You have registered for "${evt.title}" happening ${timeLabel} at ${evt.time || 'scheduled time'} (${evt.location || 'TRACE'}).`,
+              meta: { eventId: evt._id },
+            });
+            setNotifications(updatedNotifs);
+            break;
+          }
+        }
+        sessionStorage.setItem(sessionKey, 'true');
+      }
+    } catch (err) {
+      console.warn('Upcoming reminder check notice:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser?.email) {
+      checkUpcomingEventReminders(currentUser);
+    }
+  }, [currentUser]);
+
   const hideHeaderFooter = activeTab === 'event-details' || activeTab === 'admin';
 
   return (
@@ -434,6 +672,21 @@ export default function App() {
             setActiveTab('my-events');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
+          notifications={notifications}
+          unreadCount={unreadCount}
+          onMarkAsRead={(id) => {
+            const updated = markAsRead(id);
+            setNotifications(updated);
+          }}
+          onMarkAllAsRead={() => {
+            const updated = markAllAsRead();
+            setNotifications(updated);
+          }}
+          onClearAll={() => {
+            const updated = clearAllNotifications();
+            setNotifications(updated);
+          }}
+          onNotificationClick={handleNotificationClick}
         />
       )}
 
@@ -732,6 +985,9 @@ export default function App() {
         {/* Global AI Chatbot Agent */}
         <ChatbotAgent currentUser={currentUser} setActiveTab={setActiveTab} events={events} />
       </React.Suspense>
+
+      {/* Global Interactive Toast Notification Container */}
+      <ToastNotification toast={toast} />
     </div>
   );
 }
