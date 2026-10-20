@@ -93,7 +93,7 @@ export default function PastEventDetailsPage({
       }
       if (updated._id) {
         setActiveEvent((prev) => {
-          if (prev && prev._id === updated._id) {
+          if (prev && String(prev._id || prev.id) === String(updated._id)) {
             return { ...prev, ...updated };
           }
           return prev;
@@ -134,10 +134,22 @@ export default function PastEventDetailsPage({
   }, [activeEvent, onBack, showToast]);
 
   const getYouTubeEmbedUrl = (url) => {
-    if (!url) return null;
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    return match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}?autoplay=1` : null;
+    if (!url || typeof url !== 'string') return null;
+    const clean = url.trim();
+    if (!clean) return null;
+
+    // Bare 11-char ID
+    if (/^[a-zA-Z0-9_-]{11}$/.test(clean)) {
+      return `https://www.youtube.com/embed/${clean}?autoplay=1`;
+    }
+
+    // Matches youtu.be, youtube.com/watch, youtube.com/embed, youtube.com/v, youtube.com/shorts
+    const regExp = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))([\w-]{11})/;
+    const match = clean.match(regExp);
+    if (match && match[1]) {
+      return `https://www.youtube.com/embed/${match[1]}?autoplay=1`;
+    }
+    return null;
   };
 
   if (loadingEvent) {

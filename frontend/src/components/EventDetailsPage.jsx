@@ -55,12 +55,30 @@ export default function EventDetailsPage({
     }
   }, [initialEvent]);
 
+  // Universal YouTube Embed URL generator
+  const getYouTubeEmbedUrl = (url) => {
+    if (!url || typeof url !== 'string') return null;
+    const clean = url.trim();
+    if (!clean) return null;
+
+    if (/^[a-zA-Z0-9_-]{11}$/.test(clean)) {
+      return `https://www.youtube.com/embed/${clean}`;
+    }
+
+    const regExp = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))([\w-]{11})/;
+    const match = clean.match(regExp);
+    if (match && match[1]) {
+      return `https://www.youtube.com/embed/${match[1]}`;
+    }
+    return null;
+  };
+
   // Listen for live updates across components and tabs
   useEffect(() => {
     const handleUpdate = (updated) => {
       if (!updated) return;
       if (updated.deleted) {
-        if (activeEvent && activeEvent._id === updated._id) {
+        if (activeEvent && String(activeEvent._id || activeEvent.id) === String(updated._id)) {
           if (showToast) showToast('This event was removed.', 'info');
           if (onBack) onBack();
         }
@@ -68,7 +86,7 @@ export default function EventDetailsPage({
       }
       if (updated._id) {
         setActiveEvent((prev) => {
-          if (prev && prev._id === updated._id) {
+          if (prev && String(prev._id || prev.id) === String(updated._id)) {
             return { ...prev, ...updated };
           }
           return prev;
@@ -528,6 +546,24 @@ export default function EventDetailsPage({
                             <i className="fa-solid fa-check"></i> {item}
                           </span>
                         ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* YouTube Video Preview / Keynote Recording */}
+                  {event.videoUrl && getYouTubeEmbedUrl(event.videoUrl) && (
+                    <div className="details-highlights-box" style={{ marginTop: '1.5rem' }}>
+                      <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#0f172a' }}>
+                        <i className="fa-brands fa-youtube" style={{ color: '#ef4444', fontSize: '1.25rem' }}></i> Event Video Recording & Media
+                      </h3>
+                      <div style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', height: 0, borderRadius: '12px', overflow: 'hidden', marginTop: '0.85rem', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}>
+                        <iframe
+                          src={getYouTubeEmbedUrl(event.videoUrl)}
+                          title={`${event.title} Video Preview`}
+                          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        ></iframe>
                       </div>
                     </div>
                   )}

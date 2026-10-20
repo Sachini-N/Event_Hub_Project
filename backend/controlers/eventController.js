@@ -352,7 +352,10 @@ const createEvent = async (req, res) => {
 // PUT /api/events/:id (Update Event)
 const updateEvent = async (req, res) => {
   try {
+    const eventId = String(req.params.id);
     let eventData = { ...req.body };
+    eventData._id = eventId;
+
     if (eventData.status !== "draft" && eventData.date) {
       const endDateTime = getEventEndDateTime(eventData.date, eventData.time);
       const now = new Date();
@@ -360,9 +363,14 @@ const updateEvent = async (req, res) => {
     }
     eventData.updatedAt = new Date().toISOString();
 
+    // Clean video URL: trim whitespace
+    if (typeof eventData.videoUrl === "string") {
+      eventData.videoUrl = eventData.videoUrl.trim();
+    }
+
     // Safely merge gallery so existing photo URLs are never overwritten with stripped ones
     if (Array.isArray(eventData.gallery)) {
-      const existing = eventsCache.find(e => String(e._id || e.id) === String(req.params.id));
+      const existing = eventsCache.find(e => String(e._id || e.id) === eventId);
       if (existing && Array.isArray(existing.gallery)) {
         eventData.gallery = eventData.gallery.map((g, idx) => {
           if (typeof g === 'string' && g.trim()) return g;
@@ -379,18 +387,29 @@ const updateEvent = async (req, res) => {
     eventData = sanitizeEvent(eventData);
 
     // Update in-memory cache instantly
-    eventsCache = eventsCache.map(e => {
-      if (String(e._id || e.id) === String(req.params.id)) {
-        return { ...e, ...eventData };
-      }
-      return e;
-    });
+    const exists = eventsCache.some(e => String(e._id || e.id) === eventId);
+    if (exists) {
+      eventsCache = eventsCache.map(e => {
+        if (String(e._id || e.id) === eventId) {
+          return { ...e, ...eventData, _id: eventId };
+        }
+        return e;
+      });
+    } else {
+      eventsCache = [{ ...eventData, _id: eventId }, ...eventsCache];
+    }
     saveBackupAsync();
 
-    Event.findByIdAndUpdate(req.params.id, eventData, { returnDocument: 'after', runValidators: true }).catch(() => {});
-    res.json({ success: true, message: "Event updated successfully", data: eventData });
+    // Persist to MongoDB
+    Event.findByIdAndUpdate(eventId, eventData, { new: true, runValidators: true }).catch((err) => {
+      console.warn("MongoDB update event notice:", err.message);
+    });
+
+    const fullUpdated = eventsCache.find(e => String(e._id || e.id) === eventId) || eventData;
+    return res.json({ success: true, message: "Event updated successfully", data: fullUpdated });
   } catch (error) {
-    res.json({ success: true, message: "Event updated successfully", data: req.body });
+    console.error("Error in updateEvent:", error);
+    res.status(500).json({ success: false, message: "Event updated error", data: req.body });
   }
 };
 

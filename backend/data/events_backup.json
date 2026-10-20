@@ -2,15 +2,14 @@
   {
     "_id": "6a869f66785311ff102d43b4",
     "title": "Guest Talk -03",
-    "description": "“We Can Never Do Merely One Thing”\n\nThe upcoming session will focus on second-order effects, uncertainty, and the challenge of thinking beyond the obvious. Drawing from his experiences in science, nature, and conservation, Pethiyagoda will explore how even well-intentioned actions can create unexpected consequences.\n\nEvent Details&nbsp;<div><ul><li>&nbsp;📅 17 August 2026&nbsp;</li><li>🕠 5:30 PM onwards&nbsp;</li><li>📍 Bay 07, TRACE Expert City, Colombo 10&nbsp;</li></ul></div><div>&nbsp;An Opportunity to Meet Rohan Pethiyagoda\n</div>",
+    "description": "Updated session on second-order effects",
     "category": "Talk",
     "date": "2026-08-17T00:00:00.000Z",
     "time": "17:30 - 18:30",
-    "location": "Bay 7,TRACE Expert City, Bay 7,TRACE Expert City",
+    "location": "Bay 7, TRACE Expert City",
     "capacity": 100,
     "registeredCount": 0,
     "status": "past",
-    "coverImage": "/uploads/event-cover-6a869f66785311ff102d43b4-1792467145146-81606.jpg",
     "highlights": [],
     "speaker": {
       "name": "Dr.Rohan Pethiyagoda",
@@ -18,32 +17,11 @@
       "bio": "",
       "avatar": "/uploads/file-1789036475018-595584180.png"
     },
-    "gallery": [
-      {
-        "_id": "6a88044e922bbbe2f13af033",
-        "url": "/uploads/event-gallery-6a869f66785311ff102d43b4-0-1792467145155-67935.png",
-        "caption": "Event Photo"
-      },
-      {
-        "_id": "6a88044e922bbbe2f13af034",
-        "url": "/uploads/event-gallery-6a869f66785311ff102d43b4-1-1792467145158-68724.png",
-        "caption": "Event Photo"
-      },
-      {
-        "_id": "6a951cbdc6bc86729df7a12a",
-        "url": "/uploads/event-gallery-6a869f66785311ff102d43b4-2-1792467145163-67514.jpg",
-        "caption": "Event Photo"
-      },
-      {
-        "_id": "6a951cbdc6bc86729df7a12b",
-        "url": "/uploads/event-gallery-6a869f66785311ff102d43b4-3-1792467145170-27122.jpg",
-        "caption": "Event Photo"
-      }
-    ],
+    "gallery": [],
     "createdAt": "2026-08-20T06:32:06.934Z",
-    "updatedAt": "2026-10-01T10:21:55.283Z",
+    "updatedAt": "2026-10-20T04:48:52.965Z",
     "__v": 0,
-    "videoUrl": "https://www.youtube.com/watch?v=uBOaEHSJv2c",
+    "videoUrl": "https://youtu.be/RV3ddAKbbZw?si=Sa6",
     "socialLinks": {
       "facebook": "https://www.facebook.com/share/p/1FZnCJMKr3/",
       "instagram": "https://www.instagram.com/p/DbsQzR4Ozu4/?utm_source=ig_web_copy_link&stkn=MzRlODBiNWFlZA==",

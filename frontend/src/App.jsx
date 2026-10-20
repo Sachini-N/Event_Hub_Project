@@ -155,22 +155,33 @@ export default function App() {
     const applyLiveEventUpdate = (updated) => {
       if (!updated) return;
       if (updated.deleted && updated._id) {
-        setEvents((prev) => prev.filter((evt) => evt._id !== updated._id));
-        setSelectedPastEvent((prev) => (prev?._id === updated._id ? null : prev));
-        setSelectedDetailsEvent((prev) => (prev?._id === updated._id ? null : prev));
+        setEvents((prev) => {
+          const filtered = prev.filter((evt) => String(evt._id || evt.id) !== String(updated._id));
+          try {
+            localStorage.setItem('eventhub_cached_events', JSON.stringify(filtered));
+            sessionStorage.setItem('eventhub_cached_events', JSON.stringify(filtered));
+          } catch (e) {}
+          return filtered;
+        });
+        setSelectedPastEvent((prev) => (String(prev?._id || prev?.id) === String(updated._id) ? null : prev));
+        setSelectedDetailsEvent((prev) => (String(prev?._id || prev?.id) === String(updated._id) ? null : prev));
       } else if (updated._id) {
         setEvents((prev) => {
-          const exists = prev.some((evt) => evt._id === updated._id);
-          if (exists) {
-            return prev.map((evt) => (evt._id === updated._id ? { ...evt, ...updated } : evt));
-          }
-          return [updated, ...prev];
+          const exists = prev.some((evt) => String(evt._id || evt.id) === String(updated._id));
+          const updatedList = exists
+            ? prev.map((evt) => (String(evt._id || evt.id) === String(updated._id) ? { ...evt, ...updated } : evt))
+            : [updated, ...prev];
+          try {
+            localStorage.setItem('eventhub_cached_events', JSON.stringify(updatedList));
+            sessionStorage.setItem('eventhub_cached_events', JSON.stringify(updatedList));
+          } catch (e) {}
+          return updatedList;
         });
         setSelectedPastEvent((prev) =>
-          prev?._id === updated._id ? { ...prev, ...updated } : prev
+          String(prev?._id || prev?.id) === String(updated._id) ? { ...prev, ...updated } : prev
         );
         setSelectedDetailsEvent((prev) =>
-          prev?._id === updated._id ? { ...prev, ...updated } : prev
+          String(prev?._id || prev?.id) === String(updated._id) ? { ...prev, ...updated } : prev
         );
       }
       fetchEvents(true);
