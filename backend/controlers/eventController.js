@@ -118,15 +118,93 @@ const GT03_PHOTOS = [
   { url: "/uploads/file-1790159759717-298956000.jpeg", caption: "Audience & Networking" },
 ];
 
+const uploadsDir = path.join(__dirname, "../public/uploads");
+const frontendUploadsDir = path.join(__dirname, "../../frontend/public/uploads");
+
+// Helper to save base64 data to static upload file so API and cache remain ultra-lightweight
+const saveBase64ToFile = (dataUri, prefix) => {
+  if (!dataUri || typeof dataUri !== "string" || !dataUri.startsWith("data:image")) {
+    return dataUri;
+  }
+  const match = dataUri.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
+  if (!match) return dataUri;
+  let ext = match[1].toLowerCase();
+  if (ext === "jpeg") ext = "jpg";
+  const filename = `${prefix}-${Date.now()}-${Math.floor(Math.random() * 100000)}.${ext}`;
+  try {
+    const buffer = Buffer.from(match[2], "base64");
+    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+    fs.writeFileSync(path.join(uploadsDir, filename), buffer);
+    if (!fs.existsSync(frontendUploadsDir)) fs.mkdirSync(frontendUploadsDir, { recursive: true });
+    fs.writeFileSync(path.join(frontendUploadsDir, filename), buffer);
+    return `/uploads/${filename}`;
+  } catch (err) {
+    console.warn("Error saving base64 to file:", err.message);
+    return dataUri;
+  }
+};
+
+// Ensure all event images are clean static URLs, not multi-megabyte base64 strings
+const sanitizeEvent = (evt) => {
+  if (!evt) return evt;
+  let updated = false;
+  let cover = evt.coverImage;
+  let gallery = evt.gallery;
+
+  const existing = eventsCache.find(e => String(e._id || e.id) === String(evt._id || evt.id));
+  if (cover && cover.startsWith("data:image")) {
+    if (existing && existing.coverImage && !existing.coverImage.startsWith("data:image")) {
+      cover = existing.coverImage;
+    } else {
+      cover = saveBase64ToFile(cover, `event-cover-${evt._id || Date.now()}`);
+    }
+    updated = true;
+  }
+
+  if (Array.isArray(gallery)) {
+    gallery = gallery.map((g, idx) => {
+      let url = typeof g === "string" ? g : (g?.url || "");
+      const caption = (typeof g === "object" && g?.caption) ? g.caption : `Photo ${idx + 1}`;
+      if (url && url.startsWith("data:image")) {
+        const exG = existing?.gallery?.[idx];
+        const exUrl = typeof exG === "string" ? exG : exG?.url;
+        if (exUrl && !exUrl.startsWith("data:image")) {
+          url = exUrl;
+        } else {
+          url = saveBase64ToFile(url, `event-gallery-${evt._id || "gal"}-${idx}`);
+        }
+        updated = true;
+      }
+      return {
+        _id: (typeof g === "object" && (g._id || g.id)) ? (g._id || g.id) : `g_${idx}`,
+        url,
+        caption,
+      };
+    });
+  }
+
+  const cleanEvt = {
+    ...evt,
+    coverImage: cover,
+    gallery: gallery || [],
+  };
+
+  if (updated && evt._id && mongoose.connection.readyState === 1) {
+    Event.findByIdAndUpdate(evt._id, { coverImage: cover, gallery }).catch(() => {});
+  }
+
+  return cleanEvt;
+};
+
 // Prime in-memory events cache on server boot
 const seedInitialEvents = async () => {
-  // 1. Immediately load local disk backup if exists for 0ms cold boot
+  // 1. Immediately load local disk backup if exists for instant 0ms cold boot
   try {
     if (fs.existsSync(backupFilePath)) {
       const fileData = fs.readFileSync(backupFilePath, "utf8");
       const parsed = JSON.parse(fileData);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        eventsCache = parsed;
+        eventsCache = parsed.map(sanitizeEvent);
         isEventsCacheLoaded = true;
       }
     }
@@ -134,21 +212,20 @@ const seedInitialEvents = async () => {
     console.warn("Local events backup notice:", e.message);
   }
 
-  // 2. Fetch full events from MongoDB (with full gallery URLs)
+  // 2. Fetch full events from MongoDB
   try {
-    const docs = await Event.find().lean().maxTimeMS(12000);
+    const docs = await Event.find().lean().maxTimeMS(6000);
     if (Array.isArray(docs) && docs.length > 0) {
-      // Merge with any existing cache to avoid losing recent media
       eventsCache = docs.map((doc) => {
         // Heal Guest Talk -03 if gallery URLs missing
         if (String(doc._id) === "6a869f66785311ff102d43b4") {
-          const hasUrls = doc.gallery && doc.gallery.some(g => (typeof g === 'string' && g) || g?.url);
+          const hasUrls = doc.gallery && doc.gallery.some(g => (typeof g === "string" && g) || g?.url);
           if (!hasUrls) {
             doc.gallery = GT03_PHOTOS;
             doc.coverImage = doc.coverImage || "/uploads/file-1789028022647-551768248.png";
           }
         }
-        return doc;
+        return sanitizeEvent(doc);
       });
       isEventsCacheLoaded = true;
       saveBackupAsync();
@@ -160,22 +237,24 @@ const seedInitialEvents = async () => {
 
 // GET /api/events?status=upcoming|past
 const getEvents = async (req, res) => {
-  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.setHeader("Cache-Control", "public, max-age=10, stale-while-revalidate=60");
   const { status, category } = req.query;
 
-  // Format list: keep list response lightweight by not sending massive base64 in gallery for the list view
+  // Format list: lightweight response with clean static URLs
   const formatList = (list) => {
     return processEventsList(list, status, category).map((evt) => {
+      let gallery = [];
       if (Array.isArray(evt.gallery) && evt.gallery.length > 0) {
-        return {
-          ...evt,
-          gallery: evt.gallery.map((g, idx) => ({
-            _id: g._id || g.id || `g_${idx}`,
-            caption: g.caption || "Event Photo",
-          })),
-        };
+        gallery = evt.gallery.map((g, idx) => ({
+          _id: g._id || g.id || `g_${idx}`,
+          url: typeof g === "string" ? g : (g.url || ""),
+          caption: g.caption || "Event Photo",
+        }));
       }
-      return evt;
+      return {
+        ...evt,
+        gallery,
+      };
     });
   };
 
@@ -185,10 +264,10 @@ const getEvents = async (req, res) => {
     res.json({ success: true, count: result.length, data: result });
 
     // Background silent refresh with short timeout
-    Event.find().lean().maxTimeMS(6000)
+    Event.find().lean().maxTimeMS(5000)
       .then((fresh) => {
         if (Array.isArray(fresh) && fresh.length > 0) {
-          eventsCache = fresh;
+          eventsCache = fresh.map(sanitizeEvent);
           saveBackupAsync();
         }
       })
@@ -198,9 +277,9 @@ const getEvents = async (req, res) => {
 
   // 2. If cache not loaded yet, query DB directly
   try {
-    const events = await Event.find().lean().maxTimeMS(6000);
+    const events = await Event.find().lean().maxTimeMS(5000);
     if (Array.isArray(events) && events.length > 0) {
-      eventsCache = events;
+      eventsCache = events.map(sanitizeEvent);
       isEventsCacheLoaded = true;
       saveBackupAsync();
     }
@@ -215,47 +294,26 @@ const getEvents = async (req, res) => {
 
 // GET /api/events/:id
 const getEventById = async (req, res) => {
-  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=120");
   const eventId = String(req.params.id);
 
-  // 1. First check in-memory cache: if it has full gallery URLs, return immediately (0ms)
+  // 1. First check in-memory cache: if found, return immediately for 0ms loading
   const cached = eventsCache.find(e => String(e._id || e.id) === eventId);
-  const hasFullGallery = cached && Array.isArray(cached.gallery) && cached.gallery.some(
-    g => (typeof g === 'string' && g) || (g && typeof g.url === 'string' && g.url.trim())
-  );
-
-  if (cached && (hasFullGallery || !cached.gallery || cached.gallery.length === 0)) {
+  if (cached) {
     return res.json({ success: true, data: cached });
   }
 
-  // 2. Query MongoDB with 2.5 second timeout to avoid blocking UI
+  // 2. Query MongoDB if not found in cache
   try {
-    const eventPromise = Event.findById(eventId).lean();
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2500));
-    const event = await Promise.race([eventPromise, timeoutPromise]);
+    const event = await Event.findById(eventId).lean().maxTimeMS(3000);
     if (event) {
-      // Heal GT-03 if needed
-      if (eventId === "6a869f66785311ff102d43b4") {
-        const hasUrls = event.gallery && event.gallery.some(g => (typeof g === 'string' && g) || g?.url);
-        if (!hasUrls) {
-          event.gallery = GT03_PHOTOS;
-          event.coverImage = event.coverImage || "/uploads/file-1789028022647-551768248.png";
-        }
-      }
-      eventsCache = eventsCache.map(e => String(e._id || e.id) === eventId ? { ...e, ...event } : e);
-      if (!eventsCache.some(e => String(e._id || e.id) === eventId)) {
-        eventsCache.push(event);
-      }
+      const sanitized = sanitizeEvent(event);
+      eventsCache.push(sanitized);
       saveBackupAsync();
-      return res.json({ success: true, data: event });
+      return res.json({ success: true, data: sanitized });
     }
   } catch (error) {
     console.warn("Direct findById notice:", error.message);
-  }
-
-  // 3. Fallback to cached version
-  if (cached) {
-    return res.json({ success: true, data: cached });
   }
 
   return res.status(404).json({ success: false, message: "Event not found" });
@@ -264,7 +322,7 @@ const getEventById = async (req, res) => {
 // POST /api/events (Create Event)
 const createEvent = async (req, res) => {
   try {
-    const eventData = { ...req.body };
+    let eventData = { ...req.body };
     if (eventData.status !== "draft" && eventData.date) {
       const endDateTime = getEventEndDateTime(eventData.date, eventData.time);
       const now = new Date();
@@ -274,6 +332,7 @@ const createEvent = async (req, res) => {
     eventData._id = eventData._id || new mongoose.Types.ObjectId();
     eventData.createdAt = new Date().toISOString();
     eventData.updatedAt = new Date().toISOString();
+    eventData = sanitizeEvent(eventData);
 
     // Update in-memory cache instantly
     eventsCache = [eventData, ...eventsCache.filter(e => String(e._id || e.id) !== String(eventData._id))];
@@ -293,7 +352,7 @@ const createEvent = async (req, res) => {
 // PUT /api/events/:id (Update Event)
 const updateEvent = async (req, res) => {
   try {
-    const eventData = { ...req.body };
+    let eventData = { ...req.body };
     if (eventData.status !== "draft" && eventData.date) {
       const endDateTime = getEventEndDateTime(eventData.date, eventData.time);
       const now = new Date();
@@ -317,6 +376,7 @@ const updateEvent = async (req, res) => {
         });
       }
     }
+    eventData = sanitizeEvent(eventData);
 
     // Update in-memory cache instantly
     eventsCache = eventsCache.map(e => {

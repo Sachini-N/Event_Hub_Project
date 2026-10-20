@@ -15,8 +15,24 @@ export default function PastEventDetailsPage({
   showToast,
   onOpenGalleryLightbox,
 }) {
-  const [activeEvent, setActiveEvent] = useState(initialEvent);
-  const [loadingEvent, setLoadingEvent] = useState(!initialEvent);
+  const [activeEvent, setActiveEvent] = useState(() => {
+    if (initialEvent) return initialEvent;
+    try {
+      const hash = window.location.hash || '';
+      const match = hash.match(/[?&]id=([^&]+)/);
+      const eventId = match ? match[1] : sessionStorage.getItem('eventhub_past_event_id');
+      if (eventId) {
+        const cached = localStorage.getItem('eventhub_cached_events') || sessionStorage.getItem('eventhub_cached_events');
+        if (cached) {
+          const list = JSON.parse(cached);
+          const found = list.find(e => String(e._id || e.id) === String(eventId));
+          if (found) return found;
+        }
+      }
+    } catch (e) {}
+    return null;
+  });
+  const [loadingEvent, setLoadingEvent] = useState(() => !initialEvent && !activeEvent);
   const [isPlayingVideo, setIsPlayingVideo] = useState(false);
 
   // Keep activeEvent in sync and fetch full event data if gallery URLs are missing
@@ -29,31 +45,34 @@ export default function PastEventDetailsPage({
 
     if (initialEvent) {
       setActiveEvent(initialEvent);
-      // Check if gallery items exist but lack full URLs (e.g. from lightweight list API)
-      const hasMissingUrls = Array.isArray(initialEvent.gallery) &&
-        initialEvent.gallery.length > 0 &&
-        initialEvent.gallery.some(g => !getPhotoUrl(g));
-
-      if (!hasMissingUrls) {
-        setLoadingEvent(false);
-        return;
-      }
+      setLoadingEvent(false);
+      return;
     }
 
     if (eventId) {
-      if (!initialEvent) setLoadingEvent(true);
+      // Check local cache first for instant 0ms rendering
+      try {
+        const cachedStr = localStorage.getItem('eventhub_cached_events') || sessionStorage.getItem('eventhub_cached_events');
+        if (cachedStr) {
+          const list = JSON.parse(cachedStr);
+          const found = list.find(e => String(e._id || e.id) === String(eventId));
+          if (found) {
+            setActiveEvent(found);
+            setLoadingEvent(false);
+          }
+        }
+      } catch (e) {}
+
+      // Silent background fetch to guarantee latest updates
       fetch(`/api/events/${eventId}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.success && data.data) {
             setActiveEvent(data.data);
-          } else if (!initialEvent) {
-            setActiveEvent(null);
           }
         })
         .catch((err) => {
-          console.error('Error fetching past event details:', err);
-          if (!initialEvent) setActiveEvent(null);
+          console.warn('Notice fetching past event details:', err);
         })
         .finally(() => setLoadingEvent(false));
     } else {
@@ -222,7 +241,15 @@ export default function PastEventDetailsPage({
             title="Click to view full uncropped photo"
           >
             <div className="past-hero-backdrop" style={{ backgroundImage: `url(${pastEvent.coverImage})` }} />
-            <img className="past-hero-img" src={pastEvent.coverImage} alt={pastEvent.title} />
+            <img
+              className="past-hero-img"
+              src={pastEvent.coverImage}
+              alt={pastEvent.title}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=75';
+              }}
+            />
             <div className="past-hero-overlay"></div>
             <span className="past-status-badge">
               <span className="badge-pulse-dot"></span>

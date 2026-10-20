@@ -230,8 +230,8 @@ export default function PastEventsSection({
             </div>
           </div>
 
-          {/* Loading Spinner */}
-          {loading && (
+          {/* Loading Spinner only if no events are cached/ready yet */}
+          {loading && filteredPastEvents.length === 0 && (
             <div className="loading-state">
               <div className="spinner"></div>
               <p>Loading past events...</p>
@@ -247,8 +247,8 @@ export default function PastEventsSection({
             </div>
           )}
 
-          {/* Full Grid of Past Events */}
-          {!loading && filteredPastEvents.length > 0 && (
+          {/* Full Grid of Past Events: Renders immediately with zero delay */}
+          {filteredPastEvents.length > 0 && (
             <div className="events-grid-3col">
               {filteredPastEvents.map((item) => {
                 const isUserUploaded = Boolean(item.createdBy || (item._id && !item._id.startsWith('past-evt-')));
@@ -271,6 +271,10 @@ export default function PastEventsSection({
                         alt={item.title}
                         loading="lazy"
                         decoding="async"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=75';
+                        }}
                       />
                       <span className={`cat-pill ${catClass}`}>
                         {(item.category || 'PAST EVENT').toUpperCase()}
@@ -376,6 +380,10 @@ export default function PastEventsSection({
                     alt={item.title}
                     loading="lazy"
                     decoding="async"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=75';
+                    }}
                   />
                   <span className={`cat-pill ${catClass}`}>
                     {(item.category || 'PAST EVENT').toUpperCase()}

@@ -61,11 +61,13 @@ const HASH_TO_TAB_MAP = {
 export default function App() {
   const [events, setEvents] = useState(() => {
     try {
-      const cached = sessionStorage.getItem('eventhub_cached_events');
-      return cached ? JSON.parse(cached) : [];
-    } catch (e) {
-      return [];
-    }
+      const cached = localStorage.getItem('eventhub_cached_events') || sessionStorage.getItem('eventhub_cached_events');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return [];
   });
   const [activeTab, setActiveTabState] = useState(() => {
     const rawHash = window.location.hash || '#home';
@@ -75,7 +77,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(() => {
     try {
-      const cached = sessionStorage.getItem('eventhub_cached_events');
+      const cached = localStorage.getItem('eventhub_cached_events') || sessionStorage.getItem('eventhub_cached_events');
       const parsed = cached ? JSON.parse(cached) : [];
       return !(Array.isArray(parsed) && parsed.length > 0);
     } catch (e) {
@@ -231,6 +233,7 @@ export default function App() {
       if (result.success && Array.isArray(result.data)) {
         setEvents(result.data);
         try {
+          localStorage.setItem('eventhub_cached_events', JSON.stringify(result.data));
           sessionStorage.setItem('eventhub_cached_events', JSON.stringify(result.data));
         } catch (e) {}
       } else if (!silent && events.length === 0) {
@@ -451,7 +454,12 @@ export default function App() {
               setActiveTab={setActiveTab}
               onSelectPastEvent={(evt) => {
                 setSelectedPastEvent(evt);
-                setActiveTab('past-details');
+                if (evt?._id) {
+                  sessionStorage.setItem('eventhub_past_event_id', evt._id);
+                  setActiveTab('past-details', evt._id);
+                } else {
+                  setActiveTab('past-details');
+                }
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
             />
@@ -475,7 +483,12 @@ export default function App() {
             isFullView={true}
             onSelectPastEvent={(evt) => {
               setSelectedPastEvent(evt);
-              setActiveTab('past-details');
+              if (evt?._id) {
+                sessionStorage.setItem('eventhub_past_event_id', evt._id);
+                setActiveTab('past-details', evt._id);
+              } else {
+                setActiveTab('past-details');
+              }
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           />
