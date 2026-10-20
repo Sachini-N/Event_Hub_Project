@@ -110,13 +110,7 @@ const saveBackupAsync = () => {
   }
 };
 
-// Known uploaded photos for Guest Talk -03 if URLs were previously missing
-const GT03_PHOTOS = [
-  { url: "/uploads/file-1790157065685-798576637.jpeg", caption: "Guest Session Discussion" },
-  { url: "/uploads/file-1790157360634-980846906.jpeg", caption: "Interactive Q&A Session" },
-  { url: "/uploads/file-1790158756144-23754143.jpeg", caption: "Keynote Presentation" },
-  { url: "/uploads/file-1790159759717-298956000.jpeg", caption: "Audience & Networking" },
-];
+// Static uploads directories
 
 const uploadsDir = path.join(__dirname, "../public/uploads");
 const frontendUploadsDir = path.join(__dirname, "../../frontend/public/uploads");
@@ -151,13 +145,8 @@ const sanitizeEvent = (evt) => {
   let cover = evt.coverImage;
   let gallery = evt.gallery;
 
-  const existing = eventsCache.find(e => String(e._id || e.id) === String(evt._id || evt.id));
   if (cover && cover.startsWith("data:image")) {
-    if (existing && existing.coverImage && !existing.coverImage.startsWith("data:image")) {
-      cover = existing.coverImage;
-    } else {
-      cover = saveBase64ToFile(cover, `event-cover-${evt._id || Date.now()}`);
-    }
+    cover = saveBase64ToFile(cover, `event-cover-${evt._id || Date.now()}`);
     updated = true;
   }
 
@@ -166,17 +155,11 @@ const sanitizeEvent = (evt) => {
       let url = typeof g === "string" ? g : (g?.url || "");
       const caption = (typeof g === "object" && g?.caption) ? g.caption : `Photo ${idx + 1}`;
       if (url && url.startsWith("data:image")) {
-        const exG = existing?.gallery?.[idx];
-        const exUrl = typeof exG === "string" ? exG : exG?.url;
-        if (exUrl && !exUrl.startsWith("data:image")) {
-          url = exUrl;
-        } else {
-          url = saveBase64ToFile(url, `event-gallery-${evt._id || "gal"}-${idx}`);
-        }
+        url = saveBase64ToFile(url, `event-gallery-${evt._id || "gal"}-${Date.now()}-${idx}`);
         updated = true;
       }
       return {
-        _id: (typeof g === "object" && (g._id || g.id)) ? (g._id || g.id) : `g_${idx}`,
+        _id: (typeof g === "object" && (g._id || g.id)) ? (g._id || g.id) : `g_${Date.now()}_${idx}`,
         url,
         caption,
       };
@@ -216,17 +199,7 @@ const seedInitialEvents = async () => {
   try {
     const docs = await Event.find().lean().maxTimeMS(6000);
     if (Array.isArray(docs) && docs.length > 0) {
-      eventsCache = docs.map((doc) => {
-        // Heal Guest Talk -03 if gallery URLs missing
-        if (String(doc._id) === "6a869f66785311ff102d43b4") {
-          const hasUrls = doc.gallery && doc.gallery.some(g => (typeof g === "string" && g) || g?.url);
-          if (!hasUrls) {
-            doc.gallery = GT03_PHOTOS;
-            doc.coverImage = doc.coverImage || "/uploads/file-1789028022647-551768248.png";
-          }
-        }
-        return sanitizeEvent(doc);
-      });
+      eventsCache = docs.map((doc) => sanitizeEvent(doc));
       isEventsCacheLoaded = true;
       saveBackupAsync();
     }
@@ -367,23 +340,6 @@ const updateEvent = async (req, res) => {
     if (typeof eventData.videoUrl === "string") {
       eventData.videoUrl = eventData.videoUrl.trim();
     }
-
-    // Safely merge gallery so existing photo URLs are never overwritten with stripped ones
-    if (Array.isArray(eventData.gallery)) {
-      const existing = eventsCache.find(e => String(e._id || e.id) === eventId);
-      if (existing && Array.isArray(existing.gallery)) {
-        eventData.gallery = eventData.gallery.map((g, idx) => {
-          if (typeof g === 'string' && g.trim()) return g;
-          if (g && typeof g.url === 'string' && g.url.trim()) return g;
-          const exG = existing.gallery[idx] || existing.gallery.find(item => String(item._id || item.id) === String(g?._id || g?.id));
-          const existingUrl = typeof exG === 'string' ? exG : (exG?.url || exG?.src);
-          return {
-            ...g,
-            url: existingUrl || (g?.url || ""),
-          };
-        });
-      }
-    }
     eventData = sanitizeEvent(eventData);
 
     // Update in-memory cache instantly
@@ -401,7 +357,7 @@ const updateEvent = async (req, res) => {
     saveBackupAsync();
 
     // Persist to MongoDB
-    Event.findByIdAndUpdate(eventId, eventData, { new: true, runValidators: true }).catch((err) => {
+    Event.findByIdAndUpdate(eventId, eventData, { returnDocument: 'after', runValidators: true }).catch((err) => {
       console.warn("MongoDB update event notice:", err.message);
     });
 

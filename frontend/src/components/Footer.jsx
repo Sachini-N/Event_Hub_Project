@@ -44,15 +44,14 @@ export default function Footer({ setActiveTab }) {
           <h4 className="footer-section-title">QUICK LINKS</h4>
           <ul className="footer-nav-list">
             <li>
+              <a href="#venues" onClick={(e) => handleNavClick('venues', e)}>Explore Spaces</a>
+            </li>
+            <li>
               <a href="#upcoming" onClick={(e) => handleNavClick('upcoming', e)}>Upcoming Events</a>
             </li>
             <li>
               <a href="#past" onClick={(e) => handleNavClick('past', e)}>Past Events Archive</a>
             </li>
-            <li>
-              <a href="#venues" onClick={(e) => handleNavClick('venues', e)}>Explore Spaces</a>
-            </li>
-
           </ul>
         </div>
       </div>

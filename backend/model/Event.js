@@ -53,10 +53,23 @@ const eventSchema = new mongoose.Schema(
       default: "Community User",
     },
     gallery: [
-      {
-        url: String,
-        caption: String,
-      },
+      new mongoose.Schema(
+        {
+          _id: {
+            type: String,
+            default: () => new mongoose.Types.ObjectId().toString(),
+          },
+          url: {
+            type: String,
+            default: "",
+          },
+          caption: {
+            type: String,
+            default: "",
+          },
+        },
+        { _id: false }
+      ),
     ],
     highlights: [String],
     speaker: {

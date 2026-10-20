@@ -46,7 +46,6 @@ export default function PastEventDetailsPage({
     if (initialEvent) {
       setActiveEvent(initialEvent);
       setLoadingEvent(false);
-      return;
     }
 
     if (eventId) {

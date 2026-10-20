@@ -18,9 +18,45 @@
       "bio": "",
       "avatar": "/uploads/file-1789036475018-595584180.png"
     },
-    "gallery": [],
+    "gallery": [
+      {
+        "_id": "g_1792478102216_0_66",
+        "url": "/uploads/file-1792478102195-849451272.jpg",
+        "caption": "Event Photo"
+      },
+      {
+        "_id": "g_1792478106457_0_682",
+        "url": "/uploads/file-1792478106447-900240793.jpg",
+        "caption": "Event Photo"
+      },
+      {
+        "_id": "g_1792478111281_0_654",
+        "url": "/uploads/file-1792478111271-991961689.jpg",
+        "caption": "Event Photo"
+      },
+      {
+        "_id": "g_1792478115398_0_116",
+        "url": "/uploads/file-1792478115384-21546735.jpg",
+        "caption": "Event Photo"
+      },
+      {
+        "_id": "g_1792478118984_0_694",
+        "url": "/uploads/file-1792478118971-596860692.jpg",
+        "caption": "Event Photo"
+      },
+      {
+        "_id": "g_1792478123324_0_482",
+        "url": "/uploads/file-1792478123313-388494729.jpg",
+        "caption": "Event Photo"
+      },
+      {
+        "_id": "g_1792478127548_0_338",
+        "url": "/uploads/file-1792478127534-618653464.jpg",
+        "caption": "Event Photo"
+      }
+    ],
     "createdAt": "2026-08-20T06:32:06.934Z",
-    "updatedAt": "2026-10-20T05:47:01.873Z",
+    "updatedAt": "2026-10-20T06:35:30.317Z",
     "__v": 0,
     "videoUrl": "https://youtu.be/RV3ddAKbbZw?si=Sa6p4GBjAylN9r8m",
     "socialLinks": {
@@ -300,79 +336,6 @@
     ],
     "createdAt": "2026-10-01T09:09:34.111Z",
     "updatedAt": "2026-10-20T05:36:22.721Z",
-    "__v": 0
-  },
-  {
-    "_id": "6ad6ebc610143c54191e679d",
-    "title": "Guest Talk -04 (Copy)",
-    "description": "<p class=\"MsoNormal\" style=\"margin: 0in 0in 8pt; color: rgb(34, 34, 34); font-size: small; line-height: 14.95px; font-family: Aptos, sans-serif;\">We are pleased to invite you to an insightful guest session with <b>Sivarajah Ramanathan, Former CEO of StartupTN and Governing Council Member of TRACE</b>.</p><p class=\"MsoNormal\" style=\"margin: 0in 0in 8pt; color: rgb(34, 34, 34); font-size: small; line-height: 14.95px; font-family: Aptos, sans-serif;\"><b>Topic: </b><i>How to Build an Investable Startup – Insights on Building, Scaling, and Attracting Investment</i></p><p class=\"MsoNormal\" style=\"margin: 0in 0in 8pt; color: rgb(34, 34, 34); font-size: small; line-height: 14.95px; font-family: Aptos, sans-serif;\">This session will provide practical insights into building a strong startup, creating real value, attracting investors, and developing a business with the potential to scale.</p><p class=\"MsoNormal\" style=\"margin: 0in 0in 8pt; color: rgb(34, 34, 34); font-size: small; line-height: 14.95px; font-family: Aptos, sans-serif;\">The session will be especially valuable for <b>entrepreneurs, aspiring founders, students, innovators, and anyone interested in startups and investment</b>.</p><p class=\"MsoNormal\" style=\"margin: 0in; color: rgb(34, 34, 34); font-size: small; line-height: 14.95px; font-family: Aptos, sans-serif;\"><b>Event Details:</b></p><ul type=\"disc\" style=\"color: rgb(34, 34, 34); font-family: Arial, Helvetica, sans-serif; font-size: small; margin-top: 0in; margin-bottom: 0in;\"><li class=\"MsoNormal\" style=\"margin: 0in; line-height: 14.95px; font-family: Aptos, sans-serif;\"><b>Date:</b> 17 August 2026</li><li class=\"MsoNormal\" style=\"margin: 0in; line-height: 14.95px; font-family: Aptos, sans-serif;\"><b>Time:</b> 5:30 PM onwards</li><li class=\"MsoNormal\" style=\"margin: 0in; line-height: 14.95px; font-family: Aptos, sans-serif;\"><b>Venue:</b> <a href=\"https://share.google/0Zf5RfYL0IxEo8LyX\" target=\"_blank\" data-saferedirecturl=\"https://www.google.com/url?q=https://share.google/0Zf5RfYL0IxEo8LyX&amp;source=gmail&amp;ust=1789110444925000&amp;usg=AOvVaw0xqfhsWr4M3vsV3SyQ2HLa\" style=\"color: rgb(70, 120, 134);\">Bay 07, TRACE Expert City, Colombo 10</a></li></ul><p class=\"MsoNormal\" style=\"margin: 0in 0in 0in 0.5in; color: rgb(34, 34, 34); font-size: small; line-height: 14.95px; font-family: Aptos, sans-serif;\">&nbsp;</p><p class=\"MsoNormal\" style=\"margin: 0in 0in 8pt; color: rgb(34, 34, 34); font-size: small; line-height: 14.95px; font-family: Aptos, sans-serif;\">We warmly invite you to join us for this valuable session.</p>",
-    "category": "Talk",
-    "date": "2026-09-16T00:00:00.000Z",
-    "time": "17:30 - 18:42",
-    "location": "Bay 07 - TRACE Main Auditorium, Bay 07, TRACE Expert City, Maradana Road, Colombo 01000, Sri Lanka",
-    "capacity": 100,
-    "registeredCount": 0,
-    "status": "past",
-    "coverImage": "/uploads/event-cover-6ad6ebc610143c54191e679d-1792475024379-46907.png",
-    "videoUrl": "https://youtu.be/00l4zgIVbv0?si=HxiO4uf25U1iRFer",
-    "createdBy": "TRACE Admin",
-    "gallery": [
-      {
-        "_id": "6ab10473f6bd124e043de113",
-        "url": "",
-        "caption": "Event Photo"
-      },
-      {
-        "_id": "6ab10473f6bd124e043de114",
-        "url": "",
-        "caption": "Event Photo"
-      },
-      {
-        "_id": "6ab10473f6bd124e043de115",
-        "url": "",
-        "caption": "Event Photo"
-      },
-      {
-        "_id": "6ab10473f6bd124e043de116",
-        "url": "",
-        "caption": "Event Photo"
-      },
-      {
-        "_id": "6ab10473f6bd124e043de117",
-        "url": "",
-        "caption": "Event Photo"
-      },
-      {
-        "_id": "6ab10473f6bd124e043de118",
-        "url": "",
-        "caption": "Event Photo"
-      },
-      {
-        "_id": "6ab10473f6bd124e043de119",
-        "url": "",
-        "caption": "Event Photo"
-      },
-      {
-        "_id": "6ab10473f6bd124e043de11a",
-        "url": "",
-        "caption": "Event Photo"
-      }
-    ],
-    "highlights": [],
-    "speaker": {
-      "name": "sivaraja ramanatha",
-      "role": "Former CEO of StartupTN and Governing Council Member of TRACE.",
-      "bio": "",
-      "avatar": "/uploads/file-1789027772092-180896729.png"
-    },
-    "socialLinks": {
-      "facebook": "https://www.facebook.com/share/1FDjzYd6Rj/",
-      "instagram": "",
-      "twitter": "https://www.youtube.com/watch?v=uBOaEHSJv2c",
-      "linkedin": "https://www.linkedin.com/posts/trace-startup-entrepreneurship-share-7508104851487363072-gMOt?utm_source=social_share_send&utm_medium=android_app&rcm=ACoAAAFo11gBd-iJKpNfv8nAZtcdVmPKPU7ZdGU&utm_campaign=whatsapp"
-    },
-    "createdAt": "2026-10-20T04:19:18.370Z",
-    "updatedAt": "2026-10-20T05:43:44.386Z",
     "__v": 0
   }
 ]

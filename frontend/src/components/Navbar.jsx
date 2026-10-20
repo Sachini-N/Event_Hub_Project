@@ -63,6 +63,16 @@ export default function Navbar({
             Home
           </button>
           <button
+            className={`nav-link ${activeTab === 'venues-page' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('venues-page');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+              closeMobile();
+            }}
+          >
+            Spaces
+          </button>
+          <button
             className={`nav-link ${activeTab === 'upcoming' ? 'active' : ''}`}
             onClick={() => { scrollToEvents('upcoming'); closeMobile(); }}
           >
@@ -73,16 +83,6 @@ export default function Navbar({
             onClick={() => { scrollToEvents('past'); closeMobile(); }}
           >
             Past Events
-          </button>
-          <button
-            className={`nav-link ${activeTab === 'venues-page' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveTab('venues-page');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-              closeMobile();
-            }}
-          >
-            Spaces
           </button>
           {currentUser && !(currentUser?.isAdmin || currentUser?.role === 'admin' || currentUser?.role === 'super_admin' || currentUser?.role === 'branch_admin' || currentUser?.email === 'admin@trace.lk') && (
             <>

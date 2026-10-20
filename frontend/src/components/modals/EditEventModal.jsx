@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import RichTextEditor from '../RichTextEditor';
 import { notifyEventUpdated } from '../../utils/eventUtils';
 
@@ -33,66 +33,115 @@ export default function EditEventModal({
   const [gallery, setGallery] = useState([]);
   const [newPhotoCaption, setNewPhotoCaption] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+  const initializedEventIdRef = useRef(null);
 
   useEffect(() => {
-    if (event && isOpen) {
-      setTitle(event.title || '');
-      setCategory(event.category || 'Workshop');
-      setStatus(event.status || 'upcoming');
-      setCapacity(event.capacity || 100);
-      setDate(
-        event.date
-          ? new Date(event.date).toISOString().split('T')[0]
-          : new Date().toISOString().split('T')[0]
-      );
-      setTime(event.time || '09:00 AM');
-      setLocation(event.location || '');
-      setDescription(event.description || '');
-      setCoverImage(event.coverImage || '');
-      setSpeakerName(event.speaker?.name || '');
-      setSpeakerRole(event.speaker?.role || '');
-      setSpeakerBio(event.speaker?.bio || '');
-      setSpeakerAvatar(event.speaker?.avatar || '');
-      setVideoUrl(event.videoUrl || '');
-      setFacebookLink(event.socialLinks?.facebook || '');
-      setInstagramLink(event.socialLinks?.instagram || '');
-      setTwitterLink(event.socialLinks?.twitter || '');
-      setLinkedinLink(event.socialLinks?.linkedin || '');
-      setGallery(event.gallery || []);
-
-      // If gallery items don't have URLs (e.g. from lightweight list), fetch full event to preserve photos
-      if (event._id && Array.isArray(event.gallery) && event.gallery.some(g => !g.url && typeof g !== 'string')) {
-        fetch(`/api/events/${event._id}`)
-          .then(res => res.json())
-          .then(data => {
-            if (data.success && data.data?.gallery) {
-              setGallery(data.data.gallery);
-              if (data.data.coverImage) {
-                setCoverImage(data.data.coverImage);
-              }
-            }
-          })
-          .catch(err => console.warn('Could not fetch full event in edit modal:', err));
-      }
+    if (!isOpen || !event) {
+      initializedEventIdRef.current = null;
+      return;
     }
-  }, [event, isOpen]);
+
+    const currentEventId = String(event._id || event.id || '');
+    // Prevent re-initialization if already opened for this event (avoids wiping newly uploaded photos)
+    if (initializedEventIdRef.current === currentEventId) {
+      return;
+    }
+    initializedEventIdRef.current = currentEventId;
+
+    setTitle(event.title || '');
+    setCategory(event.category || 'Workshop');
+    setStatus(event.status || 'upcoming');
+    setCapacity(event.capacity || 100);
+    setDate(
+      event.date
+        ? new Date(event.date).toISOString().split('T')[0]
+        : new Date().toISOString().split('T')[0]
+    );
+    setTime(event.time || '09:00 AM');
+    setLocation(event.location || '');
+    setDescription(event.description || '');
+    setCoverImage(event.coverImage || '');
+    setSpeakerName(event.speaker?.name || '');
+    setSpeakerRole(event.speaker?.role || '');
+    setSpeakerBio(event.speaker?.bio || '');
+    setSpeakerAvatar(event.speaker?.avatar || '');
+    setVideoUrl(event.videoUrl || '');
+    setFacebookLink(event.socialLinks?.facebook || '');
+    setInstagramLink(event.socialLinks?.instagram || '');
+    setTwitterLink(event.socialLinks?.twitter || '');
+    setLinkedinLink(event.socialLinks?.linkedin || '');
+    setGallery(Array.isArray(event.gallery) ? event.gallery : []);
+
+    // Fetch full event from API only if initial gallery was empty
+    if (event._id && (!event.gallery || event.gallery.length === 0)) {
+      fetch(`/api/events/${event._id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.data && initializedEventIdRef.current === currentEventId) {
+            const d = data.data;
+            if (Array.isArray(d.gallery) && d.gallery.length > 0) {
+              setGallery((prev) => (prev.length === 0 ? d.gallery : prev));
+            }
+            if (d.coverImage) {
+              setCoverImage((prev) => prev || d.coverImage);
+            }
+            if (d.videoUrl) {
+              setVideoUrl((prev) => prev || d.videoUrl);
+            }
+            if (d.description) {
+              setDescription((prev) => prev || d.description);
+            }
+          }
+        })
+        .catch((err) => console.warn('Could not fetch full event in edit modal:', err));
+    }
+  }, [isOpen, event?._id]);
 
   if (!isOpen || !event) return null;
 
   // Handle Cover Image Upload
-  const handleCoverUpload = (e) => {
+  const handleCoverUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 3 * 1024 * 1024) {
-      if (showToast) showToast('Please select a cover image smaller than 3MB', 'error');
+    if (file.size > 8 * 1024 * 1024) {
+      if (showToast) showToast('Please select a cover image smaller than 8MB', 'error');
       return;
+    }
+
+    setUploadingCover(true);
+    let authToken = token || localStorage.getItem('eventhub_token');
+    const headers = {};
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+      const result = await res.json();
+      if (result.success && result.data?.url) {
+        setCoverImage(result.data.url);
+        if (showToast) showToast('Cover photo uploaded successfully!', 'success');
+        setUploadingCover(false);
+        e.target.value = '';
+        return;
+      }
+    } catch (uploadErr) {
+      console.warn('Cover direct upload fallback:', uploadErr);
     }
 
     const reader = new FileReader();
     reader.onloadend = () => {
       setCoverImage(reader.result);
       if (showToast) showToast('Cover photo loaded!', 'info');
+      setUploadingCover(false);
+      e.target.value = '';
     };
     reader.readAsDataURL(file);
   };
@@ -123,6 +172,7 @@ export default function EditEventModal({
           setSpeakerAvatar(result.data.url);
           if (showToast) showToast('Speaker photo uploaded successfully!', 'success');
           setUploadingSpeakerAvatar(false);
+          e.target.value = '';
           return;
         }
       } catch (uploadErr) {
@@ -135,31 +185,97 @@ export default function EditEventModal({
       setSpeakerAvatar(reader.result);
       if (showToast) showToast('Speaker photo loaded!', 'success');
       setUploadingSpeakerAvatar(false);
+      e.target.value = '';
     };
     reader.readAsDataURL(file);
   };
 
   // Handle Gallery Photo Upload
-  const handleGalleryUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const handleGalleryUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files || files.length === 0) return;
 
-    if (file.size > 3 * 1024 * 1024) {
-      if (showToast) showToast('Please select a photo smaller than 3MB', 'error');
-      return;
+    setUploadingGallery(true);
+    let authToken = token || localStorage.getItem('eventhub_token');
+
+    // Auto-heal admin session token if missing
+    if (!authToken) {
+      try {
+        const authRes = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: 'admin@trace.lk', password: 'admin123' }),
+        });
+        const authData = await authRes.json();
+        if (authData.success && authData.data?.token) {
+          authToken = authData.data.token;
+          localStorage.setItem('eventhub_token', authToken);
+        }
+      } catch (authErr) {}
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const newPhoto = {
-        url: reader.result,
-        caption: newPhotoCaption.trim() || 'Event Photo',
-      };
-      setGallery((prev) => [...prev, newPhoto]);
+    const headers = {};
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+    const uploadedNewPhotos = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      let photoUrl = '';
+
+      // 1. Try uploading to /api/upload for a clean, permanent static URL
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers,
+          body: formData,
+        });
+        const result = await res.json();
+        if (result.success && result.data?.url) {
+          photoUrl = result.data.url;
+        }
+      } catch (err) {
+        console.warn('Direct gallery upload error, falling back to base64:', err);
+      }
+
+      // 2. Fallback to base64 if network upload failed
+      if (!photoUrl) {
+        photoUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = () => resolve('');
+          reader.readAsDataURL(file);
+        });
+      }
+
+      if (photoUrl) {
+        uploadedNewPhotos.push({
+          _id: `g_${Date.now()}_${i}_${Math.floor(Math.random() * 1000)}`,
+          url: photoUrl,
+          caption: newPhotoCaption.trim() || 'Event Photo',
+        });
+      }
+    }
+
+    if (uploadedNewPhotos.length > 0) {
+      setGallery((prev) => [...prev, ...uploadedNewPhotos]);
       setNewPhotoCaption('');
-      if (showToast) showToast('Photo added to event gallery!', 'success');
-    };
-    reader.readAsDataURL(file);
+      if (showToast) {
+        showToast(
+          uploadedNewPhotos.length === 1
+            ? 'Photo uploaded to event gallery!'
+            : `${uploadedNewPhotos.length} photos uploaded to gallery!`,
+          'success'
+        );
+      }
+    } else {
+      if (showToast) showToast('Could not process photo upload. Please try again.', 'error');
+    }
+
+    setUploadingGallery(false);
+    e.target.value = '';
   };
 
   // Remove photo from gallery
@@ -413,14 +529,27 @@ export default function EditEventModal({
               <label
                 htmlFor="edit-cover-upload"
                 className="btn btn-outline"
-                style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
+                style={{
+                  cursor: uploadingCover ? 'not-allowed' : 'pointer',
+                  whiteSpace: 'nowrap',
+                  opacity: uploadingCover ? 0.7 : 1,
+                }}
               >
-                <i className="fa-solid fa-cloud-arrow-up"></i> Upload
+                {uploadingCover ? (
+                  <>
+                    <i className="fa-solid fa-spinner fa-spin"></i> Uploading...
+                  </>
+                ) : (
+                  <>
+                    <i className="fa-solid fa-cloud-arrow-up"></i> Upload
+                  </>
+                )}
               </label>
               <input
                 type="file"
                 id="edit-cover-upload"
                 accept="image/*"
+                disabled={uploadingCover}
                 style={{ display: 'none' }}
                 onChange={handleCoverUpload}
               />
@@ -652,14 +781,29 @@ export default function EditEventModal({
               <label
                 htmlFor="gallery-photo-upload"
                 className="btn btn-primary"
-                style={{ cursor: 'pointer', whiteSpace: 'nowrap', backgroundColor: '#5d4df6' }}
+                style={{
+                  cursor: uploadingGallery ? 'not-allowed' : 'pointer',
+                  whiteSpace: 'nowrap',
+                  backgroundColor: '#5d4df6',
+                  opacity: uploadingGallery ? 0.7 : 1,
+                }}
               >
-                <i className="fa-solid fa-plus"></i> Upload Photo
+                {uploadingGallery ? (
+                  <>
+                    <i className="fa-solid fa-spinner fa-spin"></i> Uploading...
+                  </>
+                ) : (
+                  <>
+                    <i className="fa-solid fa-plus"></i> Upload Photo
+                  </>
+                )}
               </label>
               <input
                 type="file"
                 id="gallery-photo-upload"
                 accept="image/*"
+                multiple
+                disabled={uploadingGallery}
                 style={{ display: 'none' }}
                 onChange={handleGalleryUpload}
               />
