@@ -219,6 +219,25 @@ export default function VenuesPage({ showToast }) {
     return 'Western Province';
   };
 
+  // Helper to format venue pricing (including On Demand)
+  const getVenuePriceText = (v) => {
+    if (!v) return 'On Demand';
+    if (v.isOnDemand) return 'On Demand';
+    const rp = typeof v.rentalPrice === 'string' ? v.rentalPrice.trim() : '';
+    if (rp) {
+      if (rp.toLowerCase().includes('demand')) return 'On Demand';
+      return rp;
+    }
+    if (v.pricePerHour !== undefined && v.pricePerHour !== null && Number(v.pricePerHour) > 0) {
+      return `Rs. ${Number(v.pricePerHour).toLocaleString()} / hr`;
+    }
+    return 'On Demand';
+  };
+
+  const isVenuePriceOnDemand = (v) => {
+    return getVenuePriceText(v).toLowerCase().includes('demand');
+  };
+
   // Modal State for Venue Details & Booking Inquiry
   const [activeVenueModal, setActiveVenueModal] = useState(null);
   const [modalActivePhotoIndex, setModalActivePhotoIndex] = useState(0);
@@ -472,7 +491,7 @@ export default function VenuesPage({ showToast }) {
           durationHours: Number(inquiryForm.durationHours) || 4,
           guests: Number(inquiryForm.guests) || 50,
           notes: inquiryForm.notes,
-          price: activeVenueModal?.rentalPrice || (activeVenueModal?.pricePerHour ? `Rs. ${activeVenueModal.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr'),
+          price: getVenuePriceText(activeVenueModal),
         }),
       });
 
@@ -748,8 +767,11 @@ export default function VenuesPage({ showToast }) {
                           📍 {getSpaceProvince(v)}
                         </span>
                       </div>
-                      <span className="venue-card-price-tag">
-                        <i className="fa-solid fa-tag"></i> {v.rentalPrice || (v.pricePerHour ? `Rs. ${v.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr')}
+                      <span
+                        className="venue-card-price-tag"
+                        style={isVenuePriceOnDemand(v) ? { color: '#2563eb', background: '#eff6ff', borderColor: '#bfdbfe', fontWeight: '800' } : {}}
+                      >
+                        <i className="fa-solid fa-tag"></i> {getVenuePriceText(v)}
                       </span>
                     </div>
 
@@ -1031,8 +1053,21 @@ export default function VenuesPage({ showToast }) {
                     <span style={{ fontSize: '0.76rem', fontWeight: '700', color: activeVenueModal.status === 'Available' ? '#059669' : '#d97706', background: activeVenueModal.status === 'Available' ? '#dcfce7' : '#fef3c7', padding: '0.25rem 0.65rem', borderRadius: '20px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                       ● {activeVenueModal.status || 'Available'}
                     </span>
-                    <span style={{ fontSize: '0.82rem', fontWeight: '800', color: '#059669', background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '0.25rem 0.65rem', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                      <i className="fa-solid fa-tag"></i> {activeVenueModal.rentalPrice || (activeVenueModal.pricePerHour ? `Rs. ${activeVenueModal.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr')}
+                    <span
+                      style={{
+                        fontSize: '0.82rem',
+                        fontWeight: '800',
+                        color: isVenuePriceOnDemand(activeVenueModal) ? '#2563eb' : '#059669',
+                        background: isVenuePriceOnDemand(activeVenueModal) ? '#eff6ff' : '#ecfdf5',
+                        border: `1px solid ${isVenuePriceOnDemand(activeVenueModal) ? '#bfdbfe' : '#a7f3d0'}`,
+                        padding: '0.25rem 0.65rem',
+                        borderRadius: '6px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                      }}
+                    >
+                      <i className="fa-solid fa-tag"></i> {getVenuePriceText(activeVenueModal)}
                     </span>
                   </div>
 

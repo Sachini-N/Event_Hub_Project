@@ -40,6 +40,10 @@ const venueSchema = new mongoose.Schema(
       type: Number,
       default: 25000,
     },
+    isOnDemand: {
+      type: Boolean,
+      default: false,
+    },
     status: {
       type: String,
       enum: ["Available", "Reserved", "Under Maintenance"],

@@ -2623,7 +2623,8 @@ export default function AdminDashboardPage({
                   {displayedVenues.map((v) => {
                     const venueId = v._id || v.id;
                     const formattedAddress = (v.address || '').replace(/,/g, ', ');
-                    const priceDisplay = v.rentalPrice || (v.pricePerHour ? `Rs. ${v.pricePerHour.toLocaleString()} / hr` : 'Rs. 25,000 / hr');
+                    const isDemand = v.isOnDemand || (v.rentalPrice && v.rentalPrice.toLowerCase().includes('demand')) || (!v.rentalPrice && (!v.pricePerHour || Number(v.pricePerHour) <= 0));
+                    const priceDisplay = isDemand ? 'On Demand' : (v.rentalPrice || (v.pricePerHour ? `Rs. ${Number(v.pricePerHour).toLocaleString()} / hr` : 'On Demand'));
 
                     return (
                       <div key={venueId || Math.random()} className="admin-venue-card">
@@ -2685,7 +2686,11 @@ export default function AdminDashboardPage({
                               <div className="admin-venue-stat-label">
                                 <i className="fa-solid fa-tag"></i> Rate / Hr
                               </div>
-                              <div className="admin-venue-stat-val rate-val" title={priceDisplay}>
+                              <div
+                                className="admin-venue-stat-val rate-val"
+                                style={isDemand ? { color: '#2563eb', fontWeight: 800 } : {}}
+                                title={priceDisplay}
+                              >
                                 {priceDisplay}
                               </div>
                             </div>

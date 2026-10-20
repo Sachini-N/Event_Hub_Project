@@ -58,14 +58,23 @@ const getVenues = async (req, res) => {
 // POST /api/venues (Create new venue)
 const createVenue = async (req, res) => {
   try {
-    const { name, branch, city, province, address, capacity, rentalPrice, pricePerHour, status, type, coverImage, images, amenities, description } = req.body;
+    const { name, branch, city, province, address, capacity, rentalPrice, pricePerHour, isOnDemand, status, type, coverImage, images, amenities, description } = req.body;
 
     if (!name || !address || !capacity) {
       return res.status(400).json({ success: false, message: "Please provide Venue Name, Address, and Capacity." });
     }
 
-    const numericPrice = pricePerHour ? Number(pricePerHour) : 25000;
-    const formattedPrice = rentalPrice || `Rs. ${numericPrice.toLocaleString()} / hr`;
+    const isDemand = isOnDemand === true ||
+                     rentalPrice === 'On Demand' ||
+                     (typeof rentalPrice === 'string' && rentalPrice.toLowerCase().includes('demand')) ||
+                     pricePerHour === 0 ||
+                     pricePerHour === '0' ||
+                     pricePerHour === '' ||
+                     pricePerHour === null ||
+                     (pricePerHour === undefined && (!rentalPrice || rentalPrice === ''));
+
+    const numericPrice = isDemand ? 0 : (pricePerHour ? Number(pricePerHour) : 25000);
+    const formattedPrice = isDemand ? 'On Demand' : (rentalPrice || `Rs. ${numericPrice.toLocaleString()} / hr`);
 
     const isCleanPhoto = (img) => {
       if (!img || typeof img !== 'string') return false;
@@ -91,6 +100,7 @@ const createVenue = async (req, res) => {
       capacity: Number(capacity),
       rentalPrice: formattedPrice,
       pricePerHour: numericPrice,
+      isOnDemand: isDemand,
       status: status || "Available",
       type: type || "Meeting Room",
       coverImage: validCoverImage,
@@ -122,10 +132,31 @@ const createVenue = async (req, res) => {
 // PUT /api/venues/:id (Update existing venue)
 const updateVenue = async (req, res) => {
   try {
-    const { name, branch, city, province, address, capacity, rentalPrice, pricePerHour, status, type, coverImage, images, amenities, description } = req.body;
+    const { name, branch, city, province, address, capacity, rentalPrice, pricePerHour, isOnDemand, status, type, coverImage, images, amenities, description } = req.body;
 
-    const numericPrice = pricePerHour !== undefined ? Number(pricePerHour) : undefined;
-    const formattedPrice = rentalPrice || (numericPrice !== undefined ? `Rs. ${numericPrice.toLocaleString()} / hr` : undefined);
+    const isDemand = isOnDemand === true ||
+                     rentalPrice === 'On Demand' ||
+                     (typeof rentalPrice === 'string' && rentalPrice.toLowerCase().includes('demand')) ||
+                     pricePerHour === 0 ||
+                     pricePerHour === '0' ||
+                     pricePerHour === '';
+
+    let numericPrice = undefined;
+    let formattedPrice = undefined;
+
+    if (isDemand) {
+      numericPrice = 0;
+      formattedPrice = 'On Demand';
+    } else {
+      if (pricePerHour !== undefined && pricePerHour !== '') {
+        numericPrice = Number(pricePerHour);
+      }
+      if (rentalPrice !== undefined) {
+        formattedPrice = rentalPrice;
+      } else if (numericPrice !== undefined) {
+        formattedPrice = `Rs. ${numericPrice.toLocaleString()} / hr`;
+      }
+    }
 
     const updateFields = {};
     if (name !== undefined) updateFields.name = name;
@@ -136,6 +167,7 @@ const updateVenue = async (req, res) => {
     if (capacity !== undefined) updateFields.capacity = Number(capacity);
     if (numericPrice !== undefined) updateFields.pricePerHour = numericPrice;
     if (formattedPrice !== undefined) updateFields.rentalPrice = formattedPrice;
+    if (isOnDemand !== undefined || isDemand) updateFields.isOnDemand = isDemand;
     if (status !== undefined) updateFields.status = status;
     if (type !== undefined) updateFields.type = type;
     if (coverImage !== undefined) {
