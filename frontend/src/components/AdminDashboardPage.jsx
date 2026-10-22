@@ -1825,7 +1825,7 @@ export default function AdminDashboardPage({
                             className="hero-live-preview-btn"
                             style={{ background: 'rgba(255,255,255,0.2)', color: '#fff' }}
                           >
-                            View Past Highlights
+                            Explore Spaces
                           </button>
                         </div>
                       </div>

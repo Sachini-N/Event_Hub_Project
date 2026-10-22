@@ -11,7 +11,7 @@ const DEFAULT_SETTINGS = {
     'From Shed sessions to Midweek Boost evenings, discover and register for the events shaping TRACE Expert City — then keep every one of them in view.',
 };
 
-export default function HeroSection({ scrollToEvents }) {
+export default function HeroSection({ scrollToEvents, onNavigateSpaces }) {
   const videoRef = useRef(null);
   const [settings, setSettings] = useState(() => {
     try {
@@ -151,9 +151,15 @@ export default function HeroSection({ scrollToEvents }) {
             <button
               type="button"
               className="btn-hero-secondary"
-              onClick={() => scrollToEvents && scrollToEvents('past')}
+              onClick={() => {
+                if (onNavigateSpaces) {
+                  onNavigateSpaces();
+                } else if (scrollToEvents) {
+                  scrollToEvents('venues-page');
+                }
+              }}
             >
-              View Past Highlights
+              Explore Spaces
             </button>
           </div>
         </div>
