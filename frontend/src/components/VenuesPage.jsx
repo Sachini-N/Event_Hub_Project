@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import FormattedText from './FormattedText';
 import ImageCarouselSlider from './ImageCarouselSlider';
 import { optimizeImageUrl } from '../utils/eventUtils';
@@ -144,6 +144,36 @@ export default function VenuesPage({ showToast }) {
   const [spaceTypeFilter, setSpaceTypeFilter] = useState('All');
   const [showAddSpaceModal, setShowAddSpaceModal] = useState(false);
 
+  // Derive unique active locations that actually exist in current venues database
+  const availableLocations = useMemo(() => {
+    const locMap = new Map();
+    const knownLocations = [
+      'TRACE Expert City Colombo 10',
+      'TRACE Coworking Colombo 02',
+      'TRACE Coworking Jaffna City',
+      'TRACE BREAD Center, Makandura',
+      'TRACE Creators Space, Rathnapura',
+      'Innovator Park - Kandy',
+      'ASAYA Workation By the Sea',
+      'UVA Co-Working Space',
+    ];
+
+    venues.forEach((v) => {
+      const b = (v.branch || '').trim();
+      if (!b) return;
+      const matched = knownLocations.find(
+        (k) => k.toLowerCase() === b.toLowerCase() || b.toLowerCase().includes(k.toLowerCase()) || k.toLowerCase().includes(b.toLowerCase())
+      );
+      if (matched) {
+        locMap.set(matched, matched);
+      } else {
+        locMap.set(b, b);
+      }
+    });
+
+    return Array.from(locMap.values());
+  }, [venues]);
+
   const currentUser = (() => {
     try {
       const u = localStorage.getItem('eventhub_user');
@@ -201,7 +231,7 @@ export default function VenuesPage({ showToast }) {
     if (str.includes('jaffna') || str.includes('palaly') || str.includes('northern')) {
       return 'Northern Province';
     }
-    if (str.includes('galle') || str.includes('fort') || str.includes('southern') || str.includes('matara') || str.includes('ruhuna')) {
+    if (str.includes('galle') || str.includes('fort') || str.includes('southern') || str.includes('matara') || str.includes('ruhuna') || str.includes('mirissa') || str.includes('kamburugamuwa') || str.includes('asaya')) {
       return 'Southern Province';
     }
     if (str.includes('kurunegala') || str.includes('wayamba') || str.includes('north western') || str.includes('makandura') || str.includes('bread')) {
@@ -544,7 +574,7 @@ export default function VenuesPage({ showToast }) {
           <div>
             <h1 className="page-title">Spaces & Facilities</h1>
             <p className="page-subtitle">
-              Explore world-class auditoriums, technology labs, and facilities stationed across TRACE branches.
+              Explore world-class auditoriums, technology labs, and facilities stationed across TRACE locations.
             </p>
           </div>
           {isAdmin && (
@@ -586,41 +616,35 @@ export default function VenuesPage({ showToast }) {
                 onChange={(e) => setProvinceFilter(e.target.value)}
               >
                 <option value="All">All Sri Lanka</option>
-                <option value="Western Province">Western Province (Colombo, Kelaniya)</option>
-                <option value="Central Province">Central Province (Kandy)</option>
-                <option value="Northern Province">Northern Province (Jaffna)</option>
-                <option value="Southern Province">Southern Province (Southern Hub, Galle)</option>
-                <option value="North Western Province">North Western Province (Makandura, Kurunegala)</option>
-                <option value="Eastern Province">Eastern Province (Batticaloa)</option>
-                <option value="Sabaragamuwa Province">Sabaragamuwa Province (Rathnapura)</option>
-                <option value="Uva Province">Uva Province (Badulla, UWU)</option>
+                <option value="Western Province">Western Province</option>
+                <option value="Central Province">Central Province</option>
+                <option value="Northern Province">Northern Province</option>
+                <option value="Southern Province">Southern Province</option>
+                <option value="North Western Province">North Western Province</option>
+                <option value="Eastern Province">Eastern Province</option>
+                <option value="Sabaragamuwa Province">Sabaragamuwa Province</option>
+                <option value="Uva Province">Uva Province</option>
                 <option value="North Central Province">North Central Province</option>
               </select>
               <i className="fa-solid fa-chevron-down select-arrow"></i>
             </div>
           </div>
 
-          {/* 3. Branch Selector */}
+          {/* 3. Location Selector */}
           <div className="filter-item">
-            <label htmlFor="spaces-filter-branch">TRACE Branch</label>
+            <label htmlFor="spaces-filter-location">Location</label>
             <div className="select-wrapper">
               <select
-                id="spaces-filter-branch"
+                id="spaces-filter-location"
                 value={selectedBranch}
                 onChange={(e) => setSelectedBranch(e.target.value)}
               >
-                <option value="All">All TRACE Hubs</option>
-                <option value="TRACE Expert City Colombo 10">TRACE Expert City Colombo 10</option>
-                <option value="HomeTree Coworking, Colombo 04">HomeTree Coworking, Colombo 04</option>
-                <option value="TRACE Coworking Colombo 02">TRACE Coworking Colombo 02</option>
-                <option value="TRACE Coworking Jaffna City">TRACE Coworking Jaffna City</option>
-                <option value="TRACE BREAD Center, Makandura">TRACE BREAD Center, Makandura</option>
-                <option value="TRACE - JRDC Incubator, Kandy">TRACE - JRDC Incubator, Kandy</option>
-                <option value="TRACE Creators Space, Rathnapura">TRACE Creators Space, Rathnapura</option>
-                <option value="TRACE Batticaloa">TRACE Batticaloa</option>
-                <option value="Southern Innovation Hub">Southern Innovation Hub</option>
-                <option value="UOK Innovation Hub">UOK Innovation Hub</option>
-                <option value="UWU Innovation Hub">UWU Innovation Hub</option>
+                <option value="All">All Locations</option>
+                {availableLocations.map((loc) => (
+                  <option key={loc} value={loc}>
+                    {loc}
+                  </option>
+                ))}
               </select>
               <i className="fa-solid fa-chevron-down select-arrow"></i>
             </div>
@@ -670,7 +694,7 @@ export default function VenuesPage({ showToast }) {
         {loading && (
           <div className="venues-loading-state">
             <div className="spinner"></div>
-            <p>Loading TRACE branch venue spaces...</p>
+            <p>Loading TRACE venue spaces...</p>
           </div>
         )}
 

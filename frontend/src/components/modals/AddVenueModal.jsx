@@ -4,16 +4,13 @@ import { notifyVenueUpdated } from '../../utils/eventUtils';
 
 export const PRESET_BRANCHES = [
   'TRACE Expert City Colombo 10',
-  'HomeTree Coworking, Colombo 04',
   'TRACE Coworking Colombo 02',
   'TRACE Coworking Jaffna City',
   'TRACE BREAD Center, Makandura',
-  'TRACE - JRDC Incubator, Kandy',
   'TRACE Creators Space, Rathnapura',
-  'TRACE Batticaloa',
-  'Southern Innovation Hub',
-  'UOK Innovation Hub',
-  'UWU Innovation Hub',
+  'Innovator Park - Kandy',
+  'ASAYA Workation By the Sea',
+  'UVA Co-Working Space',
 ];
 
 export default function AddVenueModal({
@@ -485,7 +482,7 @@ export default function AddVenueModal({
             <div className="time-row-grid" style={{ marginBottom: '1.25rem' }}>
               <div className="profile-form-group">
                 <label htmlFor="venue-branch">
-                  TRACE Branch *
+                  Location *
                 </label>
                 <select
                   id="venue-branch"
@@ -554,14 +551,14 @@ export default function AddVenueModal({
                   value={province}
                   onChange={(e) => setProvince(e.target.value)}
                 >
-                  <option value="Western Province">Western Province (Colombo, Kelaniya)</option>
-                  <option value="Central Province">Central Province (Kandy)</option>
-                  <option value="Northern Province">Northern Province (Jaffna)</option>
-                  <option value="Southern Province">Southern Province (Southern Hub, Galle)</option>
-                  <option value="North Western Province">North Western Province (Makandura, Kurunegala)</option>
-                  <option value="Eastern Province">Eastern Province (Batticaloa)</option>
-                  <option value="Sabaragamuwa Province">Sabaragamuwa Province (Rathnapura)</option>
-                  <option value="Uva Province">Uva Province (Badulla, UWU)</option>
+                  <option value="Western Province">Western Province</option>
+                  <option value="Central Province">Central Province</option>
+                  <option value="Northern Province">Northern Province</option>
+                  <option value="Southern Province">Southern Province</option>
+                  <option value="North Western Province">North Western Province</option>
+                  <option value="Eastern Province">Eastern Province</option>
+                  <option value="Sabaragamuwa Province">Sabaragamuwa Province</option>
+                  <option value="Uva Province">Uva Province</option>
                   <option value="North Central Province">North Central Province</option>
                 </select>
               </div>

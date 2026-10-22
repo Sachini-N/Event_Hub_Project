@@ -2523,26 +2523,23 @@ export default function AdminDashboardPage({
                     </div>
                   </div>
 
-                  {/* 2. TRACE Branch Filter */}
+                  {/* 2. Location Filter */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: 0, margin: 0 }}>
-                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block' }}>TRACE Branch</label>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block' }}>Location</label>
                     <select
                       value={venueBranchFilter}
                       onChange={(e) => setVenueBranchFilter(e.target.value)}
                       style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', height: '42px', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', background: '#ffffff', color: '#0f172a', outline: 'none', cursor: 'pointer' }}
                     >
-                      <option value="all">All TRACE Hubs</option>
+                      <option value="all">All Locations</option>
                       <option value="TRACE Expert City Colombo 10">TRACE Expert City Colombo 10</option>
-                      <option value="HomeTree Coworking, Colombo 04">HomeTree Coworking, Colombo 04</option>
                       <option value="TRACE Coworking Colombo 02">TRACE Coworking Colombo 02</option>
                       <option value="TRACE Coworking Jaffna City">TRACE Coworking Jaffna City</option>
                       <option value="TRACE BREAD Center, Makandura">TRACE BREAD Center, Makandura</option>
-                      <option value="TRACE - JRDC Incubator, Kandy">TRACE - JRDC Incubator, Kandy</option>
                       <option value="TRACE Creators Space, Rathnapura">TRACE Creators Space, Rathnapura</option>
-                      <option value="TRACE Batticaloa">TRACE Batticaloa</option>
-                      <option value="Southern Innovation Hub">Southern Innovation Hub</option>
-                      <option value="UOK Innovation Hub">UOK Innovation Hub</option>
-                      <option value="UWU Innovation Hub">UWU Innovation Hub</option>
+                      <option value="Innovator Park - Kandy">Innovator Park - Kandy</option>
+                      <option value="ASAYA Workation By the Sea">ASAYA Workation By the Sea</option>
+                      <option value="UVA Co-Working Space">UVA Co-Working Space</option>
                     </select>
                   </div>
 
