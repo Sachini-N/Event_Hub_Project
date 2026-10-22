@@ -160,6 +160,7 @@ export default function AdminModal({ isOpen, onClose, onEventCreated, showToast 
               <select id="admin-category" value={category} onChange={(e) => setCategory(e.target.value)}>
                 <option value="Workshop">Workshop</option>
                 <option value="Meetup">Meetup</option>
+                <option value="Talk">Talk</option>
                 <option value="Sprint">Sprint</option>
                 <option value="Keynote">Keynote</option>
                 <option value="Hackathon">Hackathon</option>

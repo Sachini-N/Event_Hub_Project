@@ -4,6 +4,7 @@ import RichTextEditor from './RichTextEditor';
 
 const TRACE_VENUE_PRESETS = [
   { label: '🏛️ Bay 07 - TRACE Main Auditorium & Event Center', venue: 'Bay 07 - TRACE Main Auditorium', address: 'Bay 07, TRACE Expert City, Maradana Road, Colombo 01000, Sri Lanka' },
+  { label: '☕ The Third Place - TRACE Expert City', venue: 'Third Place', address: 'The Third Place, TRACE Expert City, Maradana Road, Colombo 01000, Sri Lanka' },
   { label: '💻 CodeGen International (Bay 01-04)', venue: 'CodeGen International (Bay 01-04)', address: 'CodeGen International, Bay 01-04, TRACE Expert City, Colombo 01000, Sri Lanka' },
   { label: '📈 LSEG Sri Lanka (Bay 11-12)', venue: 'LSEG Sri Lanka (Bay 11-12)', address: 'London Stock Exchange Group (LSEG), Bay 11-12, TRACE Expert City, Colombo 01000' },
   { label: '🍔 Sysco LABS Sri Lanka (Bay 05)', venue: 'Sysco LABS Sri Lanka (Bay 05)', address: 'Sysco LABS Sri Lanka, Bay 05, TRACE Expert City, Colombo 01000, Sri Lanka' },

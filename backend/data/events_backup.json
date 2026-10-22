@@ -337,5 +337,32 @@
     "createdAt": "2026-10-01T09:09:34.111Z",
     "updatedAt": "2026-10-20T05:36:22.721Z",
     "__v": 0
+  },
+  {
+    "_id": "6ad98818bb5d08c009e87f01",
+    "title": "TRACE Midweek Boost – Live Music & Games",
+    "description": "<!--StartFragment--><p>Need a Midweek Pick-Me-Up? 🎸✨</p><p><br></p><p>Join us for TRACE Midweek Boost at The Third Place, TRACE Expert City! Unwind, recharge, and enjoy a fun-filled evening with music, games, and great food.</p><p><br></p><p>🎵 Live Music by Chris &amp; Avishka<br>♟️ Fun Board Games<br>☕ 20% OFF on all beverages<br>🍛 Special Dinner Menu featuring Kottu</p><p><br></p><p>📅 <strong>Date:</strong> Wednesday, October 28, 2026<br>⏰ <strong>Time:</strong> 5:30 PM – 8:30 PM<br>📍 <strong>Location:</strong> The Third Place, TRACE Expert City</p><p><br></p><p>Bring your friends, enjoy great music, and make your midweek memorable! 🎶✨</p><p><br></p><!--EndFragment-->",
+    "category": "Meetup",
+    "date": "2026-10-28T00:00:00.000Z",
+    "time": "17:30 - 20:30",
+    "location": "The Third Place, TRACE Expert City, The Third Place, TRACE Expert City",
+    "capacity": 100,
+    "registeredCount": 1,
+    "status": "upcoming",
+    "coverImage": "/uploads/event-cover-6ad98818bb5d08c009e87f01-1792641492124-62975.jpg",
+    "videoUrl": "",
+    "createdBy": "TRACE Admin",
+    "gallery": [],
+    "highlights": [],
+    "speaker": null,
+    "socialLinks": {
+      "facebook": "",
+      "instagram": "",
+      "twitter": "",
+      "linkedin": ""
+    },
+    "createdAt": "2026-10-22T03:50:48.017Z",
+    "updatedAt": "2026-10-22T03:58:12.131Z",
+    "__v": 0
   }
 ]

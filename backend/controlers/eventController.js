@@ -95,19 +95,24 @@ const path = require("path");
 
 const backupFilePath = path.join(__dirname, "../data/events_backup.json");
 
-// Helper to safely persist cache to disk in background
+// Helper to safely persist cache to disk in background (debounced to avoid disk thrashing)
+let backupTimeout = null;
 const saveBackupAsync = () => {
-  try {
-    const dataDir = path.dirname(backupFilePath);
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true });
+  if (backupTimeout) return;
+  backupTimeout = setTimeout(() => {
+    backupTimeout = null;
+    try {
+      const dataDir = path.dirname(backupFilePath);
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      fs.writeFile(backupFilePath, JSON.stringify(eventsCache, null, 2), (err) => {
+        if (err) console.warn("Failed to save events backup:", err.message);
+      });
+    } catch (err) {
+      console.warn("Save backup error:", err.message);
     }
-    fs.writeFile(backupFilePath, JSON.stringify(eventsCache, null, 2), (err) => {
-      if (err) console.warn("Failed to save events backup:", err.message);
-    });
-  } catch (err) {
-    console.warn("Save backup error:", err.message);
-  }
+  }, 2000);
 };
 
 // Static uploads directories

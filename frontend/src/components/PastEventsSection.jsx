@@ -22,29 +22,19 @@ export default function PastEventsSection({
   const allPastEvents = dbPastEvents;
 
   const categories = useMemo(() => {
-    const cats = new Set(['All Categories', 'Talk', 'Meetup', 'Workshop', 'Sprint']);
+    const cats = new Set(['All Categories', 'Talk', 'Meetup', 'Workshop', 'Sprint', 'Keynote', 'Hackathon']);
     allPastEvents.forEach((e) => {
       if (e.category && e.category.trim()) cats.add(e.category.trim());
     });
     return Array.from(cats);
   }, [allPastEvents]);
 
-  const locations = useMemo(() => {
-    const locs = new Set([
-      'Any Location',
-      'TRACE Expert City',
-      'TRACE Hub',
-      'Innovation Center',
-      'Main Hall',
-    ]);
-    allPastEvents.forEach((e) => {
-      if (e.location && e.location.trim()) {
-        const mainLoc = e.location.split(',')[0].trim();
-        locs.add(mainLoc);
-      }
-    });
-    return Array.from(locs);
-  }, [allPastEvents]);
+  const locations = [
+    'Any Location',
+    'Third Place',
+    'Bay 7',
+    'TRACE Expert City',
+  ];
 
   // Filter list based on search, category, location, and date
   const filteredPastEvents = useMemo(() => {
@@ -71,7 +61,12 @@ export default function PastEventsSection({
 
       // Location filter
       if (selectedLocation !== 'Any Location') {
-        if (!item.location?.toLowerCase().includes(selectedLocation.toLowerCase())) {
+        const locLower = (item.location || '').toLowerCase();
+        if (selectedLocation === 'Bay 7') {
+          if (!locLower.includes('bay 7') && !locLower.includes('bay 07')) {
+            return false;
+          }
+        } else if (!locLower.includes(selectedLocation.toLowerCase())) {
           return false;
         }
       }

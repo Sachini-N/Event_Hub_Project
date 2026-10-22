@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { isEventPast, stripHtml, optimizeImageUrl } from '../utils/eventUtils';
+import { isEventPast, stripHtml, optimizeImageUrl, DEFAULT_EVENT_BANNER } from '../utils/eventUtils';
 
 export default function UpcomingEventsPage({
   events,
@@ -50,23 +50,19 @@ export default function UpcomingEventsPage({
   }, [currentUser]);
 
   const categories = useMemo(() => {
-    const cats = new Set(['All Categories']);
+    const cats = new Set(['All Categories', 'Talk', 'Meetup', 'Workshop', 'Sprint', 'Keynote', 'Hackathon']);
     events.forEach((e) => {
-      if (e.category) cats.add(e.category);
+      if (e.category && e.category.trim()) cats.add(e.category.trim());
     });
     return Array.from(cats);
   }, [events]);
 
-  const locations = useMemo(() => {
-    const locs = new Set(['Any Location']);
-    events.forEach((e) => {
-      if (e.location) {
-        const mainLoc = e.location.split(',')[0].trim();
-        locs.add(mainLoc);
-      }
-    });
-    return Array.from(locs);
-  }, [events]);
+  const locations = [
+    'Any Location',
+    'Third Place',
+    'Bay 7',
+    'TRACE Expert City',
+  ];
 
   const filteredUpcomingEvents = useMemo(() => {
     return events.filter((event) => {
@@ -95,7 +91,12 @@ export default function UpcomingEventsPage({
 
       // Location filter
       if (selectedLocation !== 'Any Location') {
-        if (!event.location?.toLowerCase().includes(selectedLocation.toLowerCase())) {
+        const locLower = (event.location || '').toLowerCase();
+        if (selectedLocation === 'Bay 7') {
+          if (!locLower.includes('bay 7') && !locLower.includes('bay 07')) {
+            return false;
+          }
+        } else if (!locLower.includes(selectedLocation.toLowerCase())) {
           return false;
         }
       }
@@ -171,11 +172,11 @@ export default function UpcomingEventsPage({
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
               >
-                <option value="All Categories">All Categories</option>
-                <option value="Talk">Talk</option>
-                <option value="Meetup">Meetup</option>
-                <option value="Workshop">Workshop</option>
-                <option value="Sprint">Sprint</option>
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
               </select>
               <i className="fa-solid fa-chevron-down select-arrow"></i>
             </div>
@@ -201,11 +202,11 @@ export default function UpcomingEventsPage({
                 value={selectedLocation}
                 onChange={(e) => setSelectedLocation(e.target.value)}
               >
-                <option value="Any Location">Any Location</option>
-                <option value="TRACE Expert City">TRACE Expert City</option>
-                <option value="TRACE Hub">TRACE Hub</option>
-                <option value="Innovation Center">Innovation Center</option>
-                <option value="Main Hall">Main Hall</option>
+                {locations.map((loc) => (
+                  <option key={loc} value={loc}>
+                    {loc}
+                  </option>
+                ))}
               </select>
               <i className="fa-solid fa-chevron-down select-arrow"></i>
             </div>
@@ -264,14 +265,23 @@ export default function UpcomingEventsPage({
                     title="Click / tap to view event details"
                   >
                     <img
-                      src={optimizeImageUrl(
-                        event.coverImage ||
-                        'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=75',
-                        800
-                      )}
+                      src={
+                        optimizeImageUrl(event.coverImage, 800) ||
+                        DEFAULT_EVENT_BANNER
+                      }
                       alt={event.title}
                       loading="lazy"
                       decoding="async"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (!target.dataset.retried && event.coverImage) {
+                          target.dataset.retried = 'true';
+                          const separator = event.coverImage.includes('?') ? '&' : '?';
+                          target.src = `${event.coverImage}${separator}t=${Date.now()}`;
+                          return;
+                        }
+                        target.src = DEFAULT_EVENT_BANNER;
+                      }}
                     />
                     <span className={`cat-pill ${catClass}`}>
                       {(event.category || 'EVENT').toUpperCase()}

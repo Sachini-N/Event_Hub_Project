@@ -1,5 +1,5 @@
 import React from 'react';
-import { isEventPast, stripHtml, optimizeImageUrl } from '../utils/eventUtils';
+import { isEventPast, stripHtml, optimizeImageUrl, DEFAULT_EVENT_BANNER } from '../utils/eventUtils';
 
 export default function UpcomingEventsSection({
   events,
@@ -116,14 +116,23 @@ export default function UpcomingEventsSection({
                     title="Click / tap to view event details"
                   >
                     <img
-                      src={optimizeImageUrl(
-                        event.coverImage ||
-                        'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=75',
-                        800
-                      )}
+                      src={
+                        optimizeImageUrl(event.coverImage, 800) ||
+                        DEFAULT_EVENT_BANNER
+                      }
                       alt={event.title}
                       loading="lazy"
                       decoding="async"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (!target.dataset.retried && event.coverImage) {
+                          target.dataset.retried = 'true';
+                          const separator = event.coverImage.includes('?') ? '&' : '?';
+                          target.src = `${event.coverImage}${separator}t=${Date.now()}`;
+                          return;
+                        }
+                        target.src = DEFAULT_EVENT_BANNER;
+                      }}
                     />
                     <span className={`category-tag-pill ${catClass}`}>{event.category}</span>
                   </div>

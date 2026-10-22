@@ -186,7 +186,7 @@ class EventHubApp {
 
     card.innerHTML = `
       <div class="card-banner">
-        <img src="${event.coverImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80'}" alt="${event.title}">
+        <img src="${event.coverImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80'}" alt="${event.title}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80';">
         <span class="category-tag-pill ${catClass}">${event.category}</span>
       </div>
       <div class="card-body">

@@ -33,6 +33,7 @@ app.use(
   helmet({
     contentSecurityPolicy: false, // Allow external CDN icons, fonts, and Cloudinary media
     crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
   })
 );
 
@@ -151,6 +152,25 @@ app.use((req, res, next) => {
     return res.status(404).json({ success: false, message: `API endpoint ${req.originalUrl} not found` });
   }
   next();
+});
+
+// Dedicated static file handler for uploads with cross-origin headers and caching
+app.use(
+  "/uploads",
+  (req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    next();
+  },
+  express.static(path.join(__dirname, "public", "uploads"), {
+    maxAge: "7d",
+    etag: true,
+  })
+);
+
+// If an image in /uploads is not found, return 404 JSON instead of index.html
+app.use("/uploads", (req, res) => {
+  res.status(404).json({ success: false, message: "Upload file not found" });
 });
 
 // Serve static public files with 1-day browser caching

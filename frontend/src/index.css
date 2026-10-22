@@ -1076,6 +1076,7 @@ body {
   width: 100%;
   aspect-ratio: 1 / 1;
   overflow: hidden;
+  background-color: #0f172a;
 }
 
 .card-banner img {

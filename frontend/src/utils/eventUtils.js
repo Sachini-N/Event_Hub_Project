@@ -150,6 +150,9 @@ export function notifyVenueUpdated(detail) {
   }
 }
 
+export const DEFAULT_EVENT_BANNER =
+  'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=75';
+
 /**
  * Optimizes image URLs for fast web delivery (Cloudinary WebP/AVIF auto-format and Unsplash width/quality).
  * @param {string} url - Original image URL
@@ -157,29 +160,37 @@ export function notifyVenueUpdated(detail) {
  * @returns {string} - Optimized URL
  */
 export function optimizeImageUrl(url, width = 800) {
-  if (!url || typeof url !== 'string') return url;
+  if (!url || typeof url !== 'string') return '';
+  let cleanUrl = url.trim().replace(/\\/g, '/');
+  if (!cleanUrl) return '';
+
+  // Ensure relative upload paths start with /
+  if (cleanUrl.startsWith('uploads/')) {
+    cleanUrl = '/' + cleanUrl;
+  }
 
   // Cloudinary image auto format & compression
-  if (url.includes('cloudinary.com') && url.includes('/upload/')) {
-    if (!url.includes('/f_auto,q_auto')) {
-      return url.replace('/upload/', `/upload/f_auto,q_auto,w_${width},c_limit/`);
+  if (cleanUrl.includes('cloudinary.com') && cleanUrl.includes('/upload/')) {
+    if (!cleanUrl.includes('/f_auto,q_auto')) {
+      return cleanUrl.replace('/upload/', `/upload/f_auto,q_auto,w_${width},c_limit/`);
     }
   }
 
   // Unsplash CDN dynamic optimization
-  if (url.includes('images.unsplash.com')) {
+  if (cleanUrl.includes('images.unsplash.com')) {
     try {
-      const u = new URL(url);
+      const u = new URL(cleanUrl);
       u.searchParams.set('auto', 'format');
       u.searchParams.set('fit', 'crop');
       u.searchParams.set('w', String(width));
       u.searchParams.set('q', '75');
       return u.toString();
     } catch (e) {
-      return url;
+      return cleanUrl;
     }
   }
 
-  return url;
+  return cleanUrl;
 }
+
 

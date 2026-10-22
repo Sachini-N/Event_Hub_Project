@@ -439,6 +439,7 @@ export default function EditEventModal({
                 <option value="Workshop">Workshop</option>
                 <option value="Meetup">Meetup</option>
                 <option value="Talk">Talk</option>
+                <option value="Sprint">Sprint</option>
                 <option value="Keynote">Keynote</option>
                 <option value="Hackathon">Hackathon</option>
               </select>
