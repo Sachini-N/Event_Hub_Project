@@ -83,7 +83,7 @@ const createVenue = async (req, res) => {
                      (pricePerHour === undefined && (!rentalPrice || rentalPrice === ''));
 
     const numericPrice = isDemand ? 0 : (pricePerHour ? Number(pricePerHour) : 25000);
-    const formattedPrice = isDemand ? 'On Demand' : (rentalPrice || `Rs. ${numericPrice.toLocaleString()} / hr`);
+    const formattedPrice = rentalPrice || (isDemand ? 'On Demand' : `Rs. ${numericPrice.toLocaleString()} / hr`);
 
     const isCleanPhoto = (img) => {
       if (!img || typeof img !== 'string') return false;
@@ -160,7 +160,7 @@ const updateVenue = async (req, res) => {
 
     if (isDemand) {
       numericPrice = 0;
-      formattedPrice = 'On Demand';
+      formattedPrice = rentalPrice || 'On Demand';
     } else {
       if (pricePerHour !== undefined && pricePerHour !== '') {
         numericPrice = Number(pricePerHour);

@@ -862,7 +862,7 @@ export default function VenuesPage({ showToast }) {
           <div
             className="modal-card venue-split-modal-card"
             onClick={(e) => e.stopPropagation()}
-            style={{ position: 'relative', overflow: 'hidden', maxWidth: '1180px', width: '95%', maxHeight: '92vh', minHeight: '620px' }}
+            style={{ position: 'relative' }}
           >
             {/* Floating Close Button */}
             <button
@@ -894,10 +894,10 @@ export default function VenuesPage({ showToast }) {
             </button>
 
             {/* SPACE DETAILS & DATABASE PHOTO GALLERY (SIDE-BY-SIDE 2-COLUMN SPLIT) */}
-            <div className="venue-split-grid" style={{ gridTemplateColumns: '1.05fr 0.95fr', minHeight: '620px', maxHeight: '92vh', height: '100%' }}>
+            <div className="venue-split-grid">
 
               {/* LEFT SIDE: DATABASE UPLOADED PHOTO GALLERY SHOWCASE */}
-              <div className="venue-split-left-gallery" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', height: '100%', borderRight: '1px solid #e2e8f0', overflowY: 'auto', background: '#f8fafc' }}>
+              <div className="venue-split-left-gallery">
                 {(() => {
                   const modalImages = getModalImages(activeVenueModal);
                   const currentImg = modalImages[modalActivePhotoIndex] || modalImages[0];
@@ -915,7 +915,7 @@ export default function VenuesPage({ showToast }) {
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', height: '100%', flex: 1 }}>
                       {/* Main Active Photo View */}
-                      <div className="modal-active-photo-box" style={{ position: 'relative', overflow: 'hidden', width: '100%', flex: 1, minHeight: '520px', borderRadius: '16px', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
+                      <div className="modal-active-photo-box" style={{ position: 'relative', overflow: 'hidden', width: '100%', flex: 1, minHeight: '360px', borderRadius: '16px', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
                         <img
                           key={modalActivePhotoIndex}
                           src={optimizeImageUrl(currentImg, 1200)}
@@ -1070,7 +1070,7 @@ export default function VenuesPage({ showToast }) {
               </div>
 
               {/* RIGHT SIDE: VENUE NAME, SPECIFICATIONS & DETAILS DISPLAY */}
-              <div className="venue-split-right-details" style={{ padding: '2rem 2.25rem 2rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', overflowY: 'auto', background: '#ffffff', height: '100%', justifyContent: 'space-between' }}>
+              <div className="venue-split-right-details">
 
                 {/* 1. SPACE NAME & TOP BADGES */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', paddingRight: '2.5rem' }}>
@@ -1147,18 +1147,21 @@ export default function VenuesPage({ showToast }) {
                 {/* 3. INCLUDED FACILITIES & AMENITIES */}
                 {activeVenueModal.amenities && activeVenueModal.amenities.length > 0 && (
                   <div>
-                    <h4 style={{ fontSize: '0.82rem', fontWeight: '800', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <h4 style={{ fontSize: '0.82rem', fontWeight: '800', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <i className="fa-solid fa-sliders" style={{ color: '#0052cc' }}></i> Included Facilities
                     </h4>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
                       {activeVenueModal.amenities.map((am, i) => (
-                        <span key={i} style={{ fontSize: '0.76rem', fontWeight: '700', color: '#334155', background: '#f1f5f9', padding: '4px 9px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
-                          ✓ {am}
+                        <span key={i} style={{ fontSize: '0.78rem', fontWeight: '700', color: '#1e293b', background: '#f1f5f9', padding: '5px 11px', borderRadius: '8px', border: '1px solid #cbd5e1', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <i className="fa-solid fa-check" style={{ color: '#10b981', fontSize: '0.75rem' }}></i> {am}
                         </span>
                       ))}
                     </div>
                   </div>
                 )}
+
+                {/* Extra bottom padding to ensure the last item is never cut off */}
+                <div style={{ height: '2.5rem', flexShrink: 0 }}></div>
               </div>
             </div>
           </div>

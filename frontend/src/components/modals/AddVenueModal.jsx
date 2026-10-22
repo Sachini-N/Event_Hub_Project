@@ -33,6 +33,8 @@ export default function AddVenueModal({
   const [priceRateType, setPriceRateType] = useState('per_hour'); // 'per_hour' | 'per_day' | 'on_demand'
   const [pricePerHour, setPricePerHour] = useState('25000');
   const [isOnDemand, setIsOnDemand] = useState(false);
+  const [includeTax, setIncludeTax] = useState(false);
+  const [taxLabelType, setTaxLabelType] = useState('+ Tax');
   const [status, setStatus] = useState('Available');
   const [type, setType] = useState('Meeting Room');
   const [coverImage, setCoverImage] = useState('');
@@ -132,6 +134,25 @@ export default function AddVenueModal({
         setPricePerHour(numPrice || '25000');
       }
 
+      const rawPriceStr = String(editingVenue.rentalPrice || '');
+      const hasTax = rawPriceStr.toLowerCase().includes('tax') || rawPriceStr.toLowerCase().includes('vat');
+      setIncludeTax(hasTax);
+      if (hasTax) {
+        if (rawPriceStr.toLowerCase().includes('vat')) {
+          setTaxLabelType('+ VAT (18%)');
+        } else if (rawPriceStr.toLowerCase().includes('sscl')) {
+          setTaxLabelType('+ SSCL & VAT');
+        } else if (rawPriceStr.toLowerCase().includes('subject')) {
+          setTaxLabelType('(Subject to Tax)');
+        } else if (rawPriceStr.toLowerCase().includes('taxes')) {
+          setTaxLabelType('+ Taxes');
+        } else {
+          setTaxLabelType('+ Tax');
+        }
+      } else {
+        setTaxLabelType('+ Tax');
+      }
+
       setStatus(editingVenue.status || 'Available');
       setType(editingVenue.type || 'Meeting Room');
       const existingImgs = Array.isArray(editingVenue.images) && editingVenue.images.length > 0
@@ -153,6 +174,8 @@ export default function AddVenueModal({
       setPriceRateType('per_hour');
       setPricePerHour('25000');
       setIsOnDemand(false);
+      setIncludeTax(false);
+      setTaxLabelType('+ Tax');
       setStatus('Available');
       setType('Meeting Room');
       setCoverImage('');
@@ -321,13 +344,16 @@ export default function AddVenueModal({
 
     const isDemand = priceRateType === 'on_demand' || isOnDemand || !pricePerHour || String(pricePerHour).trim() === '' || Number(pricePerHour) <= 0;
     const numPrice = isDemand ? 0 : Number(pricePerHour);
+    const taxSuffix = includeTax ? ` ${taxLabelType}` : '';
     let formattedRentalPrice = 'On Demand';
     if (!isDemand) {
       if (priceRateType === 'per_day') {
-        formattedRentalPrice = `Rs. ${numPrice.toLocaleString()} / day`;
+        formattedRentalPrice = `Rs. ${numPrice.toLocaleString()} / day${taxSuffix}`;
       } else {
-        formattedRentalPrice = `Rs. ${numPrice.toLocaleString()} / hr`;
+        formattedRentalPrice = `Rs. ${numPrice.toLocaleString()} / hr${taxSuffix}`;
       }
+    } else {
+      formattedRentalPrice = includeTax ? `On Demand (${taxLabelType.replace(/^\+?\s*/, '')})` : 'On Demand';
     }
 
     const isEdit = Boolean(editingVenue);
@@ -907,7 +933,7 @@ export default function AddVenueModal({
                               gap: '4px',
                             }}
                           >
-                            <i className="fa-solid fa-bolt"></i> Preview: Rs. {Number(pricePerHour).toLocaleString()} {priceRateType === 'per_day' ? '/ day' : '/ hr'}
+                            <i className="fa-solid fa-bolt"></i> Preview: Rs. {Number(pricePerHour).toLocaleString()} {priceRateType === 'per_day' ? '/ day' : '/ hr'}{includeTax ? ` ${taxLabelType}` : ''}
                           </span>
                         )}
 
@@ -934,6 +960,82 @@ export default function AddVenueModal({
                       </div>
                     </div>
                   )}
+
+                  {/* Tax Applicable Setting Row */}
+                  <div
+                    style={{
+                      marginTop: '6px',
+                      padding: '0.55rem 0.85rem',
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '8px',
+                    }}
+                  >
+                    <label
+                      htmlFor="venue-include-tax"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        margin: 0,
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                        color: '#334155',
+                        userSelect: 'none',
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        id="venue-include-tax"
+                        checked={includeTax}
+                        onChange={(e) => setIncludeTax(e.target.checked)}
+                        style={{
+                          width: '16px',
+                          height: '16px',
+                          accentColor: '#5d4df6',
+                          cursor: 'pointer',
+                          margin: 0,
+                        }}
+                      />
+                      <span>
+                        <i className="fa-solid fa-receipt" style={{ color: '#6366f1', marginRight: '5px' }}></i>
+                        Taxes Applicable (e.g. <strong>+ Tax</strong> / <strong>VAT</strong>)
+                      </span>
+                    </label>
+
+                    {includeTax && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <select
+                          id="venue-tax-type"
+                          value={taxLabelType}
+                          onChange={(e) => setTaxLabelType(e.target.value)}
+                          style={{
+                            padding: '4px 9px',
+                            borderRadius: '6px',
+                            border: '1px solid #c7d2fe',
+                            fontSize: '0.8rem',
+                            fontWeight: 700,
+                            color: '#4338ca',
+                            background: '#eef2ff',
+                            cursor: 'pointer',
+                            outline: 'none',
+                          }}
+                        >
+                          <option value="+ Tax">+ Tax</option>
+                          <option value="+ Taxes">+ Taxes</option>
+                          <option value="+ VAT (18%)">+ VAT (18%)</option>
+                          <option value="+ SSCL & VAT">+ SSCL & VAT</option>
+                          <option value="(Subject to Tax)">(Subject to Tax)</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
