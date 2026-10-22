@@ -399,12 +399,13 @@ export default function CreateEventPage({ onCancel, onEventCreated, showToast, c
                   <option value="Select a category" disabled>
                     Select a category
                   </option>
+                  <option value="Guest Talk Series">Guest Talk Series</option>
+                  <option value="Community Meetup">Community Meetup</option>
+                  <option value="Policy Discussion">Policy Discussion</option>
                   <option value="Workshop">Workshop</option>
-                  <option value="Meetup">Meetup</option>
-                  <option value="Talk">Talk</option>
+                  <option value="Sprint">Sprint</option>
                   <option value="Keynote">Keynote</option>
                   <option value="Hackathon">Hackathon</option>
-                  <option value="Sprint">Sprint</option>
                 </select>
               </div>
 

@@ -22,7 +22,12 @@ export default function PastEventsSection({
   const allPastEvents = dbPastEvents;
 
   const categories = useMemo(() => {
-    const cats = new Set(['All Categories', 'Talk', 'Meetup', 'Workshop', 'Sprint', 'Keynote', 'Hackathon']);
+    const cats = new Set([
+      'All Categories',
+      'Guest Talk Series',
+      'Community Meetup',
+      'Policy Discussion',
+    ]);
     allPastEvents.forEach((e) => {
       if (e.category && e.category.trim()) cats.add(e.category.trim());
     });
@@ -52,11 +57,28 @@ export default function PastEventsSection({
       }
 
       // Category filter
-      if (
-        selectedCategory !== 'All Categories' &&
-        item.category?.toLowerCase() !== selectedCategory.toLowerCase()
-      ) {
-        return false;
+      if (selectedCategory !== 'All Categories') {
+        const selCat = selectedCategory.toLowerCase();
+        const evtCat = (item.category || '').toLowerCase();
+        const evtTitle = (item.title || '').toLowerCase();
+
+        if (selCat === 'guest talk series') {
+          const isGuestTalk = evtCat.includes('guest talk') || evtCat === 'talk' || evtTitle.includes('guest talk');
+          if (!isGuestTalk) return false;
+        } else if (selCat === 'community meetup') {
+          const isCommunityMeetup = evtCat.includes('community') || evtCat === 'meetup' || evtTitle.includes('midweek');
+          if (evtTitle.includes('shed') && !evtTitle.includes('midweek')) {
+            return false;
+          }
+          if (!isCommunityMeetup) return false;
+        } else if (selCat === 'policy discussion') {
+          const isPolicy = evtCat.includes('policy') || evtTitle.includes('shed');
+          if (!isPolicy) return false;
+        } else {
+          if (evtCat !== selCat) {
+            return false;
+          }
+        }
       }
 
       // Location filter
@@ -130,9 +152,10 @@ export default function PastEventsSection({
 
   const getCategoryClass = (category) => {
     const lower = (category || '').toLowerCase();
-    if (lower === 'talk') return 'cat-badge-talk';
-    if (lower === 'meetup') return 'cat-badge-meetup';
-    if (lower === 'workshop') return 'cat-badge-workshop';
+    if (lower.includes('talk') || lower.includes('guest')) return 'cat-badge-talk';
+    if (lower.includes('meetup') || lower.includes('community')) return 'cat-badge-meetup';
+    if (lower.includes('policy') || lower.includes('shed') || lower.includes('discus')) return 'cat-badge-policy';
+    if (lower.includes('workshop')) return 'cat-badge-workshop';
     return 'cat-badge-default';
   };
 
