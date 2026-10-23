@@ -1138,7 +1138,7 @@ body {
     grid-template-columns: 1fr;
     gap: 2rem;
   }
-  
+
   .trace-map-image-wrapper {
     min-height: 320px;
   }
@@ -11925,10 +11925,11 @@ textarea.venue-inquiry-input {
   transform: translateX(-50%);
   display: flex;
   align-items: center;
+  gap: 14px;
   background: rgba(15, 23, 42, 0.65);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  padding: 8px 14px;
+  padding: 8px 18px;
   border-radius: 30px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   pointer-events: auto;
@@ -12095,19 +12096,23 @@ textarea.venue-inquiry-input {
     height: 38px;
     font-size: 0.95rem;
   }
+
   .hero-slide-arrow-prev {
     left: 10px;
   }
+
   .hero-slide-arrow-next {
     right: 10px;
   }
+
   .hero-slider-indicator-bar {
     bottom: 16px;
     padding: 6px 12px;
     gap: 10px;
   }
+
   .hero-slider-counter-pill {
     font-size: 0.72rem;
     padding-right: 8px;
   }
-}
+}

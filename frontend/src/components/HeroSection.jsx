@@ -61,7 +61,7 @@ export default function HeroSection({ scrollToEvents, onNavigateSpaces }) {
 
   useEffect(() => {
     if (settings.heroMediaType !== 'image' && videoRef.current) {
-      videoRef.current.play().catch(() => {});
+      videoRef.current.play().catch(() => { });
     }
   }, [settings.heroMediaType, settings.heroVideoUrl]);
 
@@ -184,8 +184,11 @@ export default function HeroSection({ scrollToEvents, onNavigateSpaces }) {
               <i className="fa-solid fa-chevron-right"></i>
             </button>
 
-            {/* Slider Dots Indicator Bar */}
+            {/* Slider Dots & Photo Counter Pill */}
             <div className="hero-slider-indicator-bar">
+              <span className="hero-slider-counter-pill">
+                <i className="fa-regular fa-images"></i> {currentSlideIndex + 1} / {heroImagesList.length}
+              </span>
               <div className="hero-slider-dots-row">
                 {heroImagesList.map((_, dotIdx) => (
                   <button
