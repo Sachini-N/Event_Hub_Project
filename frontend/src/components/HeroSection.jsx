@@ -116,6 +116,9 @@ export default function HeroSection({ scrollToEvents, onNavigateSpaces }) {
                   src={imgUrl}
                   alt={`Hero Banner Photo ${index + 1}`}
                   className="hero-image-element"
+                  onError={(e) => {
+                    e.currentTarget.style.opacity = 0;
+                  }}
                   style={{
                     position: 'absolute',
                     top: '50%',
@@ -184,11 +187,8 @@ export default function HeroSection({ scrollToEvents, onNavigateSpaces }) {
               <i className="fa-solid fa-chevron-right"></i>
             </button>
 
-            {/* Slider Dots & Photo Counter Pill */}
+            {/* Slider Dots Indicator Bar */}
             <div className="hero-slider-indicator-bar">
-              <span className="hero-slider-counter-pill">
-                <i className="fa-regular fa-images"></i> {currentSlideIndex + 1} / {heroImagesList.length}
-              </span>
               <div className="hero-slider-dots-row">
                 {heroImagesList.map((_, dotIdx) => (
                   <button
