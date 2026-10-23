@@ -17,6 +17,10 @@ const siteSettingSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    heroImages: {
+      type: [String],
+      default: [],
+    },
     heroVideoUrl: {
       type: String,
       default: "",

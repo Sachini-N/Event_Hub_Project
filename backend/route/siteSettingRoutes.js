@@ -8,6 +8,7 @@ const DEFAULT_HERO_SETTINGS = {
   key: "hero_settings",
   heroMediaType: "default",
   heroImageUrl: "",
+  heroImages: [],
   heroVideoUrl: "",
   heroBadge: "TRACE COMMUNITY HUB, SRI LANKA",
   heroTitle: "Where innovation meets community and culture.",
@@ -40,7 +41,7 @@ router.get("/hero", async (req, res) => {
 // PUT /api/settings/hero - Admin endpoint to update hero media & banner
 router.put("/hero", protect, authorize("admin", "super_admin", "branch_admin"), async (req, res) => {
   try {
-    const { heroMediaType, heroImageUrl, heroVideoUrl, heroBadge, heroTitle, heroSubtitle } = req.body;
+    const { heroMediaType, heroImageUrl, heroImages, heroVideoUrl, heroBadge, heroTitle, heroSubtitle } = req.body;
 
     let setting = await SiteSetting.findOne({ key: "hero_settings" });
     if (!setting) {
@@ -49,6 +50,12 @@ router.put("/hero", protect, authorize("admin", "super_admin", "branch_admin"), 
 
     if (heroMediaType !== undefined) setting.heroMediaType = heroMediaType;
     if (heroImageUrl !== undefined) setting.heroImageUrl = heroImageUrl;
+    if (heroImages !== undefined) {
+      setting.heroImages = Array.isArray(heroImages) ? heroImages.filter(Boolean).slice(0, 10) : [];
+      if (setting.heroImages.length > 0 && !setting.heroImageUrl) {
+        setting.heroImageUrl = setting.heroImages[0];
+      }
+    }
     if (heroVideoUrl !== undefined) setting.heroVideoUrl = heroVideoUrl;
     if (heroBadge !== undefined) setting.heroBadge = heroBadge;
     if (heroTitle !== undefined) setting.heroTitle = heroTitle;
@@ -57,7 +64,7 @@ router.put("/hero", protect, authorize("admin", "super_admin", "branch_admin"), 
     await setting.save();
     cachedHeroSettings = setting.toObject ? setting.toObject() : setting;
 
-    console.log(`[SETTINGS] Hero settings updated: mediaType=${setting.heroMediaType}, imageUrl=${setting.heroImageUrl}, videoUrl=${setting.heroVideoUrl}`);
+    console.log(`[SETTINGS] Hero settings updated: mediaType=${setting.heroMediaType}, imagesCount=${setting.heroImages ? setting.heroImages.length : 0}, videoUrl=${setting.heroVideoUrl}`);
 
     res.json({
       success: true,

@@ -59,6 +59,7 @@ export default function AdminDashboardPage({
   const DEFAULT_HERO_SETTINGS = {
     heroMediaType: 'default',
     heroImageUrl: '',
+    heroImages: [],
     heroVideoUrl: '',
     heroBadge: 'TRACE COMMUNITY HUB, SRI LANKA',
     heroTitle: 'Where innovation meets community and culture.',
@@ -82,6 +83,10 @@ export default function AdminDashboardPage({
     }
   });
   const [savingHeroSettings, setSavingHeroSettings] = useState(false);
+  const [newPhotoUrlInput, setNewPhotoUrlInput] = useState('');
+  const [uploadingHeroPhotos, setUploadingHeroPhotos] = useState(false);
+  const [heroMockupSlideIndex, setHeroMockupSlideIndex] = useState(0);
+  const heroPhotosFileInputRef = useRef(null);
 
   // Registrations View State
   const [regEventFilter, setRegEventFilter] = useState('all');
@@ -381,6 +386,154 @@ export default function AdminDashboardPage({
     } finally {
       setSavingHeroSettings(false);
     }
+  };
+
+  // Multiple hero photos list derived from heroImages (up to 10 photos)
+  const heroPhotosList = (Array.isArray(heroSettings.heroImages) && heroSettings.heroImages.length > 0)
+    ? heroSettings.heroImages.filter(Boolean)
+    : (heroSettings.heroImageUrl ? [heroSettings.heroImageUrl] : []);
+
+  // Admin mockup preview slider
+  useEffect(() => {
+    if (heroSettings.heroMediaType === 'image' && heroPhotosList.length > 1) {
+      const timer = setInterval(() => {
+        setHeroMockupSlideIndex((prev) => (prev + 1) % heroPhotosList.length);
+      }, 3500);
+      return () => clearInterval(timer);
+    }
+  }, [heroSettings.heroMediaType, heroPhotosList.length]);
+
+  useEffect(() => {
+    if (heroMockupSlideIndex >= heroPhotosList.length) {
+      setHeroMockupSlideIndex(0);
+    }
+  }, [heroPhotosList.length]);
+
+  // Upload multiple hero photos from computer (up to 10)
+  const handleUploadHeroPhotos = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const currentImages = (Array.isArray(heroSettings.heroImages) && heroSettings.heroImages.length > 0)
+      ? [...heroSettings.heroImages.filter(Boolean)]
+      : (heroSettings.heroImageUrl ? [heroSettings.heroImageUrl] : []);
+
+    const remainingSlots = 10 - currentImages.length;
+    if (remainingSlots <= 0) {
+      if (showToast) showToast('Maximum 10 photos already reached. Remove a photo to add a new one.', 'warning');
+      if (e.target) e.target.value = '';
+      return;
+    }
+
+    const filesToUpload = files.slice(0, remainingSlots);
+    if (files.length > remainingSlots && showToast) {
+      showToast(`Selected ${files.length} files, but only ${remainingSlots} photo slot(s) remaining (Maximum 10).`, 'info');
+    }
+
+    setUploadingHeroPhotos(true);
+    const token = localStorage.getItem('eventhub_token');
+
+    try {
+      const uploadedUrls = [];
+      for (const file of filesToUpload) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: formData,
+        });
+        const json = await res.json();
+        if (json.success && json.data?.url) {
+          uploadedUrls.push(json.data.url);
+        }
+      }
+
+      if (uploadedUrls.length > 0) {
+        const updatedImages = [...currentImages, ...uploadedUrls].slice(0, 10);
+        const updated = {
+          ...heroSettings,
+          heroMediaType: 'image',
+          heroImages: updatedImages,
+          heroImageUrl: updatedImages[0] || '',
+        };
+        setHeroSettings(updated);
+        handleSaveHeroSettings(updated);
+        if (showToast) showToast(`Successfully uploaded ${uploadedUrls.length} photo(s) to hero slideshow!`, 'success');
+      } else {
+        if (showToast) showToast('Failed to upload photos. Please try again.', 'error');
+      }
+    } catch (err) {
+      console.error('Error uploading hero photos:', err);
+      if (showToast) showToast('Network error during photo upload.', 'error');
+    } finally {
+      setUploadingHeroPhotos(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  // Add photo via direct URL
+  const handleAddHeroPhotoUrl = () => {
+    if (!newPhotoUrlInput || !newPhotoUrlInput.trim()) return;
+    const url = newPhotoUrlInput.trim();
+    const currentImages = (Array.isArray(heroSettings.heroImages) && heroSettings.heroImages.length > 0)
+      ? [...heroSettings.heroImages.filter(Boolean)]
+      : (heroSettings.heroImageUrl ? [heroSettings.heroImageUrl] : []);
+
+    if (currentImages.length >= 10) {
+      if (showToast) showToast('Maximum 10 photos reached. Please remove one before adding another.', 'warning');
+      return;
+    }
+
+    const updatedImages = [...currentImages, url].slice(0, 10);
+    const updated = {
+      ...heroSettings,
+      heroMediaType: 'image',
+      heroImages: updatedImages,
+      heroImageUrl: updatedImages[0] || '',
+    };
+    setHeroSettings(updated);
+    setNewPhotoUrlInput('');
+    handleSaveHeroSettings(updated);
+    if (showToast) showToast('Photo added to hero slideshow!', 'success');
+  };
+
+  // Remove individual photo from slideshow
+  const handleRemoveHeroPhoto = (indexToRemove) => {
+    const currentImages = (Array.isArray(heroSettings.heroImages) && heroSettings.heroImages.length > 0)
+      ? [...heroSettings.heroImages.filter(Boolean)]
+      : (heroSettings.heroImageUrl ? [heroSettings.heroImageUrl] : []);
+
+    const updatedImages = currentImages.filter((_, idx) => idx !== indexToRemove);
+    const updated = {
+      ...heroSettings,
+      heroImages: updatedImages,
+      heroImageUrl: updatedImages[0] || '',
+      heroMediaType: updatedImages.length > 0 ? 'image' : 'default',
+    };
+    setHeroSettings(updated);
+    handleSaveHeroSettings(updated);
+    if (showToast) showToast('Photo removed from slideshow.', 'info');
+  };
+
+  // Reorder photos (move earlier/later)
+  const handleMoveHeroPhoto = (fromIndex, toIndex) => {
+    const currentImages = (Array.isArray(heroSettings.heroImages) && heroSettings.heroImages.length > 0)
+      ? [...heroSettings.heroImages.filter(Boolean)]
+      : (heroSettings.heroImageUrl ? [heroSettings.heroImageUrl] : []);
+
+    if (toIndex < 0 || toIndex >= currentImages.length) return;
+    const item = currentImages[fromIndex];
+    currentImages.splice(fromIndex, 1);
+    currentImages.splice(toIndex, 0, item);
+
+    const updated = {
+      ...heroSettings,
+      heroImages: currentImages,
+      heroImageUrl: currentImages[0] || '',
+    };
+    setHeroSettings(updated);
+    handleSaveHeroSettings(updated);
   };
 
   useEffect(() => {
@@ -1400,7 +1553,7 @@ export default function AdminDashboardPage({
                   </div>
                 </div>
 
-                {/* Option 2: Add New Photo */}
+                {/* Option 2: Add New Photo / Slideshow */}
                 <div
                   className={`hero-mode-card ${heroSettings.heroMediaType === 'image' ? 'active' : ''}`}
                   onClick={() =>
@@ -1411,11 +1564,11 @@ export default function AdminDashboardPage({
                   }
                 >
                   <div className="hero-mode-card-icon">
-                    <i className="fa-solid fa-image"></i>
+                    <i className="fa-solid fa-images"></i>
                   </div>
                   <div className="hero-mode-card-content">
-                    <h4>Add New Photo (Image)</h4>
-                    <p>Upload or set a custom photo/image banner.</p>
+                    <h4>Add New Photos / Slideshow (Up to 10)</h4>
+                    <p>Upload up to 10 photos that automatically transition one by one.</p>
                   </div>
                   <div className="hero-mode-check">
                     <i
@@ -1471,85 +1624,143 @@ export default function AdminDashboardPage({
                       </div>
                       <p style={{ margin: 0, fontSize: '0.88rem', color: '#475569', lineHeight: 1.5 }}>
                         The homepage hero is currently playing the original TRACE video with original texts.
-                        To set a new custom photo or video, click <strong>"Add New Photo (Image)"</strong> or <strong>"Add New Video"</strong> above.
+                        To set a new custom photo slideshow or video, click <strong>"Add New Photos / Slideshow"</strong> or <strong>"Add New Video"</strong> above.
                       </p>
                     </div>
                   )}
 
-                  {/* Panel for Photo (Image) Upload */}
+                  {/* Panel for Photo (Image) Upload - Up to 10 Photos Slideshow */}
                   {heroSettings.heroMediaType === 'image' && (
                     <div className="hero-card-panel">
                       <div className="hero-card-header">
-                        <h3>
-                          <i className="fa-solid fa-image"></i> Custom Photo (Image)
-                        </h3>
+                        <div>
+                          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                            <i className="fa-solid fa-images" style={{ color: '#2563eb' }}></i> Hero Photos Slideshow
+                          </h3>
+                          <p style={{ margin: '4px 0 0 0', fontSize: '0.82rem', color: '#64748b' }}>
+                            Upload up to 10 photos. On the website hero banner, they will smoothly auto-transition one by one.
+                          </p>
+                        </div>
                         <span
                           style={{
-                            fontSize: '0.78rem',
-                            padding: '0.2rem 0.6rem',
+                            fontSize: '0.8rem',
+                            padding: '0.3rem 0.75rem',
                             borderRadius: '9999px',
-                            background: '#dcfce7',
-                            color: '#166534',
+                            background: heroPhotosList.length > 0 ? '#dbeafe' : '#f1f5f9',
+                            color: heroPhotosList.length > 0 ? '#1e40af' : '#64748b',
                             fontWeight: 700,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
                           }}
                         >
-                          Photo Mode Active
+                          <i className="fa-solid fa-photo-film"></i> {heroPhotosList.length} / 10 Photos
                         </span>
                       </div>
 
-                      {/* Cloudinary Uploader Component for Image */}
-                      <div style={{ marginBottom: '1.25rem' }}>
-                        <label
-                          style={{
-                            display: 'block',
-                            fontSize: '0.85rem',
-                            fontWeight: 600,
-                            color: '#334155',
-                            marginBottom: '0.4rem',
-                          }}
-                        >
-                          1. Upload Photo from Computer
-                        </label>
-                        <CloudinaryUploader
+                      {/* Upload Photos from Computer (Multiple, up to 10) */}
+                      <div style={{ marginBottom: '1.25rem', background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                          <label style={{ fontSize: '0.88rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>
+                            <i className="fa-solid fa-cloud-arrow-up" style={{ color: '#2563eb', marginRight: '6px' }}></i>
+                            1. Upload Photos from Computer
+                          </label>
+                          <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                            {10 - heroPhotosList.length > 0
+                              ? `${10 - heroPhotosList.length} photo slot(s) remaining`
+                              : 'Maximum 10 photos reached'}
+                          </span>
+                        </div>
+
+                        <input
+                          type="file"
+                          ref={heroPhotosFileInputRef}
+                          multiple
                           accept="image/*"
-                          label="Upload Custom Photo"
-                          onUploadSuccess={(url) => {
-                            const updated = {
-                              ...heroSettings,
-                              heroImageUrl: url,
-                              heroMediaType: 'image',
-                            };
-                            setHeroSettings(updated);
-                            handleSaveHeroSettings(updated);
-                          }}
+                          style={{ display: 'none' }}
+                          onChange={handleUploadHeroPhotos}
+                          disabled={uploadingHeroPhotos || heroPhotosList.length >= 10}
                         />
+
+                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            style={{
+                              background: heroPhotosList.length >= 10 ? '#94a3b8' : 'linear-gradient(135deg, #2563eb, #3b82f6)',
+                              padding: '0.65rem 1.25rem',
+                              fontWeight: 700,
+                              borderRadius: '8px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              cursor: heroPhotosList.length >= 10 || uploadingHeroPhotos ? 'not-allowed' : 'pointer',
+                            }}
+                            onClick={() => heroPhotosFileInputRef.current && heroPhotosFileInputRef.current.click()}
+                            disabled={uploadingHeroPhotos || heroPhotosList.length >= 10}
+                          >
+                            {uploadingHeroPhotos ? (
+                              <>
+                                <i className="fa-solid fa-spinner fa-spin"></i> Uploading Photos...
+                              </>
+                            ) : (
+                              <>
+                                <i className="fa-solid fa-plus"></i> Select & Upload Photos (Up to 10)
+                              </>
+                            )}
+                          </button>
+
+                          {heroPhotosList.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (window.confirm('Are you sure you want to clear all photos from the hero slideshow?')) {
+                                  const updated = {
+                                    ...heroSettings,
+                                    heroImages: [],
+                                    heroImageUrl: '',
+                                    heroMediaType: 'default',
+                                  };
+                                  setHeroSettings(updated);
+                                  handleSaveHeroSettings(updated);
+                                }
+                              }}
+                              style={{
+                                background: '#fef2f2',
+                                color: '#ef4444',
+                                border: '1px solid #fee2e2',
+                                padding: '0.65rem 1rem',
+                                borderRadius: '8px',
+                                fontSize: '0.84rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <i className="fa-solid fa-trash-can"></i> Clear All Photos
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       {/* Direct Image URL input */}
-                      <div>
-                        <label
-                          style={{
-                            display: 'block',
-                            fontSize: '0.85rem',
-                            fontWeight: 600,
-                            color: '#334155',
-                            marginBottom: '0.4rem',
-                          }}
-                        >
-                          2. Or Enter Photo URL
+                      <div style={{ marginBottom: '1.5rem', background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                        <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>
+                          <i className="fa-solid fa-link" style={{ color: '#2563eb', marginRight: '6px' }}></i>
+                          2. Or Paste Photo URL
                         </label>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                           <input
                             type="text"
-                            placeholder="https://example.com/my-photo.jpg"
-                            value={heroSettings.heroImageUrl || ''}
-                            onChange={(e) =>
-                              setHeroSettings((prev) => ({
-                                ...prev,
-                                heroImageUrl: e.target.value,
-                                heroMediaType: 'image',
-                              }))
-                            }
+                            placeholder="https://example.com/photo.jpg or Cloudinary URL..."
+                            value={newPhotoUrlInput}
+                            onChange={(e) => setNewPhotoUrlInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAddHeroPhotoUrl();
+                              }
+                            }}
+                            disabled={heroPhotosList.length >= 10}
                             style={{
                               flex: 1,
                               padding: '0.65rem 0.85rem',
@@ -1559,31 +1770,100 @@ export default function AdminDashboardPage({
                               outline: 'none',
                             }}
                           />
-                          {heroSettings.heroImageUrl && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setHeroSettings((prev) => ({
-                                  ...prev,
-                                  heroImageUrl: '',
-                                }))
-                              }
-                              style={{
-                                background: '#f1f5f9',
-                                color: '#64748b',
-                                border: '1px solid #cbd5e1',
-                                borderRadius: '8px',
-                                padding: '0 0.85rem',
-                                fontSize: '0.82rem',
-                                cursor: 'pointer',
-                                fontWeight: 600,
-                              }}
-                              title="Clear photo URL"
-                            >
-                              Clear
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={handleAddHeroPhotoUrl}
+                            disabled={!newPhotoUrlInput.trim() || heroPhotosList.length >= 10}
+                            style={{
+                              background: '#2563eb',
+                              color: '#ffffff',
+                              border: 'none',
+                              borderRadius: '8px',
+                              padding: '0 1.2rem',
+                              fontSize: '0.85rem',
+                              fontWeight: 700,
+                              cursor: !newPhotoUrlInput.trim() || heroPhotosList.length >= 10 ? 'not-allowed' : 'pointer',
+                              opacity: !newPhotoUrlInput.trim() || heroPhotosList.length >= 10 ? 0.6 : 1,
+                            }}
+                          >
+                            <i className="fa-solid fa-plus"></i> Add Photo
+                          </button>
                         </div>
+                      </div>
+
+                      {/* Photo Slideshow Gallery Grid (Up to 10) */}
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                          <label style={{ fontSize: '0.88rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>
+                            <i className="fa-regular fa-clone" style={{ color: '#2563eb', marginRight: '6px' }}></i>
+                            Slideshow Photos List ({heroPhotosList.length} of 10)
+                          </label>
+                          <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                            Photos auto-transition one by one on the live site
+                          </span>
+                        </div>
+
+                        {heroPhotosList.length === 0 ? (
+                          <div
+                            style={{
+                              padding: '2.5rem 1.5rem',
+                              textAlign: 'center',
+                              background: '#f8fafc',
+                              border: '2px dashed #cbd5e1',
+                              borderRadius: '12px',
+                              color: '#64748b',
+                            }}
+                          >
+                            <i className="fa-regular fa-image fa-3x" style={{ color: '#94a3b8', marginBottom: '0.75rem' }}></i>
+                            <h4 style={{ margin: '0 0 0.35rem 0', color: '#334155', fontSize: '1rem', fontWeight: 700 }}>
+                              No Photos in Slideshow Yet
+                            </h4>
+                            <p style={{ margin: 0, fontSize: '0.85rem' }}>
+                              Upload or add up to 10 photos above to activate the automated slideshow on the hero banner.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="hero-photos-manager-grid">
+                            {heroPhotosList.map((photoUrl, photoIdx) => (
+                              <div key={`${photoUrl}-${photoIdx}`} className="hero-photo-manage-card">
+                                <div className="hero-photo-manage-badge">
+                                  {photoIdx === 0 ? 'Photo 1 (Cover)' : `Photo ${photoIdx + 1}`}
+                                </div>
+                                <div className="hero-photo-manage-img-box">
+                                  <img src={photoUrl} alt={`Photo ${photoIdx + 1}`} loading="lazy" />
+                                </div>
+                                <div className="hero-photo-manage-actions">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMoveHeroPhoto(photoIdx, photoIdx - 1)}
+                                    disabled={photoIdx === 0}
+                                    title="Move earlier"
+                                    className="hero-photo-btn-icon"
+                                  >
+                                    <i className="fa-solid fa-chevron-left"></i>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMoveHeroPhoto(photoIdx, photoIdx + 1)}
+                                    disabled={photoIdx === heroPhotosList.length - 1}
+                                    title="Move later"
+                                    className="hero-photo-btn-icon"
+                                  >
+                                    <i className="fa-solid fa-chevron-right"></i>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveHeroPhoto(photoIdx)}
+                                    title="Remove this photo"
+                                    className="hero-photo-btn-delete"
+                                  >
+                                    <i className="fa-solid fa-trash-can"></i>
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1873,12 +2153,44 @@ export default function AdminDashboardPage({
 
                     {/* The Live Interactive Mockup Box */}
                     <div className="hero-live-preview-container">
-                      {heroSettings.heroMediaType === 'image' && heroSettings.heroImageUrl ? (
-                        <img
-                          src={heroSettings.heroImageUrl}
-                          alt="Hero Preview"
-                          className="hero-live-preview-bg"
-                        />
+                      {heroSettings.heroMediaType === 'image' && heroPhotosList.length > 0 ? (
+                        <>
+                          {heroPhotosList.map((photoUrl, pIdx) => (
+                            <img
+                              key={`${photoUrl}-${pIdx}`}
+                              src={photoUrl}
+                              alt={`Hero Preview ${pIdx + 1}`}
+                              className="hero-live-preview-bg"
+                              style={{
+                                opacity: pIdx === heroMockupSlideIndex ? 1 : 0,
+                                transition: 'opacity 0.8s ease-in-out',
+                                zIndex: pIdx === heroMockupSlideIndex ? 1 : 0,
+                              }}
+                            />
+                          ))}
+                          {heroPhotosList.length > 1 && (
+                            <div
+                              style={{
+                                position: 'absolute',
+                                bottom: '10px',
+                                right: '10px',
+                                zIndex: 10,
+                                background: 'rgba(15, 23, 42, 0.8)',
+                                color: '#ffffff',
+                                padding: '3px 9px',
+                                borderRadius: '14px',
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                              }}
+                            >
+                              <i className="fa-solid fa-play" style={{ fontSize: '0.62rem', color: '#60a5fa' }}></i>
+                              Photo {heroMockupSlideIndex + 1} of {heroPhotosList.length}
+                            </div>
+                          )}
+                        </>
                       ) : heroSettings.heroMediaType === 'video' && heroSettings.heroVideoUrl ? (
                         <video
                           src={heroSettings.heroVideoUrl}
