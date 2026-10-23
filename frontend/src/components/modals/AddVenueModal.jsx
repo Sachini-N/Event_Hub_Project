@@ -247,7 +247,7 @@ export default function AddVenueModal({
           authToken = authData.data.token;
           localStorage.setItem('eventhub_token', authToken);
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     const uploadedUrls = [];
@@ -617,8 +617,6 @@ export default function AddVenueModal({
                   <option value="Meeting Room">Meeting Room</option>
                   <option value="Co-Working Space">Co-Working Space</option>
                   <option value="Auditorium & Hall">Auditorium & Conference Hall</option>
-                  <option value="Tech Lab & Maker Space">Tech Lab & Maker Space</option>
-                  <option value="Private Office / Suite">Private Office / Suite</option>
                   <option value="Event Space">Event Space</option>
                 </select>
               </div>
