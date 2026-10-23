@@ -4115,12 +4115,24 @@ input:checked+.slider:before {
   background-color: #003d99;
 }
 
+/* Prevent outer body/html scroll when admin layout is active */
+body:has(.admin-dashboard-layout),
+html:has(.admin-dashboard-layout),
+.main-content:has(.admin-dashboard-layout) {
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
 /* TRACE Admin Dashboard Styles matching exact reference screenshot */
 .admin-dashboard-layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  max-height: 100vh;
   background-color: #f8fafc;
   width: 100%;
+  overflow: hidden;
+  position: relative;
 }
 
 .admin-sidebar {
@@ -4131,11 +4143,13 @@ input:checked+.slider:before {
   flex-direction: column;
   padding: 1.25rem 0.9rem;
   flex-shrink: 0;
-  min-height: 100vh;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 100vh;
+  max-height: 100vh;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 1px 0 10px rgba(0, 0, 0, 0.02);
   z-index: 50;
   user-select: none;
+  overflow: hidden;
 }
 
 .admin-sidebar.collapsed {
@@ -4151,6 +4165,7 @@ input:checked+.slider:before {
   padding: 0.25rem 0.4rem 1rem 0.4rem;
   margin-bottom: 0.5rem;
   position: relative;
+  flex-shrink: 0;
 }
 
 .admin-sidebar.collapsed .admin-brand-container {
@@ -4228,8 +4243,9 @@ input:checked+.slider:before {
 
 /* Sidebar Search Box (Matching Reference Screenshot) */
 .sidebar-search-wrapper {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   padding: 0 0.2rem;
+  flex-shrink: 0;
 }
 
 .sidebar-search-input-box {
@@ -4296,6 +4312,24 @@ input:checked+.slider:before {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 2px;
+}
+
+.admin-nav-menu::-webkit-scrollbar {
+  width: 4px;
+}
+
+.admin-nav-menu::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.admin-nav-menu::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .admin-nav-item {
@@ -4400,12 +4434,14 @@ input:checked+.slider:before {
 /* Sidebar Footer */
 .admin-sidebar-bottom {
   margin-top: auto;
-  padding-top: 1.25rem;
+  padding-top: 0.85rem;
   border-top: 1px solid #f1f5f9;
+  flex-shrink: 0;
+  background: #ffffff;
 }
 
 .admin-sidebar.collapsed .admin-sidebar-bottom {
-  padding-top: 1rem;
+  padding-top: 0.75rem;
 }
 
 .admin-logout-btn {
@@ -4419,14 +4455,14 @@ input:checked+.slider:before {
   border: 1px solid #fee2e2;
   border-radius: 10px;
   cursor: pointer;
-  padding: 0.6rem 0.9rem;
+  padding: 0.65rem 0.9rem;
   width: 100%;
   transition: all 0.2s ease;
 }
 
 .admin-sidebar.collapsed .admin-logout-btn {
   justify-content: center;
-  padding: 0.6rem;
+  padding: 0.65rem;
   width: 44px;
   height: 44px;
   margin: 0 auto;
@@ -4443,6 +4479,12 @@ input:checked+.slider:before {
   flex-direction: column;
   background: #f8fafc;
   min-width: 0;
+  height: 100vh;
+  max-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 .admin-top-bar {
