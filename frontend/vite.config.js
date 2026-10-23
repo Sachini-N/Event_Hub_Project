@@ -28,6 +28,8 @@ export default defineConfig({
         target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
+        timeout: 300000,
+        proxyTimeout: 300000,
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, res) => {
             if (res && !res.headersSent) {

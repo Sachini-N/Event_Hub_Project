@@ -48,7 +48,11 @@ const handleSingleUpload = (req, res, next) => {
     upload.single('file')(req, res, (err) => {
         if (err) {
             console.error('Multer single upload error:', err);
-            return res.status(400).json({ success: false, message: err.message || 'File upload error' });
+            let msg = err.message || 'File upload error';
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                msg = 'File too large. Maximum supported file/video size is 500MB.';
+            }
+            return res.status(400).json({ success: false, message: msg });
         }
         next();
     });
@@ -59,7 +63,11 @@ const handleArrayUpload = (req, res, next) => {
     upload.array('files', 10)(req, res, (err) => {
         if (err) {
             console.error('Multer array upload error:', err);
-            return res.status(400).json({ success: false, message: err.message || 'Gallery upload error' });
+            let msg = err.message || 'Gallery upload error';
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                msg = 'One or more files are too large. Maximum supported file size is 500MB.';
+            }
+            return res.status(400).json({ success: false, message: msg });
         }
         next();
     });

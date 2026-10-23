@@ -61,7 +61,7 @@ if (isCloudinaryConfigured) {
 
 const upload = multer({
   storage,
-  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB max limit
+  limits: { fileSize: 500 * 1024 * 1024 }, // 500MB max limit for high-def videos
 });
 
 module.exports = { cloudinary, upload, isCloudinaryConfigured };

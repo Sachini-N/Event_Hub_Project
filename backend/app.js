@@ -190,7 +190,9 @@ const PORT = process.env.PORT || 5000;
 
 // Start server locally when not running inside Vercel serverless runtime
 if (!process.env.VERCEL) {
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  server.timeout = 300000; // 5 minutes timeout for large video uploads
+  server.keepAliveTimeout = 65000;
   connectDB().catch((err) => console.log("MongoDB initial connection error:", err.message));
 }
 
