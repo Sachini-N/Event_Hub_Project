@@ -941,6 +941,209 @@ body {
   line-height: 1.6;
 }
 
+/* Split Layout for TRACE Spaces Map & 3 Features */
+.why-trace-split-layout {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 2.5rem;
+  align-items: stretch;
+  margin-top: 1.5rem;
+}
+
+.why-trace-map-column {
+  display: flex;
+}
+
+.trace-map-card {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.trace-map-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -10px rgba(37, 99, 235, 0.18);
+  border-color: #bfdbfe;
+}
+
+.trace-map-badge-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.trace-network-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.trace-hubs-count {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  padding: 4px 10px;
+  border-radius: 9999px;
+}
+
+.trace-map-image-wrapper {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, #f8fafc, #f1f5f9);
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #f1f5f9;
+}
+
+.trace-map-image {
+  width: 100%;
+  height: 100%;
+  max-height: 460px;
+  object-fit: contain;
+  transition: transform 0.4s ease;
+}
+
+.trace-map-card:hover .trace-map-image {
+  transform: scale(1.02);
+}
+
+.trace-map-zoom-hint {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.9;
+  transition: all 0.2s ease;
+  pointer-events: none;
+}
+
+.trace-map-card:hover .trace-map-zoom-hint {
+  opacity: 1;
+  background: #1e3a8a;
+}
+
+.trace-map-footer {
+  margin-top: 1rem;
+  text-align: center;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.trace-map-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #1e3a8a;
+  margin: 0 0 0.35rem 0;
+}
+
+.trace-map-subtitle {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Feature column on the other side */
+.why-trace-features-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.feature-card.feature-card-horizontal {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  text-align: left;
+  gap: 1.5rem;
+  padding: 1.75rem 1.75rem;
+  margin: 0;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+  flex: 1;
+  transition: all 0.3s ease;
+}
+
+.feature-card.feature-card-horizontal:hover {
+  transform: translateX(4px);
+  border-color: #cbd5e1;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+}
+
+.feature-card.feature-card-horizontal .feature-icon {
+  margin: 0;
+  flex-shrink: 0;
+  width: 54px;
+  height: 54px;
+  font-size: 1.35rem;
+}
+
+.feature-card.feature-card-horizontal .feature-card-text {
+  flex: 1;
+}
+
+.feature-card.feature-card-horizontal .feature-heading {
+  margin-bottom: 0.4rem;
+  font-size: 1.15rem;
+}
+
+.feature-card.feature-card-horizontal .feature-desc {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 992px) {
+  .why-trace-split-layout {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .trace-map-image-wrapper {
+    min-height: 320px;
+  }
+}
+
 /* Upcoming Events Section */
 .events-main-section {
   padding: 4.5rem 0;
