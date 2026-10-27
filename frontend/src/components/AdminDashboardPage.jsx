@@ -3037,7 +3037,10 @@ export default function AdminDashboardPage({
                     const venueId = v._id || v.id;
                     const formattedAddress = (v.address || '').replace(/,/g, ', ');
                     const isDemand = v.isOnDemand || (v.rentalPrice && v.rentalPrice.toLowerCase().includes('demand')) || (!v.rentalPrice && (!v.pricePerHour || Number(v.pricePerHour) <= 0));
-                    const priceDisplay = v.rentalPrice || (isDemand ? 'On Demand' : (v.pricePerHour ? `Rs. ${Number(v.pricePerHour).toLocaleString()} / hr` : 'On Demand'));
+                    const rawPrice = v.rentalPrice || (isDemand ? 'On Demand' : (v.pricePerHour ? `Rs. ${Number(v.pricePerHour).toLocaleString()} / hr` : 'On Demand'));
+                    const priceDisplay = (v.includeTax && !rawPrice.toLowerCase().includes('tax') && !rawPrice.toLowerCase().includes('vat'))
+                      ? `${rawPrice} ${v.taxLabelType || '+ Tax'}`
+                      : rawPrice;
 
                     return (
                       <div key={venueId || Math.random()} className="admin-venue-card">

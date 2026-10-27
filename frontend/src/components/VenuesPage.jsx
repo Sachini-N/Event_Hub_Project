@@ -243,31 +243,72 @@ export default function VenuesPage({ showToast }) {
     return 'Western Province';
   };
 
-  // Helper to format venue pricing (including On Demand without tax labels)
+  // Helper to get structured pricing details (including tax information)
+  const getVenuePriceDetails = (v) => {
+    if (!v) return { fullText: 'On Demand', baseText: 'On Demand', taxText: '', hasTax: false, isDemand: true };
+
+    const rawRp = typeof v.rentalPrice === 'string' ? v.rentalPrice.trim() : '';
+    const hasTaxInString = rawRp.toLowerCase().includes('tax') || rawRp.toLowerCase().includes('vat') || rawRp.toLowerCase().includes('sscl');
+    const hasTax = Boolean(v.includeTax) || hasTaxInString;
+
+    // Detect tax label if present
+    let taxLabel = v.taxLabelType;
+    if (!taxLabel && hasTaxInString) {
+      const match = rawRp.match(/(\+\s*(?:Tax(?:es)?|VAT(?:\s*\(\d+%\))?|SSCL\s*&\s*VAT)|\(Subject to Tax\))/i);
+      if (match) taxLabel = match[0].trim();
+    }
+    if (!taxLabel && hasTax) {
+      taxLabel = '+ Tax';
+    }
+
+    const isDemand = Boolean(v.isOnDemand || rawRp.toLowerCase().includes('demand'));
+    if (isDemand) {
+      const cleanTaxLabel = (taxLabel || 'Tax').replace(/^\+?\s*/, '').replace(/^\(|\)$/g, '');
+      const fullText = hasTax ? `On Demand (${cleanTaxLabel})` : 'On Demand';
+      return {
+        fullText,
+        baseText: 'On Demand',
+        taxText: hasTax ? (taxLabel || '+ Tax') : '',
+        hasTax,
+        isDemand: true,
+      };
+    }
+
+    // Clean base price without tax suffix
+    let basePrice = rawRp
+      .replace(/\s*\+\s*tax(es)?/gi, '')
+      .replace(/\s*\+\s*vat(\s*\(\d+%\))?/gi, '')
+      .replace(/\s*\+\s*sscl\s*&\s*vat/gi, '')
+      .replace(/\s*\(subject to tax\)/gi, '')
+      .replace(/\s*\(tax(es)?\)/gi, '')
+      .trim();
+
+    if (!basePrice && v.pricePerHour !== undefined && v.pricePerHour !== null && Number(v.pricePerHour) > 0) {
+      basePrice = `Rs. ${Number(v.pricePerHour).toLocaleString()} / hr`;
+    }
+
+    if (!basePrice) {
+      basePrice = 'On Demand';
+    }
+
+    const fullText = hasTax ? `${basePrice} ${taxLabel}` : basePrice;
+
+    return {
+      fullText,
+      baseText: basePrice,
+      taxText: hasTax ? taxLabel : '',
+      hasTax,
+      isDemand: basePrice.toLowerCase().includes('demand'),
+    };
+  };
+
+  // Helper to format venue pricing (including tax labels)
   const getVenuePriceText = (v) => {
-    if (!v) return 'On Demand';
-    if (v.isOnDemand) return 'On Demand';
-    let rp = typeof v.rentalPrice === 'string' ? v.rentalPrice.trim() : '';
-    if (rp) {
-      if (rp.toLowerCase().includes('demand')) return 'On Demand';
-      // Strip any tax suffix: e.g. "+ Tax", "+ Taxes", "+ VAT...", "(Subject to Tax)", etc.
-      rp = rp
-        .replace(/\s*\+\s*tax(es)?/gi, '')
-        .replace(/\s*\+\s*vat(\s*\(\d+%\))?/gi, '')
-        .replace(/\s*\+\s*sscl\s*&\s*vat/gi, '')
-        .replace(/\s*\(subject to tax\)/gi, '')
-        .replace(/\s*\(tax(es)?\)/gi, '')
-        .trim();
-      return rp || 'On Demand';
-    }
-    if (v.pricePerHour !== undefined && v.pricePerHour !== null && Number(v.pricePerHour) > 0) {
-      return `Rs. ${Number(v.pricePerHour).toLocaleString()} / hr`;
-    }
-    return 'On Demand';
+    return getVenuePriceDetails(v).fullText;
   };
 
   const isVenuePriceOnDemand = (v) => {
-    return getVenuePriceText(v).toLowerCase().includes('demand');
+    return getVenuePriceDetails(v).isDemand;
   };
 
   // Modal State for Venue Details & Booking Inquiry
@@ -799,12 +840,38 @@ export default function VenuesPage({ showToast }) {
                           📍 {getSpaceProvince(v)}
                         </span>
                       </div>
-                      <span
-                        className="venue-card-price-tag"
-                        style={isVenuePriceOnDemand(v) ? { color: '#059669', background: '#ecfdf5', borderColor: '#a7f3d0', fontWeight: '800' } : {}}
-                      >
-                        <i className="fa-solid fa-tag"></i> {getVenuePriceText(v)}
-                      </span>
+                      {(() => {
+                        const priceInfo = getVenuePriceDetails(v);
+                        return (
+                          <span
+                            className="venue-card-price-tag"
+                            style={priceInfo.isDemand ? { color: '#059669', background: '#ecfdf5', borderColor: '#a7f3d0', fontWeight: '800' } : {}}
+                            title={priceInfo.fullText}
+                          >
+                            <i className="fa-solid fa-tag"></i> {priceInfo.baseText}
+                            {priceInfo.taxText && (
+                              <span
+                                className="venue-card-tax-pill"
+                                style={{
+                                  marginLeft: '4px',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 800,
+                                  color: '#4f46e5',
+                                  background: '#eef2ff',
+                                  border: '1px solid #c7d2fe',
+                                  padding: '1px 6px',
+                                  borderRadius: '4px',
+                                  letterSpacing: '0.02em',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                }}
+                              >
+                                {priceInfo.taxText}
+                              </span>
+                            )}
+                          </span>
+                        );
+                      })()}
                     </div>
 
                     <h3 className="venue-card-title">{v.name}</h3>
@@ -1010,9 +1077,26 @@ export default function VenuesPage({ showToast }) {
                   </div>
 
                   <div style={{ background: '#ffffff', borderRadius: '10px', padding: '0.85rem 1rem', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem' }}>
                       <span style={{ color: '#64748b', fontWeight: 600 }}>Rate / Pricing:</span>
-                      <strong style={{ color: '#059669' }}>{getVenuePriceText(activeVenueModal)}</strong>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <strong style={{ color: '#059669' }}>{getVenuePriceDetails(activeVenueModal).baseText}</strong>
+                        {getVenuePriceDetails(activeVenueModal).taxText && (
+                          <span
+                            style={{
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              color: '#4f46e5',
+                              background: '#eef2ff',
+                              border: '1px solid #c7d2fe',
+                              padding: '1px 5px',
+                              borderRadius: '4px',
+                            }}
+                          >
+                            {getVenuePriceDetails(activeVenueModal).taxText}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
                       <span style={{ color: '#64748b', fontWeight: 600 }}>Capacity:</span>
@@ -1404,22 +1488,43 @@ export default function VenuesPage({ showToast }) {
                       <span style={{ fontSize: '0.76rem', fontWeight: '700', color: activeVenueModal.status === 'Available' ? '#059669' : '#d97706', background: activeVenueModal.status === 'Available' ? '#dcfce7' : '#fef3c7', padding: '0.25rem 0.65rem', borderRadius: '20px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                         ● {activeVenueModal.status || 'Available'}
                       </span>
-                      <span
-                        style={{
-                          fontSize: '0.82rem',
-                          fontWeight: '800',
-                          color: '#059669',
-                          background: '#ecfdf5',
-                          border: '1px solid #a7f3d0',
-                          padding: '0.25rem 0.65rem',
-                          borderRadius: '6px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '5px',
-                        }}
-                      >
-                        <i className="fa-solid fa-tag"></i> {getVenuePriceText(activeVenueModal)}
-                      </span>
+                      {(() => {
+                        const modalPrice = getVenuePriceDetails(activeVenueModal);
+                        return (
+                          <span
+                            style={{
+                              fontSize: '0.82rem',
+                              fontWeight: '800',
+                              color: '#059669',
+                              background: '#ecfdf5',
+                              border: '1px solid #a7f3d0',
+                              padding: '0.25rem 0.65rem',
+                              borderRadius: '6px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                            }}
+                          >
+                            <i className="fa-solid fa-tag"></i> {modalPrice.baseText}
+                            {modalPrice.taxText && (
+                              <span
+                                style={{
+                                  fontSize: '0.74rem',
+                                  fontWeight: 800,
+                                  color: '#4f46e5',
+                                  background: '#eef2ff',
+                                  border: '1px solid #c7d2fe',
+                                  padding: '1px 6px',
+                                  borderRadius: '4px',
+                                  marginLeft: '2px',
+                                }}
+                              >
+                                {modalPrice.taxText}
+                              </span>
+                            )}
+                          </span>
+                        );
+                      })()}
                     </div>
 
                     {/* Province, Type, Capacity & Location Address */}

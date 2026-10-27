@@ -114,6 +114,10 @@ export default function AddVenueModal({
       );
       const isDailyVenue = typeof editingVenue.rentalPrice === 'string' && editingVenue.rentalPrice.toLowerCase().includes('day');
 
+      const rawWithoutTax = editingVenue.rentalPrice
+        ? String(editingVenue.rentalPrice).replace(/\+.*$/i, '').replace(/\(.*\)/g, '')
+        : '';
+
       if (isDemandVenue) {
         setPriceRateType('on_demand');
         setIsOnDemand(true);
@@ -123,22 +127,26 @@ export default function AddVenueModal({
         setIsOnDemand(false);
         const numPrice = editingVenue.pricePerHour
           ? String(editingVenue.pricePerHour)
-          : (editingVenue.rentalPrice ? String(editingVenue.rentalPrice).replace(/[^0-9]/g, '') : '50000');
+          : (rawWithoutTax ? rawWithoutTax.replace(/[^0-9]/g, '') : '50000');
         setPricePerHour(numPrice || '50000');
       } else {
         setPriceRateType('per_hour');
         setIsOnDemand(false);
         const numPrice = editingVenue.pricePerHour
           ? String(editingVenue.pricePerHour)
-          : (editingVenue.rentalPrice ? String(editingVenue.rentalPrice).replace(/[^0-9]/g, '') : '25000');
+          : (rawWithoutTax ? rawWithoutTax.replace(/[^0-9]/g, '') : '25000');
         setPricePerHour(numPrice || '25000');
       }
 
       const rawPriceStr = String(editingVenue.rentalPrice || '');
-      const hasTax = rawPriceStr.toLowerCase().includes('tax') || rawPriceStr.toLowerCase().includes('vat');
+      const hasTax = editingVenue.includeTax !== undefined
+        ? Boolean(editingVenue.includeTax)
+        : (rawPriceStr.toLowerCase().includes('tax') || rawPriceStr.toLowerCase().includes('vat'));
       setIncludeTax(hasTax);
       if (hasTax) {
-        if (rawPriceStr.toLowerCase().includes('vat')) {
+        if (editingVenue.taxLabelType) {
+          setTaxLabelType(editingVenue.taxLabelType);
+        } else if (rawPriceStr.toLowerCase().includes('vat')) {
           setTaxLabelType('+ VAT (18%)');
         } else if (rawPriceStr.toLowerCase().includes('sscl')) {
           setTaxLabelType('+ SSCL & VAT');
@@ -150,7 +158,7 @@ export default function AddVenueModal({
           setTaxLabelType('+ Tax');
         }
       } else {
-        setTaxLabelType('+ Tax');
+        setTaxLabelType(editingVenue.taxLabelType || '+ Tax');
       }
 
       setStatus(editingVenue.status || 'Available');
@@ -374,6 +382,8 @@ export default function AddVenueModal({
       rentalPrice: formattedRentalPrice,
       pricePerHour: numPrice,
       isOnDemand: isDemand,
+      includeTax: Boolean(includeTax),
+      taxLabelType: includeTax ? taxLabelType : '',
       status,
       type,
       coverImage: primaryCover,
