@@ -1,30 +1,18 @@
+const mongoose = require("mongoose");
 const VenueBooking = require("../model/VenueBooking");
 const { sendEmail } = require("../config/emailHelper");
 
-// In-memory cache for instantaneous (0ms) response times
+// In-memory cache for fast response times
 let venueBookingsCache = [];
 
 // GET /api/venue-bookings (Fetch all venue booking inquiries)
 const getAllVenueBookings = async (req, res) => {
   res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 
-  if (venueBookingsCache.length > 0) {
-    res.json({ success: true, count: venueBookingsCache.length, data: venueBookingsCache });
-    // Silent background refresh
-    VenueBooking.find().sort({ createdAt: -1 }).lean()
-      .then((fresh) => {
-        if (Array.isArray(fresh)) venueBookingsCache = fresh;
-      })
-      .catch(() => {});
-    return;
-  }
-
   try {
     const bookings = await VenueBooking.find().sort({ createdAt: -1 }).lean();
-    if (Array.isArray(bookings)) {
-      venueBookingsCache = bookings;
-    }
-    res.json({ success: true, count: bookings.length, data: bookings });
+    venueBookingsCache = Array.isArray(bookings) ? bookings : [];
+    res.json({ success: true, count: venueBookingsCache.length, data: venueBookingsCache });
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to fetch venue bookings", error: error.message });
   }
@@ -239,7 +227,14 @@ const createVenueBooking = async (req, res) => {
 const updateVenueBookingStatus = async (req, res) => {
   try {
     const { status, notes } = req.body;
-    const booking = await VenueBooking.findById(req.params.id);
+    const idOrRef = req.params.id;
+    let query = {};
+    if (mongoose.Types.ObjectId.isValid(idOrRef)) {
+      query = { $or: [{ _id: idOrRef }, { bookingRef: idOrRef }] };
+    } else {
+      query = { bookingRef: idOrRef };
+    }
+    const booking = await VenueBooking.findOne(query);
 
     if (!booking) {
       return res.status(404).json({ success: false, message: "Booking inquiry not found" });
@@ -249,8 +244,8 @@ const updateVenueBookingStatus = async (req, res) => {
     if (notes !== undefined) booking.notes = notes;
 
     await booking.save();
-    venueBookingsCache = venueBookingsCache.map(b =>
-      String(b._id) === String(req.params.id)
+    venueBookingsCache = venueBookingsCache.map((b) =>
+      String(b._id) === String(booking._id) || b.bookingRef === booking.bookingRef
         ? { ...b, status: status || b.status, notes: notes !== undefined ? notes : b.notes }
         : b
     );
@@ -263,65 +258,36 @@ const updateVenueBookingStatus = async (req, res) => {
 // DELETE /api/venue-bookings/:id (Delete booking)
 const deleteVenueBooking = async (req, res) => {
   try {
-    const booking = await VenueBooking.findByIdAndDelete(req.params.id);
+    const idOrRef = req.params.id;
+    let query = {};
+    if (mongoose.Types.ObjectId.isValid(idOrRef)) {
+      query = { $or: [{ _id: idOrRef }, { bookingRef: idOrRef }] };
+    } else {
+      query = { bookingRef: idOrRef };
+    }
+    const booking = await VenueBooking.findOneAndDelete(query);
     if (!booking) {
       return res.status(404).json({ success: false, message: "Booking inquiry not found" });
     }
-    venueBookingsCache = venueBookingsCache.filter(b => String(b._id) !== String(req.params.id));
+    venueBookingsCache = venueBookingsCache.filter(
+      (b) => String(b._id) !== String(booking._id) && b.bookingRef !== booking.bookingRef
+    );
     res.json({ success: true, message: "Booking deleted successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to delete booking", error: error.message });
   }
 };
 
-// Seed initial sample venue bookings if database is empty
+// Seed initial sample venue bookings if database is empty - Do NOT inject demo bookings once deleted
 const seedInitialVenueBookings = async () => {
   try {
-    const count = await VenueBooking.countDocuments();
-    if (count === 0) {
-      const sampleBookings = [
-        {
-          bookingRef: "VBOOK-882193",
-          venueName: "TRACE Main Grand Auditorium",
-          branch: "TRACE Expert City (Colombo)",
-          name: "Kasun Perera",
-          email: "kasun@techstartup.lk",
-          phone: "+94 77 123 4567",
-          eventTitle: "Annual National AI Summit 2026",
-          eventDate: "2026-09-15",
-          durationHours: 6,
-          guests: 250,
-          notes: "Need 4K live streaming setup, stage lighting, and 2 podium microphones.",
-          price: "Rs. 45,000 / hr",
-          status: "Pending",
-        },
-        {
-          bookingRef: "VBOOK-304192",
-          venueName: "Kandy Tech Pavilion & Amphitheater",
-          branch: "TRACE Innovation Hub (Kandy)",
-          name: "Nimmi Fernando",
-          email: "nimmi@kandytech.org",
-          phone: "+94 71 987 6543",
-          eventTitle: "Central Hills Developer Meetup",
-          eventDate: "2026-10-02",
-          durationHours: 4,
-          guests: 120,
-          notes: "Outdoor coffee break arrangement requested.",
-          price: "Rs. 30,000 / hr",
-          status: "Confirmed",
-        },
-      ];
-      await VenueBooking.insertMany(sampleBookings);
-      console.log("Sample venue bookings seeded successfully!");
-    }
-
-    // Always prime cache on boot for 0ms response time
+    // Only prime cache from existing database documents without inserting dummy data
     const freshBookings = await VenueBooking.find().sort({ createdAt: -1 }).lean();
     if (Array.isArray(freshBookings)) {
       venueBookingsCache = freshBookings;
     }
   } catch (err) {
-    console.error("Error seeding/caching venue bookings:", err);
+    console.error("Error priming venue bookings cache:", err);
   }
 };
 

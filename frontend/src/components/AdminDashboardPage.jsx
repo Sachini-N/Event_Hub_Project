@@ -1113,9 +1113,17 @@ export default function AdminDashboardPage({
       });
       const data = await res.json();
       if (data.success) {
-        setVenueBookings((prev) =>
-          prev.map((b) => (String(b._id || b.id) === String(bookingId) ? { ...b, status: newStatus } : b))
-        );
+        setVenueBookings((prev) => {
+          const updated = prev.map((b) =>
+            (String(b._id || b.id) === String(bookingId) || b.bookingRef === bookingId)
+              ? { ...b, status: newStatus }
+              : b
+          );
+          try {
+            sessionStorage.setItem('eventhub_admin_cached_bookings', JSON.stringify(updated));
+          } catch (e) { }
+          return updated;
+        });
         if (showToast) showToast(`Inquiry status updated to "${newStatus}"`, 'success');
       } else {
         if (showToast) showToast(data.message || 'Failed to update status', 'error');
@@ -1129,13 +1137,22 @@ export default function AdminDashboardPage({
     if (!window.confirm(`Are you sure you want to delete inquiry "${bookingRef || ''}"?`)) return;
     try {
       const authToken = localStorage.getItem('eventhub_token') || token;
-      const res = await fetch(`/api/venue-bookings/${bookingId}`, {
+      const idToSend = bookingId || bookingRef;
+      const res = await fetch(`/api/venue-bookings/${idToSend}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${authToken}` },
       });
       const data = await res.json();
       if (data.success) {
-        setVenueBookings((prev) => prev.filter((b) => String(b._id || b.id) !== String(bookingId)));
+        setVenueBookings((prev) => {
+          const updated = prev.filter(
+            (b) => String(b._id || b.id) !== String(bookingId) && b.bookingRef !== bookingRef
+          );
+          try {
+            sessionStorage.setItem('eventhub_admin_cached_bookings', JSON.stringify(updated));
+          } catch (e) { }
+          return updated;
+        });
         if (showToast) showToast('Inquiry deleted successfully', 'success');
       } else {
         if (showToast) showToast(data.message || 'Failed to delete inquiry', 'error');

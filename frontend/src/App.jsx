@@ -480,6 +480,9 @@ export default function App() {
     );
 
     if (isAdmin) {
+      try {
+        sessionStorage.removeItem('eventhub_admin_cached_bookings');
+      } catch (e) { }
       prefetchAdminData(data.token);
       setActiveTab('admin');
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -498,6 +501,12 @@ export default function App() {
     setToken(null);
     setCurrentUser(null);
     localStorage.removeItem('eventhub_token');
+    try {
+      sessionStorage.removeItem('eventhub_admin_cached_bookings');
+      sessionStorage.removeItem('eventhub_admin_cached_events');
+      sessionStorage.removeItem('eventhub_admin_cached_registrations');
+      sessionStorage.removeItem('eventhub_admin_cached_users');
+    } catch (e) { }
     setActiveTab('home');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     showToast('Logged out successfully.', 'info');

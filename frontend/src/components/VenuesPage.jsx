@@ -1140,7 +1140,7 @@ export default function VenuesPage({ showToast }) {
                           type="text"
                           required
                           className="venue-inquiry-input"
-                          placeholder="e.g. Kasun Perera"
+                          placeholder="Your full name"
                           value={inquiryForm.name}
                           onChange={(e) => setInquiryForm({ ...inquiryForm, name: e.target.value })}
                         />
@@ -1153,7 +1153,7 @@ export default function VenuesPage({ showToast }) {
                           type="email"
                           required
                           className="venue-inquiry-input"
-                          placeholder="e.g. kasun@example.com"
+                          placeholder="yourname@domain.com"
                           value={inquiryForm.email}
                           onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })}
                         />
