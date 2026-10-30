@@ -5,13 +5,34 @@ const crypto = require("crypto");
 // POST /api/auth/signup
 const signupUser = async (req, res) => {
   try {
-    const { name, email, password, contactNumber } = req.body;
+    const { name, email, password, confirmPassword, contactNumber } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: "Please provide Name, Email, and Password." });
     }
 
-    const emailClean = email.toLowerCase().trim();
+    const emailClean = String(email).toLowerCase().trim();
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(emailClean)) {
+      return res.status(400).json({ success: false, message: "Please enter a valid email address (e.g. name@domain.com)." });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ success: false, message: "Password must be at least 6 characters long." });
+    }
+
+    if (confirmPassword && password !== confirmPassword) {
+      return res.status(400).json({ success: false, message: "Passwords do not match. Please double-check your password." });
+    }
+
+    let cleanPhone = "";
+    if (contactNumber && String(contactNumber).trim()) {
+      cleanPhone = String(contactNumber).trim();
+      const stripped = cleanPhone.replace(/[\s\-()]/g, "");
+      if (!/^\+?[0-9]{9,15}$/.test(stripped)) {
+        return res.status(400).json({ success: false, message: "Please enter a valid contact phone number (e.g. +94 77 123 4567 or 077 123 4567)." });
+      }
+    }
 
     // Check if email already registered
     const existingUser = await User.findOne({ email: emailClean });
@@ -21,10 +42,10 @@ const signupUser = async (req, res) => {
 
     // Enforce role: "user" for all public registrations to prevent privilege escalation
     const user = new User({
-      name,
+      name: String(name).trim(),
       email: emailClean,
       password,
-      contactNumber: contactNumber || "",
+      contactNumber: cleanPhone,
       role: "user",
     });
 

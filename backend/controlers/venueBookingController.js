@@ -51,6 +51,17 @@ const createVenueBooking = async (req, res) => {
       });
     }
 
+    const emailClean = String(email).trim().toLowerCase();
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(emailClean)) {
+      return res.status(400).json({ success: false, message: "Please enter a valid email address." });
+    }
+
+    const cleanPhone = String(phone).replace(/[\s\-()]/g, "");
+    if (!/^\+?[0-9]{9,15}$/.test(cleanPhone)) {
+      return res.status(400).json({ success: false, message: "Please enter a valid contact phone number." });
+    }
+
     const bookingRef = "VBOOK-" + Math.floor(100000 + Math.random() * 900000);
 
     const booking = new VenueBooking({

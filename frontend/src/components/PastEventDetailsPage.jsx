@@ -18,9 +18,11 @@ export default function PastEventDetailsPage({
   const [activeEvent, setActiveEvent] = useState(() => {
     if (initialEvent) return initialEvent;
     try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const urlId = searchParams.get('id');
       const hash = window.location.hash || '';
       const match = hash.match(/[?&]id=([^&]+)/);
-      const eventId = match ? match[1] : sessionStorage.getItem('eventhub_past_event_id');
+      const eventId = urlId || (match ? match[1] : sessionStorage.getItem('eventhub_past_event_id'));
       if (eventId) {
         const cached = localStorage.getItem('eventhub_cached_events') || sessionStorage.getItem('eventhub_cached_events');
         if (cached) {
@@ -38,9 +40,11 @@ export default function PastEventDetailsPage({
   // Keep activeEvent in sync and fetch full event data if gallery URLs are missing
   React.useEffect(() => {
     const eventId = initialEvent?._id || initialEvent?.id || (() => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const urlId = searchParams.get('id');
       const hash = window.location.hash || '';
       const match = hash.match(/[?&]id=([^&]+)/);
-      return match ? match[1] : sessionStorage.getItem('eventhub_past_event_id');
+      return urlId || (match ? match[1] : sessionStorage.getItem('eventhub_past_event_id'));
     })();
 
     if (initialEvent) {

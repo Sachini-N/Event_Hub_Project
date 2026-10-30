@@ -11,7 +11,7 @@ export default function WhyJoinSection({ onNavigateSpaces }) {
             Why TRACE Events and Spaces?
           </h2>
           <p style={{ color: '#64748b', fontSize: '1rem', maxWidth: '640px', margin: '0 auto' }}>
-            Empowering Sri Lanka’s technology, startup, and innovation ecosystem through connected regional spaces and world-class events.
+            Empowering Sri Lanka’s technology, startup, and innovation ecosystem through connected regional spaces and events.
           </p>
         </div>
 
@@ -62,7 +62,7 @@ export default function WhyJoinSection({ onNavigateSpaces }) {
               <div className="feature-card-text">
                 <h3 className="feature-heading">Connect with Community</h3>
                 <p className="feature-desc">
-                  Network with visionary founders, industry mentors, developers, and tech innovators across Sri Lanka's leading community hubs.
+                  Connect with founders, industry mentors, creators, and tech innovators. Build meaningful relationships, exchange ideas, and grow through collaboration.
                 </p>
               </div>
             </div>
@@ -73,9 +73,9 @@ export default function WhyJoinSection({ onNavigateSpaces }) {
                 <i className="fa-solid fa-building-circle-check"></i>
               </div>
               <div className="feature-card-text">
-                <h3 className="feature-heading">Access World-Class Facilities</h3>
+                <h3 className="feature-heading">Access & Career Startups</h3>
                 <p className="feature-desc">
-                  Experience high-speed fiber auditoriums, modern meeting rooms, maker spaces, and creative co-working spaces designed for high performance.
+                  Dynamic event spaces, creative event spaces, co-working spaces, meeting rooms, and flexible workspaces designed for high performance.
                 </p>
               </div>
             </div>
@@ -88,7 +88,7 @@ export default function WhyJoinSection({ onNavigateSpaces }) {
               <div className="feature-card-text">
                 <h3 className="feature-heading">Accelerate Career & Startups</h3>
                 <p className="feature-desc">
-                  Gain hands-on tech exposure, participate in national hackathons, pitch to global investors, and scale innovative startups nationwide.
+                  Exposure to a fast-growing skill pool, access to national and international opportunities, pitch to investors, and scale innovative startups nationwide.
                 </p>
               </div>
             </div>

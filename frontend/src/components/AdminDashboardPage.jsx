@@ -64,7 +64,7 @@ export default function AdminDashboardPage({
     heroBadge: 'TRACE COMMUNITY HUB, SRI LANKA',
     heroTitle: 'Where innovation meets community and culture.',
     heroSubtitle:
-      'From Shed sessions to Midweek Boost evenings, discover and register for the events shaping TRACE Expert City — then keep every one of them in view.',
+      "Be part of Sri Lanka's largest innovation ecosystem to make an impact.",
   };
 
   const [heroSettings, setHeroSettings] = useState(() => {
@@ -1251,7 +1251,25 @@ export default function AdminDashboardPage({
       const vType = (v.type || '').toLowerCase();
       const target = venueTypeFilter.toLowerCase();
       const vName = (v.name || '').toLowerCase();
-      if (!vType.includes(target) && !target.includes(vType) && !vName.includes(target)) return false;
+      const vDesc = (v.description || '').toLowerCase();
+      const vBranch = (v.branch || '').toLowerCase();
+      const str = `${vName} ${vType} ${vDesc} ${vBranch}`;
+
+      if (target === 'meeting rooms' || target === 'meeting room') {
+        if (!str.includes('meeting') && !str.includes('room') && !str.includes('suite') && !str.includes('office')) return false;
+      } else if (target === 'conference hall' || target === 'conference halls') {
+        if (!str.includes('conference') && !str.includes('hall')) return false;
+      } else if (target === 'co-working spaces' || target === 'co-working' || target === 'coworking') {
+        if (!str.includes('co-working') && !str.includes('coworking') && !str.includes('incubator') && !str.includes('desk')) return false;
+      } else if (target === 'maker spaces' || target === 'maker space') {
+        if (!str.includes('maker') && !str.includes('creator') && !str.includes('bread') && !str.includes('lab') && !str.includes('fablab')) return false;
+      } else if (target === 'workation') {
+        if (!str.includes('workation') && !str.includes('by the sea')) return false;
+      } else if (target === 'event spaces' || target === 'event space') {
+        if (!str.includes('event') && !str.includes('deck') && !str.includes('bay 07') && !str.includes('auditorium')) return false;
+      } else if (!vType.includes(target) && !target.includes(vType) && !vName.includes(target)) {
+        return false;
+      }
     }
 
     // 5. Capacity Filter
@@ -1488,7 +1506,7 @@ export default function AdminDashboardPage({
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
                   <a
-                    href="#home"
+                    href="/"
                     target="_blank"
                     rel="noreferrer"
                     className="btn-export-excel"
@@ -2011,7 +2029,7 @@ export default function AdminDashboardPage({
                             heroBadge: 'TRACE COMMUNITY HUB, SRI LANKA',
                             heroTitle: 'Where innovation meets community and culture.',
                             heroSubtitle:
-                              'From Shed sessions to Midweek Boost evenings, discover and register for the events shaping TRACE Expert City — then keep every one of them in view.',
+                              "Be part of Sri Lanka's largest innovation ecosystem to make an impact.",
                           }))
                         }
                         style={{
@@ -2245,7 +2263,7 @@ export default function AdminDashboardPage({
                         </h2>
                         <p className="hero-live-preview-sub">
                           {heroSettings.heroSubtitle ||
-                            'From Shed sessions to Midweek Boost evenings, discover and register for the events shaping TRACE Expert City — then keep every one of them in view.'}
+                            "Be part of Sri Lanka's largest innovation ecosystem to make an impact."}
                         </p>
                         <div className="hero-live-preview-actions">
                           <button
@@ -2337,7 +2355,7 @@ export default function AdminDashboardPage({
                             heroBadge: 'TRACE COMMUNITY HUB, SRI LANKA',
                             heroTitle: 'Where innovation meets community and culture.',
                             heroSubtitle:
-                              'From Shed sessions to Midweek Boost evenings, discover and register for the events shaping TRACE Expert City — then keep every one of them in view.',
+                              "Be part of Sri Lanka's largest innovation ecosystem to make an impact.",
                           };
                           setHeroSettings(defaults);
                           handleSaveHeroSettings(defaults);
@@ -3002,10 +3020,12 @@ export default function AdminDashboardPage({
                       style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', height: '42px', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', background: '#ffffff', color: '#0f172a', outline: 'none', cursor: 'pointer' }}
                     >
                       <option value="all">All Space Types</option>
-                      <option value="Meeting Room">Meeting Room</option>
-                      <option value="Co-Working">Co-Working Space</option>
-                      <option value="Auditorium">Auditorium & Hall</option>
-                      <option value="Event Space">Event Space</option>
+                      <option value="Meeting Rooms">Meeting Rooms</option>
+                      <option value="Conference Hall">Conference Hall</option>
+                      <option value="Co-Working Spaces">Co-Working Spaces</option>
+                      <option value="Maker Spaces">Maker Spaces</option>
+                      <option value="Workation">Workation</option>
+                      <option value="Event Spaces">Event Spaces</option>
                     </select>
                   </div>
 

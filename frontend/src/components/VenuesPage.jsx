@@ -142,30 +142,23 @@ export default function VenuesPage({ showToast }) {
   const [statusFilter, setStatusFilter] = useState('All');
   const [spaceTypeFilter, setSpaceTypeFilter] = useState('All');
 
-  // Derive unique active locations that actually exist in current venues database
+  // Single unified list containing all locations and all existing/newly added spaces (no duplicates)
   const availableLocations = useMemo(() => {
     const locMap = new Map();
-    const knownLocations = [
-      'TRACE Expert City Colombo 10',
-      'TRACE Coworking Colombo 02',
-      'TRACE Coworking Jaffna City',
-      'TRACE BREAD Center, Makandura',
-      'TRACE Creators Space, Rathnapura',
-      'Innovator Park - Kandy',
-      'ASAYA Workation By the Sea',
-      'UVA Co-Working Space',
-    ];
 
+    // 1. Add all branches/locations
     venues.forEach((v) => {
       const b = (v.branch || '').trim();
-      if (!b) return;
-      const matched = knownLocations.find(
-        (k) => k.toLowerCase() === b.toLowerCase() || b.toLowerCase().includes(k.toLowerCase()) || k.toLowerCase().includes(b.toLowerCase())
-      );
-      if (matched) {
-        locMap.set(matched, matched);
-      } else {
-        locMap.set(b, b);
+      if (b && !locMap.has(b.toLowerCase())) {
+        locMap.set(b.toLowerCase(), b);
+      }
+    });
+
+    // 2. Add all individual space names (if not already in list)
+    venues.forEach((v) => {
+      const name = (v.name || '').trim();
+      if (name && !locMap.has(name.toLowerCase())) {
+        locMap.set(name.toLowerCase(), name);
       }
     });
 
@@ -188,27 +181,38 @@ export default function VenuesPage({ showToast }) {
     currentUser.isAdmin
   );
 
-  // Helper function to derive space type (Meeting Room, Co-working, Auditorium, Event Space)
+  // Helper function to derive space type (Meeting Rooms, Co-Working Spaces, Maker Spaces, Workation, Event Spaces)
   const getSpaceType = (v) => {
-    if (!v) return 'Meeting Room';
+    if (!v) return 'Meeting Rooms';
     const rawType = (v.type && typeof v.type === 'string') ? v.type.trim() : '';
+
     if (rawType) {
-      if (rawType.toLowerCase().includes('lab') || rawType.toLowerCase().includes('maker')) return 'Co-Working Space';
-      if (rawType.toLowerCase().includes('office') || rawType.toLowerCase().includes('suite')) return 'Meeting Room';
+      const lower = rawType.toLowerCase();
+      if (lower.includes('workation')) return 'Workation';
+      if (lower.includes('maker') || lower.includes('creator') || lower.includes('lab')) return 'Maker Spaces';
+      if (lower.includes('coworking') || lower.includes('co-working') || lower.includes('incubator') || lower.includes('desk')) return 'Co-Working Spaces';
+      if (lower.includes('event') || lower.includes('deck') || lower.includes('auditorium') || lower.includes('hall')) return 'Event Spaces';
+      if (lower.includes('meeting') || lower.includes('conference') || lower.includes('room') || lower.includes('office') || lower.includes('suite')) return 'Meeting Rooms';
       return rawType;
     }
-    const str = `${v.name || ''} ${v.description || ''} ${v.branch || ''} ${v.address || ''}`.toLowerCase();
 
-    if (str.includes('coworking') || str.includes('co-working') || str.includes('incubator') || str.includes('shared desk') || str.includes('coding hub') || str.includes('creators space') || str.includes('lab') || str.includes('maker')) {
-      return 'Co-Working Space';
+    if (str.includes('workation') || str.includes('work-cation') || str.includes('by the sea')) {
+      return 'Workation';
     }
-    if (str.includes('auditorium') || str.includes('amphitheater') || str.includes('pavilion') || str.includes('theatre') || str.includes('grand')) {
-      return 'Auditorium & Hall';
+    if (str.includes('conference') || str.includes('hall')) {
+      return 'Conference Hall';
     }
-    if (str.includes('deck') || str.includes('terrace') || str.includes('expo') || str.includes('event space')) {
-      return 'Event Space';
+    if (str.includes('maker') || str.includes('creator') || str.includes('bread') || str.includes('lab') || str.includes('fablab')) {
+      return 'Maker Spaces';
     }
-    return 'Meeting Room';
+    if (str.includes('coworking') || str.includes('co-working') || str.includes('incubator') || str.includes('shared desk') || str.includes('coding hub')) {
+      return 'Co-Working Spaces';
+    }
+    if (str.includes('deck') || str.includes('terrace') || str.includes('expo') || str.includes('event') || str.includes('auditorium') || str.includes('amphitheater') || str.includes('pavilion') || str.includes('bay 07') || str.includes('bay 7') || str.includes('theatre')) {
+      return 'Event Spaces';
+    }
+
+    return 'Meeting Rooms';
   };
 
   // Helper function to derive province for any space
@@ -472,11 +476,16 @@ export default function VenuesPage({ showToast }) {
       if (p.toLowerCase() !== provinceFilter.toLowerCase()) return false;
     }
 
-    // 1. Branch Filter
+    // 1. Location & Space Filter
     if (selectedBranch !== 'All') {
-      const vBranch = (v.branch || '').toLowerCase();
-      const target = selectedBranch.toLowerCase();
-      if (!vBranch.includes(target) && !target.includes(vBranch)) return false;
+      const target = selectedBranch.toLowerCase().trim();
+      const vBranch = (v.branch || '').toLowerCase().trim();
+      const vName = (v.name || '').toLowerCase().trim();
+
+      const matchesBranch = vBranch === target || vBranch.includes(target) || target.includes(vBranch);
+      const matchesName = vName === target || vName.includes(target) || target.includes(vName);
+
+      if (!matchesBranch && !matchesName) return false;
     }
 
     // 2. Search Query
@@ -496,11 +505,22 @@ export default function VenuesPage({ showToast }) {
     if (spaceTypeFilter !== 'All') {
       const type = getSpaceType(v).toLowerCase();
       const target = spaceTypeFilter.toLowerCase();
-      if (target === 'meeting room' && !(type.includes('meeting') || type.includes('conference') || type.includes('room'))) return false;
-      else if (target === 'co-working' && !(type.includes('co-working') || type.includes('coworking') || type.includes('incubator') || type.includes('desk'))) return false;
-      else if (target === 'auditorium' && !(type.includes('auditorium') || type.includes('hall') || type.includes('amphitheater') || type.includes('pavilion'))) return false;
-      else if (target === 'event space' && !(type.includes('event') || type.includes('deck') || type.includes('space'))) return false;
-      else if (!type.includes(target) && !target.includes(type)) return false;
+
+      if (target === 'meeting rooms' || target === 'meeting room') {
+        if (!type.includes('meeting')) return false;
+      } else if (target === 'conference hall' || target === 'conference halls') {
+        if (!type.includes('conference') && !type.includes('hall')) return false;
+      } else if (target === 'co-working spaces' || target === 'co-working' || target === 'co-working space') {
+        if (!type.includes('co-working') && !type.includes('coworking')) return false;
+      } else if (target === 'maker spaces' || target === 'maker space') {
+        if (!type.includes('maker')) return false;
+      } else if (target === 'workation') {
+        if (!type.includes('workation')) return false;
+      } else if (target === 'event spaces' || target === 'event space') {
+        if (!type.includes('event')) return false;
+      } else if (!type.includes(target) && !target.includes(type)) {
+        return false;
+      }
     }
 
     // 4. Status Filter
@@ -559,6 +579,20 @@ export default function VenuesPage({ showToast }) {
 
   const handleInquirySubmit = async (e) => {
     e.preventDefault();
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test((inquiryForm.email || '').trim())) {
+      if (showToast) showToast('Please enter a valid email address (e.g. name@example.com)', 'error');
+      return;
+    }
+
+    const cleanPhone = (inquiryForm.phone || '').trim().replace(/[\s\-()]/g, '');
+    const phoneRegex = /^\+?[0-9]{9,15}$/;
+    if (!phoneRegex.test(cleanPhone)) {
+      if (showToast) showToast('Please enter a valid phone number (at least 9 digits, e.g. 0771234567 or +94771234567)', 'error');
+      return;
+    }
+
     setIsSubmittingInquiry(true);
 
     try {
@@ -689,10 +723,12 @@ export default function VenuesPage({ showToast }) {
                 onChange={(e) => setSpaceTypeFilter(e.target.value)}
               >
                 <option value="All">All Types</option>
-                <option value="Meeting Room">Meeting Room</option>
-                <option value="Co-Working">Co-Working Space</option>
-                <option value="Auditorium">Auditorium & Conference Hall</option>
-                <option value="Event Space">Event Space</option>
+                <option value="Meeting Rooms">Meeting Rooms</option>
+                <option value="Conference Hall">Conference Hall</option>
+                <option value="Co-Working Spaces">Co-Working Spaces</option>
+                <option value="Maker Spaces">Maker Spaces</option>
+                <option value="Workation">Workation</option>
+                <option value="Event Spaces">Event Spaces</option>
               </select>
               <i className="fa-solid fa-chevron-down select-arrow"></i>
             </div>

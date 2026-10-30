@@ -1,6 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import RichTextEditor from '../RichTextEditor';
 import { notifyVenueUpdated } from '../../utils/eventUtils';
+
+export const AVAILABLE_SPACE_TYPES = [
+  'Meeting Rooms',
+  'Conference Hall',
+  'Co-Working Spaces',
+  'Maker Spaces',
+  'Workation',
+  'Event Spaces',
+];
 
 export const PRESET_BRANCHES = [
   'TRACE Expert City Colombo 10',
@@ -36,7 +45,34 @@ export default function AddVenueModal({
   const [includeTax, setIncludeTax] = useState(false);
   const [taxLabelType, setTaxLabelType] = useState('+ Tax');
   const [status, setStatus] = useState('Available');
-  const [type, setType] = useState('Meeting Room');
+  const [selectedTypes, setSelectedTypes] = useState(['Meeting Rooms']);
+  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
+  const typeDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (typeDropdownRef.current && !typeDropdownRef.current.contains(e.target)) {
+        setIsTypeDropdownOpen(false);
+      }
+    };
+    if (isTypeDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isTypeDropdownOpen]);
+
+  const handleToggleSpaceType = (item) => {
+    setSelectedTypes((prev) => {
+      if (prev.includes(item)) {
+        return prev.filter((t) => t !== item);
+      } else {
+        return [...prev, item];
+      }
+    });
+  };
+
   const [coverImage, setCoverImage] = useState('');
   const [imageList, setImageList] = useState([]);
   const [amenities, setAmenities] = useState('High-Speed WiFi, 4K Projectors, Air Conditioned, Sound System');
@@ -162,7 +198,26 @@ export default function AddVenueModal({
       }
 
       setStatus(editingVenue.status || 'Available');
-      setType(editingVenue.type || 'Meeting Room');
+      if (editingVenue.type) {
+        const rawTypes = typeof editingVenue.type === 'string'
+          ? editingVenue.type.split(',').map((t) => t.trim()).filter(Boolean)
+          : Array.isArray(editingVenue.type) ? editingVenue.type : [];
+
+        const normalized = rawTypes.map((t) => {
+          const lower = t.toLowerCase();
+          if (lower.includes('workation')) return 'Workation';
+          if (lower.includes('conference') || lower.includes('hall')) return 'Conference Hall';
+          if (lower.includes('maker') || lower.includes('creator') || lower.includes('lab')) return 'Maker Spaces';
+          if (lower.includes('co-working') || lower.includes('coworking')) return 'Co-Working Spaces';
+          if (lower.includes('event') || lower.includes('auditorium')) return 'Event Spaces';
+          if (lower.includes('meeting') || lower.includes('room')) return 'Meeting Rooms';
+          return t;
+        });
+
+        setSelectedTypes(normalized.length > 0 ? Array.from(new Set(normalized)) : ['Meeting Rooms']);
+      } else {
+        setSelectedTypes(['Meeting Rooms']);
+      }
       const existingImgs = Array.isArray(editingVenue.images) && editingVenue.images.length > 0
         ? editingVenue.images
         : (editingVenue.coverImage ? [editingVenue.coverImage] : []);
@@ -185,7 +240,7 @@ export default function AddVenueModal({
       setIncludeTax(false);
       setTaxLabelType('+ Tax');
       setStatus('Available');
-      setType('Meeting Room');
+      setSelectedTypes(['Meeting Rooms']);
       setCoverImage('');
       setImageList([]);
       setAmenities('High-Speed WiFi, 4K Projectors, Air Conditioned, Sound System');
@@ -373,6 +428,12 @@ export default function AddVenueModal({
     const primaryCover = finalImages[0] || (coverImage && coverImage.trim()) || '';
     const payloadImages = finalImages;
 
+    if (!selectedTypes || selectedTypes.length === 0) {
+      if (showToast) showToast('Please select at least one space type', 'error');
+      setSubmitting(false);
+      return;
+    }
+
     const payload = {
       name,
       branch: finalBranch,
@@ -385,7 +446,7 @@ export default function AddVenueModal({
       includeTax: Boolean(includeTax),
       taxLabelType: includeTax ? taxLabelType : '',
       status,
-      type,
+      type: selectedTypes.join(', '),
       coverImage: primaryCover,
       images: payloadImages,
       amenities: typeof amenities === 'string' ? amenities.split(',').map((a) => a.trim()).filter(Boolean) : (amenities || []),
@@ -615,20 +676,172 @@ export default function AddVenueModal({
                 />
               </div>
 
-              <div className="profile-form-group">
-                <label htmlFor="venue-type">
-                  Space Type *
+              <div className="profile-form-group" ref={typeDropdownRef} style={{ position: 'relative' }}>
+                <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <span>Space Type * <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: '#64748b' }}>(Select any number)</span></span>
+                  {selectedTypes.length > 0 && (
+                    <span style={{ fontSize: '0.74rem', color: '#5d4df6', fontWeight: 700 }}>
+                      {selectedTypes.length} Selected
+                    </span>
+                  )}
                 </label>
-                <select
-                  id="venue-type"
-                  value={type}
-                  onChange={(e) => setType(e.target.value)}
+
+                {/* Multi-Select Trigger Box */}
+                <div
+                  onClick={() => setIsTypeDropdownOpen((prev) => !prev)}
+                  style={{
+                    minHeight: '44px',
+                    padding: '0.4rem 0.75rem',
+                    borderRadius: '8px',
+                    border: isTypeDropdownOpen ? '2px solid #5d4df6' : '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                    boxShadow: isTypeDropdownOpen ? '0 0 0 3px rgba(93, 77, 246, 0.15)' : 'none',
+                    transition: 'all 0.15s ease',
+                  }}
+                  title="Click to select multiple space types"
                 >
-                  <option value="Meeting Room">Meeting Room</option>
-                  <option value="Co-Working Space">Co-Working Space</option>
-                  <option value="Auditorium & Hall">Auditorium & Conference Hall</option>
-                  <option value="Event Space">Event Space</option>
-                </select>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center', flex: 1, paddingRight: '8px' }}>
+                    {selectedTypes.length === 0 ? (
+                      <span style={{ color: '#94a3b8', fontSize: '0.88rem' }}>Select space types...</span>
+                    ) : (
+                      selectedTypes.map((t) => (
+                        <span
+                          key={t}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleSpaceType(t);
+                          }}
+                          style={{
+                            background: '#eff6ff',
+                            color: '#1d4ed8',
+                            border: '1px solid #bfdbfe',
+                            padding: '2px 8px',
+                            borderRadius: '16px',
+                            fontSize: '0.78rem',
+                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                          }}
+                        >
+                          {t}
+                          <i className="fa-solid fa-xmark" style={{ fontSize: '0.7rem', opacity: 0.7 }}></i>
+                        </span>
+                      ))
+                    )}
+                  </div>
+                  <i
+                    className="fa-solid fa-chevron-down select-arrow"
+                    style={{
+                      transform: isTypeDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s',
+                      color: '#64748b',
+                      fontSize: '0.85rem',
+                    }}
+                  ></i>
+                </div>
+
+                {/* Multi-Select Dropdown Menu with Checkboxes */}
+                {isTypeDropdownOpen && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 4px)',
+                      left: 0,
+                      right: 0,
+                      background: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '10px',
+                      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                      zIndex: 1000,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div style={{ padding: '0.5rem 0.75rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                        Click to select / unselect
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (selectedTypes.length === AVAILABLE_SPACE_TYPES.length) {
+                            setSelectedTypes([]);
+                          } else {
+                            setSelectedTypes([...AVAILABLE_SPACE_TYPES]);
+                          }
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#5d4df6',
+                          fontSize: '0.74rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          padding: 0,
+                        }}
+                      >
+                        {selectedTypes.length === AVAILABLE_SPACE_TYPES.length ? 'Deselect All' : 'Select All'}
+                      </button>
+                    </div>
+
+                    <div style={{ maxHeight: '220px', overflowY: 'auto', padding: '0.35rem 0' }}>
+                      {AVAILABLE_SPACE_TYPES.map((typeOption) => {
+                        const isChecked = selectedTypes.includes(typeOption);
+                        return (
+                          <div
+                            key={typeOption}
+                            onClick={() => handleToggleSpaceType(typeOption)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '0.55rem 0.9rem',
+                              cursor: 'pointer',
+                              background: isChecked ? '#f0fdf4' : 'transparent',
+                              transition: 'background 0.15s',
+                              userSelect: 'none',
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isChecked) e.currentTarget.style.background = '#f8fafc';
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isChecked) e.currentTarget.style.background = 'transparent';
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => {}}
+                                style={{
+                                  width: '16px',
+                                  height: '16px',
+                                  accentColor: '#5d4df6',
+                                  cursor: 'pointer',
+                                  margin: 0,
+                                }}
+                              />
+                              <span style={{ fontSize: '0.88rem', fontWeight: isChecked ? 700 : 500, color: isChecked ? '#0f172a' : '#334155' }}>
+                                {typeOption}
+                              </span>
+                            </div>
+                            {isChecked && (
+                              <span style={{ color: '#16a34a', fontSize: '0.8rem', fontWeight: 700 }}>
+                                ✓
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="profile-form-group">
