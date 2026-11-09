@@ -45,7 +45,10 @@ export default function EventDetailsPage({
 
     if (eventId) {
       setLoadingEvent(true);
-      fetch(`/api/events/${eventId}`)
+      fetch(`/api/events/${eventId}?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache, no-store' },
+      })
         .then((res) => res.json())
         .then((data) => {
           if (data.success && data.data) {

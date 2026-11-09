@@ -545,28 +545,6 @@ export default function PastEventsSection({
           </button>
         </div>
 
-        {/* Home Section Category Filter Pills */}
-        <div className="category-pills-bar" style={{ marginBottom: '1.5rem', borderBottom: 'none' }}>
-          <button
-            type="button"
-            className={`category-pill-btn ${selectedSeriesId === 'all' ? 'active' : ''}`}
-            onClick={() => setSelectedSeriesId('all')}
-          >
-            <i className="fa-solid fa-layer-group"></i> All Past
-          </button>
-          {seriesStats.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              className={`category-pill-btn ${selectedSeriesId === s.id ? 'active' : ''}`}
-              onClick={() => setSelectedSeriesId(s.id)}
-            >
-              <i className={s.icon} style={{ color: selectedSeriesId === s.id ? '#ffffff' : s.accentColor }}></i>
-              {s.name}
-            </button>
-          ))}
-        </div>
-
         {/* Dynamic Grid Showing Past Events */}
         {homeDisplayEvents.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '2.5rem 1rem', background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>

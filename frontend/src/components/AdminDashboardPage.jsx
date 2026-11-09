@@ -3,7 +3,7 @@ import EditEventModal from './modals/EditEventModal';
 import AddVenueModal, { PRESET_BRANCHES } from './modals/AddVenueModal';
 import CreateEventPage from './CreateEventPage';
 import CloudinaryUploader from './CloudinaryUploader';
-import { notifyEventUpdated, notifyVenueUpdated } from '../utils/eventUtils';
+import { notifyEventUpdated, notifyVenueUpdated, optimizeImageUrl, DEFAULT_EVENT_BANNER } from '../utils/eventUtils';
 
 export default function AdminDashboardPage({
   currentUser,
@@ -285,7 +285,10 @@ export default function AdminDashboardPage({
       // Execute all 6 dashboard fetches in parallel for instant 0ms/fast load
       const [eventsResult, regsResult, venuesResult, bookingsResult, usersResult, heroResult] =
         await Promise.allSettled([
-          fetch('/api/events', { headers }).then((r) => r.json()),
+          fetch(`/api/events?_t=${Date.now()}`, {
+            headers: { ...headers, 'Cache-Control': 'no-cache, no-store' },
+            cache: 'no-store',
+          }).then((r) => r.json()),
           fetch('/api/registrations', { headers }).then((r) => r.json()),
           fetch('/api/venues', { headers }).then((r) => r.json()),
           fetch('/api/venue-bookings', { headers }).then((r) => r.json()),
@@ -3774,11 +3777,16 @@ export default function AdminDashboardPage({
                               <div className="event-table-cell">
                                 <img
                                   src={
-                                    evt.coverImage ||
-                                    'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=300&q=80'
+                                    optimizeImageUrl(evt.coverImage, 300) ||
+                                    DEFAULT_EVENT_BANNER
                                   }
                                   alt={evt.title}
                                   className="event-thumb"
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = DEFAULT_EVENT_BANNER;
+                                  }}
                                 />
                                 <div>
                                   <div className="event-cell-title">{evt.title}</div>
@@ -4009,11 +4017,16 @@ export default function AdminDashboardPage({
                               <div className="event-table-cell">
                                 <img
                                   src={
-                                    evt.coverImage ||
-                                    'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=300&q=80'
+                                    optimizeImageUrl(evt.coverImage, 300) ||
+                                    DEFAULT_EVENT_BANNER
                                   }
                                   alt={evt.title}
                                   className="event-thumb"
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = DEFAULT_EVENT_BANNER;
+                                  }}
                                 />
                                 <div>
                                   <div className="event-cell-title">{evt.title}</div>
@@ -4395,13 +4408,22 @@ export default function AdminDashboardPage({
         token={token || localStorage.getItem('eventhub_token')}
         currentUser={currentUser}
         onEventUpdated={(updatedEvent) => {
-          if (updatedEvent && updatedEvent._id) {
-            setEvents((prev) =>
-              prev.map((e) => (e._id === updatedEvent._id ? { ...e, ...updatedEvent } : e))
-            );
+          const targetId = String(updatedEvent?._id || updatedEvent?.id || '');
+          if (targetId) {
+            setEvents((prev) => {
+              const next = prev.map((e) =>
+                String(e._id || e.id) === targetId ? { ...e, ...updatedEvent } : e
+              );
+              try {
+                sessionStorage.setItem('eventhub_admin_cached_events', JSON.stringify(next));
+                sessionStorage.setItem('eventhub_cached_events', JSON.stringify(next));
+                localStorage.setItem('eventhub_cached_events', JSON.stringify(next));
+              } catch (e) { }
+              return next;
+            });
           }
           if (onEventUpdated) onEventUpdated(updatedEvent);
-          fetchDashboardData();
+          fetchDashboardData(true);
         }}
         showToast={showToast}
       />

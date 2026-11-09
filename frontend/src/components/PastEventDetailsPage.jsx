@@ -68,7 +68,10 @@ export default function PastEventDetailsPage({
       } catch (e) {}
 
       // Silent background fetch to guarantee latest updates
-      fetch(`/api/events/${eventId}`)
+      fetch(`/api/events/${eventId}?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache, no-store' },
+      })
         .then((res) => res.json())
         .then((data) => {
           if (data.success && data.data) {

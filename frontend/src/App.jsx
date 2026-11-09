@@ -186,20 +186,21 @@ export default function App() {
   useEffect(() => {
     const applyLiveEventUpdate = (updated) => {
       if (!updated) return;
-      if (updated.deleted && updated._id) {
+      const targetId = String(updated._id || updated.id || '');
+      if (updated.deleted && targetId) {
         setEvents((prev) => {
-          const filtered = prev.filter((evt) => String(evt._id || evt.id) !== String(updated._id));
+          const filtered = prev.filter((evt) => String(evt._id || evt.id) !== targetId);
           try {
             localStorage.setItem('eventhub_cached_events', JSON.stringify(filtered));
             sessionStorage.setItem('eventhub_cached_events', JSON.stringify(filtered));
           } catch (e) { }
           return filtered;
         });
-        setSelectedPastEvent((prev) => (String(prev?._id || prev?.id) === String(updated._id) ? null : prev));
-        setSelectedDetailsEvent((prev) => (String(prev?._id || prev?.id) === String(updated._id) ? null : prev));
-      } else if (updated._id) {
+        setSelectedPastEvent((prev) => (String(prev?._id || prev?.id) === targetId ? null : prev));
+        setSelectedDetailsEvent((prev) => (String(prev?._id || prev?.id) === targetId ? null : prev));
+      } else if (targetId) {
         setEvents((prev) => {
-          const exists = prev.some((evt) => String(evt._id || evt.id) === String(updated._id));
+          const exists = prev.some((evt) => String(evt._id || evt.id) === targetId);
           if (!exists) {
             showToast(
               `🔔 New Event Announced: "${updated.title}"! Check it out!`,
@@ -211,12 +212,12 @@ export default function App() {
               type: 'event',
               title: 'New Event Announced!',
               message: `"${updated.title}" has just been published for ${updated.location || 'TRACE'}. Register now!`,
-              meta: { eventId: updated._id },
+              meta: { eventId: updated._id || targetId },
             });
             setNotifications(updatedNotifs);
           }
           const updatedList = exists
-            ? prev.map((evt) => (String(evt._id || evt.id) === String(updated._id) ? { ...evt, ...updated } : evt))
+            ? prev.map((evt) => (String(evt._id || evt.id) === targetId ? { ...evt, ...updated } : evt))
             : [updated, ...prev];
           try {
             localStorage.setItem('eventhub_cached_events', JSON.stringify(updatedList));
@@ -225,10 +226,10 @@ export default function App() {
           return updatedList;
         });
         setSelectedPastEvent((prev) =>
-          String(prev?._id || prev?.id) === String(updated._id) ? { ...prev, ...updated } : prev
+          String(prev?._id || prev?.id) === targetId ? { ...prev, ...updated } : prev
         );
         setSelectedDetailsEvent((prev) =>
-          String(prev?._id || prev?.id) === String(updated._id) ? { ...prev, ...updated } : prev
+          String(prev?._id || prev?.id) === targetId ? { ...prev, ...updated } : prev
         );
       }
       fetchEvents(true);
@@ -386,7 +387,13 @@ export default function App() {
       setLoading(true);
     }
     try {
-      const response = await fetch('/api/events');
+      const response = await fetch(`/api/events?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+        },
+      });
       const result = await response.json();
       if (result.success && Array.isArray(result.data)) {
         setEvents(result.data);
@@ -449,7 +456,10 @@ export default function App() {
     try {
       const headers = { Authorization: `Bearer ${authToken}` };
       Promise.allSettled([
-        fetch('/api/events', { headers }).then(r => r.json()).then(d => {
+        fetch(`/api/events?_t=${Date.now()}`, {
+          headers: { ...headers, 'Cache-Control': 'no-cache, no-store' },
+          cache: 'no-store',
+        }).then(r => r.json()).then(d => {
           if (d.success && Array.isArray(d.data)) {
             sessionStorage.setItem('eventhub_admin_cached_events', JSON.stringify(d.data));
             sessionStorage.setItem('eventhub_cached_events', JSON.stringify(d.data));
@@ -868,30 +878,54 @@ export default function App() {
               openCreateEventModal={() => setShowAdmin(true)}
               showToast={showToast}
               onEventUpdated={(updatedEvent) => {
-                if (updatedEvent?._id) {
-                  setEvents((prev) =>
-                    prev.map((e) => (e._id === updatedEvent._id ? { ...e, ...updatedEvent } : e))
-                  );
+                const targetId = String(updatedEvent?._id || updatedEvent?.id || '');
+                if (targetId) {
+                  setEvents((prev) => {
+                    const next = prev.map((e) =>
+                      String(e._id || e.id) === targetId ? { ...e, ...updatedEvent } : e
+                    );
+                    try {
+                      localStorage.setItem('eventhub_cached_events', JSON.stringify(next));
+                      sessionStorage.setItem('eventhub_cached_events', JSON.stringify(next));
+                    } catch (e) { }
+                    return next;
+                  });
                   setSelectedPastEvent((prev) =>
-                    prev?._id === updatedEvent._id ? { ...prev, ...updatedEvent } : prev
+                    String(prev?._id || prev?.id) === targetId ? { ...prev, ...updatedEvent } : prev
                   );
                   setSelectedDetailsEvent((prev) =>
-                    prev?._id === updatedEvent._id ? { ...prev, ...updatedEvent } : prev
+                    String(prev?._id || prev?.id) === targetId ? { ...prev, ...updatedEvent } : prev
                   );
                 }
-                fetchEvents();
+                fetchEvents(true);
               }}
               onEventCreated={(newEvent) => {
-                if (newEvent?._id) {
-                  setEvents((prev) => [newEvent, ...prev.filter((e) => e._id !== newEvent._id)]);
+                const targetId = String(newEvent?._id || newEvent?.id || '');
+                if (targetId) {
+                  setEvents((prev) => {
+                    const next = [newEvent, ...prev.filter((e) => String(e._id || e.id) !== targetId)];
+                    try {
+                      localStorage.setItem('eventhub_cached_events', JSON.stringify(next));
+                      sessionStorage.setItem('eventhub_cached_events', JSON.stringify(next));
+                    } catch (e) { }
+                    return next;
+                  });
                 }
-                fetchEvents();
+                fetchEvents(true);
               }}
               onEventDeleted={(deletedId) => {
-                if (deletedId) {
-                  setEvents((prev) => prev.filter((e) => e._id !== deletedId));
+                const targetId = String(deletedId || '');
+                if (targetId) {
+                  setEvents((prev) => {
+                    const next = prev.filter((e) => String(e._id || e.id) !== targetId);
+                    try {
+                      localStorage.setItem('eventhub_cached_events', JSON.stringify(next));
+                      sessionStorage.setItem('eventhub_cached_events', JSON.stringify(next));
+                    } catch (e) { }
+                    return next;
+                  });
                 }
-                fetchEvents();
+                fetchEvents(true);
               }}
             />
           )}
