@@ -436,7 +436,10 @@ export default function EditEventModal({
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
               >
+                <option value="Midweek Boost">Midweek Boost</option>
                 <option value="Guest Talk Series">Guest Talk Series</option>
+                <option value="The SHED">The SHED</option>
+                <option value="REBOOT.health">REBOOT.health</option>
                 <option value="Community Meetup">Community Meetup</option>
                 <option value="Policy Discussion">Policy Discussion</option>
                 <option value="Workshop">Workshop</option>

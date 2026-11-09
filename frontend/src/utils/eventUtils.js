@@ -193,4 +193,107 @@ export function optimizeImageUrl(url, width = 800) {
   return cleanUrl;
 }
 
+export const SERIES_CATEGORIES = [
+  {
+    id: 'midweek',
+    name: 'Midweek Boost',
+    slug: 'midweek-boost',
+    description: 'Casual evening gatherings at The Third Place with live music, games, food & great networking.',
+    badgeText: 'MIDWEEK BOOST',
+    badgeClass: 'cat-badge-midweek',
+    icon: 'fa-solid fa-guitar',
+    accentColor: '#0d9488',
+    gradient: 'linear-gradient(135deg, #0d9488 0%, #115e59 100%)',
+    bgLight: '#f0fdfa',
+    borderLight: '#99f6e4',
+    defaultCover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=75',
+    match: (evt) => {
+      const title = (evt?.title || '').toLowerCase();
+      const cat = (evt?.category || '').toLowerCase();
+      return title.includes('midweek') || cat.includes('midweek');
+    },
+  },
+  {
+    id: 'guest-talk',
+    name: 'Guest Talk',
+    displayName: 'Guest Talk Series',
+    slug: 'guest-talk',
+    description: 'Thought-provoking sessions with global founders, researchers, and technology leaders.',
+    badgeText: 'GUEST TALK',
+    badgeClass: 'cat-badge-talk',
+    icon: 'fa-solid fa-microphone-lines',
+    accentColor: '#4f46e5',
+    gradient: 'linear-gradient(135deg, #4f46e5 0%, #312e81 100%)',
+    bgLight: '#eef2ff',
+    borderLight: '#c7d2fe',
+    defaultCover: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=800&q=75',
+    match: (evt) => {
+      const title = (evt?.title || '').toLowerCase();
+      const cat = (evt?.category || '').toLowerCase();
+      return (
+        title.includes('guest talk') ||
+        cat.includes('guest talk') ||
+        cat === 'talk' ||
+        (title.includes('talk') && !title.includes('midweek'))
+      );
+    },
+  },
+  {
+    id: 'shed',
+    name: 'The SHED',
+    displayName: 'The SHED',
+    slug: 'the-shed',
+    description: 'Exclusive forums exploring innovations in climate tech, sustainability & policy discussions.',
+    badgeText: 'THE SHED',
+    badgeClass: 'cat-badge-shed',
+    icon: 'fa-solid fa-leaf',
+    accentColor: '#7c3aed',
+    gradient: 'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)',
+    bgLight: '#f5f3ff',
+    borderLight: '#ddd6fe',
+    defaultCover: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=800&q=75',
+    match: (evt) => {
+      const title = (evt?.title || '').toLowerCase();
+      const cat = (evt?.category || '').toLowerCase();
+      return (
+        (title.includes('shed') || cat.includes('shed') || cat.includes('policy')) &&
+        !title.includes('midweek')
+      );
+    },
+  },
+  {
+    id: 'reboot-health',
+    name: 'REBOOT.health',
+    displayName: 'REBOOT.health',
+    slug: 'reboot-health',
+    description: 'Mind-body wellness, corporate mental resilience, health-tech innovation & mindful living.',
+    badgeText: 'REBOOT.HEALTH',
+    badgeClass: 'cat-badge-reboot',
+    icon: 'fa-solid fa-heart-pulse',
+    accentColor: '#059669',
+    gradient: 'linear-gradient(135deg, #059669 0%, #064e3b 100%)',
+    bgLight: '#ecfdf5',
+    borderLight: '#a7f3d0',
+    defaultCover: '/uploads/reboot-health-cover.jpg',
+    match: (evt) => {
+      const title = (evt?.title || '').toLowerCase();
+      const cat = (evt?.category || '').toLowerCase();
+      return (
+        title.includes('reboot') ||
+        cat.includes('reboot') ||
+        title.includes('health') ||
+        cat.includes('health')
+      );
+    },
+  },
+];
+
+export function getEventSeriesCategory(evt) {
+  if (!evt) return null;
+  for (const series of SERIES_CATEGORIES) {
+    if (series.match(evt)) return series;
+  }
+  return null;
+}
+
 

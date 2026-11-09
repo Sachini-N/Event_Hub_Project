@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import FormattedText from './FormattedText';
+import { getEventSeriesCategory } from '../utils/eventUtils';
 
 export const getPhotoUrl = (item) => {
   if (!item) return '';
@@ -288,7 +289,12 @@ export default function PastEventDetailsPage({
           </div>
 
           <div className="past-hero-content">
-            <div className="past-category-pill">{pastEvent.category || 'Archive Event'}</div>
+            <div className="past-category-pill">
+              {(() => {
+                const series = getEventSeriesCategory(pastEvent);
+                return series ? (series.displayName || series.name) : (pastEvent.category || 'Archive Event');
+              })()}
+            </div>
             <h1 className="past-hero-title">{pastEvent.title}</h1>
 
             <div className="past-meta-pills-row">
