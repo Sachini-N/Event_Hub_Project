@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import FormattedText from './FormattedText';
 import ImageCarouselSlider from './ImageCarouselSlider';
-import { optimizeImageUrl } from '../utils/eventUtils';
+import { optimizeImageUrl, getSpaceTypes, getSpaceType, getSpaceTypeIcon } from '../utils/eventUtils';
 
 // TRACE Branch metadata definition for rich display & badges
 const TRACE_BRANCHES_META = [
@@ -180,40 +180,6 @@ export default function VenuesPage({ showToast }) {
     currentUser.email === 'admin@trace.lk' ||
     currentUser.isAdmin
   );
-
-  // Helper function to derive space type (Meeting Rooms, Co-Working Spaces, Maker Spaces, Workation, Event Spaces)
-  const getSpaceType = (v) => {
-    if (!v) return 'Meeting Rooms';
-    const rawType = (v.type && typeof v.type === 'string') ? v.type.trim() : '';
-
-    if (rawType) {
-      const lower = rawType.toLowerCase();
-      if (lower.includes('workation')) return 'Workation';
-      if (lower.includes('maker') || lower.includes('creator') || lower.includes('lab')) return 'Maker Spaces';
-      if (lower.includes('coworking') || lower.includes('co-working') || lower.includes('incubator') || lower.includes('desk')) return 'Co-Working Spaces';
-      if (lower.includes('event') || lower.includes('deck') || lower.includes('auditorium') || lower.includes('hall')) return 'Event Spaces';
-      if (lower.includes('meeting') || lower.includes('conference') || lower.includes('room') || lower.includes('office') || lower.includes('suite')) return 'Meeting Rooms';
-      return rawType;
-    }
-
-    if (str.includes('workation') || str.includes('work-cation') || str.includes('by the sea')) {
-      return 'Workation';
-    }
-    if (str.includes('conference') || str.includes('hall')) {
-      return 'Conference Hall';
-    }
-    if (str.includes('maker') || str.includes('creator') || str.includes('bread') || str.includes('lab') || str.includes('fablab')) {
-      return 'Maker Spaces';
-    }
-    if (str.includes('coworking') || str.includes('co-working') || str.includes('incubator') || str.includes('shared desk') || str.includes('coding hub')) {
-      return 'Co-Working Spaces';
-    }
-    if (str.includes('deck') || str.includes('terrace') || str.includes('expo') || str.includes('event') || str.includes('auditorium') || str.includes('amphitheater') || str.includes('pavilion') || str.includes('bay 07') || str.includes('bay 7') || str.includes('theatre')) {
-      return 'Event Spaces';
-    }
-
-    return 'Meeting Rooms';
-  };
 
   // Helper function to derive province for any space
   const getSpaceProvince = (v) => {
@@ -503,24 +469,20 @@ export default function VenuesPage({ showToast }) {
 
     // 3. Space Type Filter
     if (spaceTypeFilter !== 'All') {
-      const type = getSpaceType(v).toLowerCase();
+      const types = getSpaceTypes(v).map((t) => t.toLowerCase());
       const target = spaceTypeFilter.toLowerCase();
 
-      if (target === 'meeting rooms' || target === 'meeting room') {
-        if (!type.includes('meeting')) return false;
-      } else if (target === 'conference hall' || target === 'conference halls') {
-        if (!type.includes('conference') && !type.includes('hall')) return false;
-      } else if (target === 'co-working spaces' || target === 'co-working' || target === 'co-working space') {
-        if (!type.includes('co-working') && !type.includes('coworking')) return false;
-      } else if (target === 'maker spaces' || target === 'maker space') {
-        if (!type.includes('maker')) return false;
-      } else if (target === 'workation') {
-        if (!type.includes('workation')) return false;
-      } else if (target === 'event spaces' || target === 'event space') {
-        if (!type.includes('event')) return false;
-      } else if (!type.includes(target) && !target.includes(type)) {
-        return false;
-      }
+      const matches = types.some((t) => {
+        if (target.includes('meeting') && t.includes('meeting')) return true;
+        if (target.includes('conference') && (t.includes('conference') || t.includes('hall'))) return true;
+        if ((target.includes('co-working') || target.includes('coworking')) && (t.includes('co-working') || t.includes('coworking'))) return true;
+        if (target.includes('maker') && t.includes('maker')) return true;
+        if (target.includes('workation') && t.includes('workation')) return true;
+        if (target.includes('event') && t.includes('event')) return true;
+        return t === target || t.includes(target) || target.includes(t);
+      });
+
+      if (!matches) return false;
     }
 
     // 4. Status Filter
@@ -869,9 +831,25 @@ export default function VenuesPage({ showToast }) {
                           <i className={`fa-solid ${branchMeta?.icon || 'fa-building'}`}></i>
                           <span>{branchMeta?.shortName || venueBranchName}</span>
                         </div>
-                        <span style={{ fontSize: '0.74rem', fontWeight: '700', color: '#0284c7', background: '#f0f9ff', border: '1px solid #bae6fd', padding: '2px 7px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                          <i className="fa-solid fa-shapes"></i> {getSpaceType(v)}
-                        </span>
+                        {getSpaceTypes(v).map((st) => (
+                          <span
+                            key={st}
+                            style={{
+                              fontSize: '0.74rem',
+                              fontWeight: '700',
+                              color: '#0284c7',
+                              background: '#f0f9ff',
+                              border: '1px solid #bae6fd',
+                              padding: '2px 7px',
+                              borderRadius: '6px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            <i className={`fa-solid ${getSpaceTypeIcon(st)}`}></i> {st}
+                          </span>
+                        ))}
                         <span style={{ fontSize: '0.74rem', fontWeight: '700', color: '#5d4df6', background: '#eff6ff', border: '1px solid #dbeafe', padding: '2px 7px', borderRadius: '6px' }}>
                           📍 {getSpaceProvince(v)}
                         </span>
@@ -1141,6 +1119,27 @@ export default function VenuesPage({ showToast }) {
                           ? `${activeVenueModal.capacity} Guests`
                           : (activeVenueModal.capacity || 'Custom Setup')}
                       </strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', alignItems: 'center', marginTop: '0.35rem' }}>
+                      <span style={{ color: '#64748b', fontWeight: 600 }}>Space Type:</span>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', justifyContent: 'flex-end', maxWidth: '65%' }}>
+                        {getSpaceTypes(activeVenueModal).map((st) => (
+                          <span
+                            key={st}
+                            style={{
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              color: '#0284c7',
+                              background: '#f0f9ff',
+                              border: '1px solid #bae6fd',
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                            }}
+                          >
+                            {st}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
@@ -1565,9 +1564,25 @@ export default function VenuesPage({ showToast }) {
 
                     {/* Province, Type, Capacity & Location Address */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.2rem' }}>
-                      <span style={{ fontSize: '0.76rem', fontWeight: '700', color: '#0369a1', background: '#e0f2fe', border: '1px solid #bae6fd', padding: '0.25rem 0.65rem', borderRadius: '20px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <i className="fa-solid fa-shapes"></i> {getSpaceType(activeVenueModal)}
-                      </span>
+                      {getSpaceTypes(activeVenueModal).map((st) => (
+                        <span
+                          key={st}
+                          style={{
+                            fontSize: '0.76rem',
+                            fontWeight: '700',
+                            color: '#0369a1',
+                            background: '#e0f2fe',
+                            border: '1px solid #bae6fd',
+                            padding: '0.25rem 0.65rem',
+                            borderRadius: '20px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <i className={`fa-solid ${getSpaceTypeIcon(st)}`}></i> {st}
+                        </span>
+                      ))}
                       <span style={{ fontSize: '0.76rem', fontWeight: '700', color: '#5d4df6', background: '#eff6ff', border: '1px solid #dbeafe', padding: '0.25rem 0.65rem', borderRadius: '20px' }}>
                         📍 {getSpaceProvince(activeVenueModal)}
                       </span>

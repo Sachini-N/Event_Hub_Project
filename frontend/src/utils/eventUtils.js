@@ -296,4 +296,114 @@ export function getEventSeriesCategory(evt) {
   return null;
 }
 
+/**
+ * Standard Space Types across TRACE Venues & Facilities
+ */
+export const AVAILABLE_SPACE_TYPES = [
+  'Meeting Rooms',
+  'Conference Hall',
+  'Co-Working Spaces',
+  'Maker Spaces',
+  'Workation',
+  'Event Spaces',
+];
+
+/**
+ * Normalizes a single space type string to one of the canonical AVAILABLE_SPACE_TYPES.
+ */
+export function normalizeSingleSpaceType(item) {
+  if (!item || typeof item !== 'string') return '';
+  const trimmed = item.trim();
+  if (!trimmed) return '';
+
+  const exact = AVAILABLE_SPACE_TYPES.find(
+    (opt) => opt.toLowerCase() === trimmed.toLowerCase()
+  );
+  if (exact) return exact;
+
+  const lower = trimmed.toLowerCase();
+  if (lower.includes('workation') || lower.includes('work-cation')) return 'Workation';
+  if (lower.includes('conference')) return 'Conference Hall';
+  if (lower.includes('maker') || lower.includes('creator') || lower.includes('lab') || lower.includes('fablab')) return 'Maker Spaces';
+  if (lower.includes('coworking') || lower.includes('co-working') || lower.includes('incubator') || lower.includes('shared desk')) return 'Co-Working Spaces';
+  if (lower.includes('event') || lower.includes('auditorium') || lower.includes('deck')) return 'Event Spaces';
+  if (lower.includes('meeting') || lower.includes('room') || lower.includes('suite') || lower.includes('office')) return 'Meeting Rooms';
+  if (lower.includes('hall')) return 'Conference Hall';
+
+  return trimmed;
+}
+
+/**
+ * Extracts and normalizes ALL space types for a venue object into an array.
+ * Supports comma-separated strings ("Event Spaces, Maker Spaces") or arrays.
+ * @param {Object} v - Venue object
+ * @returns {string[]} Array of unique space type names
+ */
+export function getSpaceTypes(v) {
+  if (!v) return ['Meeting Rooms'];
+
+  let rawList = [];
+  if (Array.isArray(v.types) && v.types.length > 0) {
+    rawList = v.types;
+  } else if (Array.isArray(v.type) && v.type.length > 0) {
+    rawList = v.type;
+  } else if (typeof v.type === 'string' && v.type.trim()) {
+    rawList = v.type.split(',').map((s) => s.trim()).filter(Boolean);
+  } else if (typeof v.types === 'string' && v.types.trim()) {
+    rawList = v.types.split(',').map((s) => s.trim()).filter(Boolean);
+  }
+
+  if (rawList.length > 0) {
+    const normalized = rawList.map(normalizeSingleSpaceType).filter(Boolean);
+    const unique = Array.from(new Set(normalized));
+    if (unique.length > 0) return unique;
+  }
+
+  // Fallback to name/desc only if venue had no type specified
+  const str = `${v.name || ''} ${v.description || ''} ${v.branch || ''}`.toLowerCase();
+  if (str.includes('workation') || str.includes('work-cation') || str.includes('by the sea')) {
+    return ['Workation'];
+  }
+  if (str.includes('conference')) {
+    return ['Conference Hall'];
+  }
+  if (str.includes('maker') || str.includes('creator') || str.includes('bread') || str.includes('lab') || str.includes('fablab')) {
+    return ['Maker Spaces'];
+  }
+  if (str.includes('coworking') || str.includes('co-working') || str.includes('incubator') || str.includes('shared desk') || str.includes('coding hub')) {
+    return ['Co-Working Spaces'];
+  }
+  if (str.includes('deck') || str.includes('terrace') || str.includes('expo') || str.includes('event') || str.includes('auditorium') || str.includes('amphitheater') || str.includes('pavilion') || str.includes('bay 07') || str.includes('bay 7') || str.includes('theatre')) {
+    return ['Event Spaces'];
+  }
+  if (str.includes('hall')) {
+    return ['Conference Hall'];
+  }
+
+  return ['Meeting Rooms'];
+}
+
+/**
+ * Returns a comma-joined string of all space types for a venue.
+ */
+export function getSpaceType(v) {
+  const types = getSpaceTypes(v);
+  return types.join(', ');
+}
+
+/**
+ * Returns a FontAwesome icon class for a given space type name.
+ */
+export function getSpaceTypeIcon(typeStr) {
+  const t = (typeStr || '').toLowerCase();
+  if (t.includes('workation')) return 'fa-umbrella-beach';
+  if (t.includes('conference') || t.includes('hall')) return 'fa-landmark';
+  if (t.includes('maker') || t.includes('creator') || t.includes('lab')) return 'fa-microchip';
+  if (t.includes('coworking') || t.includes('co-working')) return 'fa-laptop-code';
+  if (t.includes('event')) return 'fa-champagne-glasses';
+  if (t.includes('meeting') || t.includes('room')) return 'fa-handshake';
+  return 'fa-shapes';
+}
+
+
 

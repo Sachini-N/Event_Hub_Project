@@ -3,7 +3,7 @@ import EditEventModal from './modals/EditEventModal';
 import AddVenueModal, { PRESET_BRANCHES } from './modals/AddVenueModal';
 import CreateEventPage from './CreateEventPage';
 import CloudinaryUploader from './CloudinaryUploader';
-import { notifyEventUpdated, notifyVenueUpdated, optimizeImageUrl, DEFAULT_EVENT_BANNER } from '../utils/eventUtils';
+import { notifyEventUpdated, notifyVenueUpdated, optimizeImageUrl, DEFAULT_EVENT_BANNER, getSpaceTypes, getSpaceTypeIcon } from '../utils/eventUtils';
 
 export default function AdminDashboardPage({
   currentUser,
@@ -1251,28 +1251,24 @@ export default function AdminDashboardPage({
 
     // 4. Space Type Filter
     if (venueTypeFilter !== 'all') {
-      const vType = (v.type || '').toLowerCase();
+      const types = getSpaceTypes(v).map((t) => t.toLowerCase());
       const target = venueTypeFilter.toLowerCase();
       const vName = (v.name || '').toLowerCase();
       const vDesc = (v.description || '').toLowerCase();
       const vBranch = (v.branch || '').toLowerCase();
-      const str = `${vName} ${vType} ${vDesc} ${vBranch}`;
+      const str = `${vName} ${vDesc} ${vBranch}`;
 
-      if (target === 'meeting rooms' || target === 'meeting room') {
-        if (!str.includes('meeting') && !str.includes('room') && !str.includes('suite') && !str.includes('office')) return false;
-      } else if (target === 'conference hall' || target === 'conference halls') {
-        if (!str.includes('conference') && !str.includes('hall')) return false;
-      } else if (target === 'co-working spaces' || target === 'co-working' || target === 'coworking') {
-        if (!str.includes('co-working') && !str.includes('coworking') && !str.includes('incubator') && !str.includes('desk')) return false;
-      } else if (target === 'maker spaces' || target === 'maker space') {
-        if (!str.includes('maker') && !str.includes('creator') && !str.includes('bread') && !str.includes('lab') && !str.includes('fablab')) return false;
-      } else if (target === 'workation') {
-        if (!str.includes('workation') && !str.includes('by the sea')) return false;
-      } else if (target === 'event spaces' || target === 'event space') {
-        if (!str.includes('event') && !str.includes('deck') && !str.includes('bay 07') && !str.includes('auditorium')) return false;
-      } else if (!vType.includes(target) && !target.includes(vType) && !vName.includes(target)) {
-        return false;
-      }
+      const matches = types.some((t) => {
+        if (target.includes('meeting') && (t.includes('meeting') || t.includes('room') || str.includes('meeting') || str.includes('room'))) return true;
+        if (target.includes('conference') && (t.includes('conference') || t.includes('hall') || str.includes('conference') || str.includes('hall'))) return true;
+        if ((target.includes('co-working') || target.includes('coworking')) && (t.includes('co-working') || t.includes('coworking') || str.includes('coworking') || str.includes('co-working'))) return true;
+        if (target.includes('maker') && (t.includes('maker') || t.includes('creator') || str.includes('maker') || str.includes('creator'))) return true;
+        if (target.includes('workation') && (t.includes('workation') || str.includes('workation'))) return true;
+        if (target.includes('event') && (t.includes('event') || str.includes('event') || str.includes('deck') || str.includes('bay 07'))) return true;
+        return t === target || t.includes(target) || target.includes(t);
+      });
+
+      if (!matches) return false;
     }
 
     // 5. Capacity Filter
@@ -3108,7 +3104,7 @@ export default function AdminDashboardPage({
                           </div>
                         </div>
                         <div className="admin-venue-card-body">
-                          <div className="admin-venue-badges-row">
+                          <div className="admin-venue-badges-row" style={{ flexWrap: 'wrap', gap: '5px' }}>
                             <span className={`admin-venue-status-pill ${v.status === 'Available' ? 'available' : 'reserved'}`}>
                               <span className="admin-venue-status-dot"></span>
                               {v.status || 'Available'}
@@ -3119,6 +3115,25 @@ export default function AdminDashboardPage({
                                 {v.branch}
                               </span>
                             )}
+                            {getSpaceTypes(v).map((st) => (
+                              <span
+                                key={st}
+                                style={{
+                                  fontSize: '0.72rem',
+                                  fontWeight: '700',
+                                  color: '#0284c7',
+                                  background: '#f0f9ff',
+                                  border: '1px solid #bae6fd',
+                                  padding: '2px 7px',
+                                  borderRadius: '6px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                }}
+                              >
+                                <i className={`fa-solid ${getSpaceTypeIcon(st)}`}></i> {st}
+                              </span>
+                            ))}
                           </div>
 
                           <h3 className="admin-venue-card-title">{v.name}</h3>

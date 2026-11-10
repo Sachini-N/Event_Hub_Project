@@ -1,15 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import RichTextEditor from '../RichTextEditor';
-import { notifyVenueUpdated } from '../../utils/eventUtils';
+import { notifyVenueUpdated, AVAILABLE_SPACE_TYPES, normalizeSingleSpaceType } from '../../utils/eventUtils';
 
-export const AVAILABLE_SPACE_TYPES = [
-  'Meeting Rooms',
-  'Conference Hall',
-  'Co-Working Spaces',
-  'Maker Spaces',
-  'Workation',
-  'Event Spaces',
-];
+export { AVAILABLE_SPACE_TYPES };
 
 export const PRESET_BRANCHES = [
   'TRACE Expert City Colombo 10',
@@ -198,22 +191,18 @@ export default function AddVenueModal({
       }
 
       setStatus(editingVenue.status || 'Available');
-      if (editingVenue.type) {
-        const rawTypes = typeof editingVenue.type === 'string'
-          ? editingVenue.type.split(',').map((t) => t.trim()).filter(Boolean)
-          : Array.isArray(editingVenue.type) ? editingVenue.type : [];
+      if (editingVenue.type || editingVenue.types) {
+        const rawTypes = Array.isArray(editingVenue.types) && editingVenue.types.length > 0
+          ? editingVenue.types
+          : Array.isArray(editingVenue.type) && editingVenue.type.length > 0
+            ? editingVenue.type
+            : typeof editingVenue.type === 'string'
+              ? editingVenue.type.split(',').map((t) => t.trim()).filter(Boolean)
+              : typeof editingVenue.types === 'string'
+                ? editingVenue.types.split(',').map((t) => t.trim()).filter(Boolean)
+                : [];
 
-        const normalized = rawTypes.map((t) => {
-          const lower = t.toLowerCase();
-          if (lower.includes('workation')) return 'Workation';
-          if (lower.includes('conference') || lower.includes('hall')) return 'Conference Hall';
-          if (lower.includes('maker') || lower.includes('creator') || lower.includes('lab')) return 'Maker Spaces';
-          if (lower.includes('co-working') || lower.includes('coworking')) return 'Co-Working Spaces';
-          if (lower.includes('event') || lower.includes('auditorium')) return 'Event Spaces';
-          if (lower.includes('meeting') || lower.includes('room')) return 'Meeting Rooms';
-          return t;
-        });
-
+        const normalized = rawTypes.map(normalizeSingleSpaceType).filter(Boolean);
         setSelectedTypes(normalized.length > 0 ? Array.from(new Set(normalized)) : ['Meeting Rooms']);
       } else {
         setSelectedTypes(['Meeting Rooms']);
