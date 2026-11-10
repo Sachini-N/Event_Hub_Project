@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import traceSpacesMap from '../assets/trace-spaces-map.jpg';
 
 export default function WhyJoinSection({ onNavigateSpaces }) {
   const [isMapExpanded, setIsMapExpanded] = useState(false);
@@ -33,7 +34,7 @@ export default function WhyJoinSection({ onNavigateSpaces }) {
 
               <div className="trace-map-image-wrapper">
                 <img 
-                  src="/trace-spaces-map.jpg" 
+                  src={traceSpacesMap} 
                   alt="TRACE Spaces Island-Wide Network across Sri Lanka" 
                   className="trace-map-image"
                   loading="lazy"
@@ -124,7 +125,7 @@ export default function WhyJoinSection({ onNavigateSpaces }) {
             </div>
             <div style={{ padding: '1rem', overflowY: 'auto', textAlign: 'center', background: '#fafafa' }}>
               <img 
-                src="/trace-spaces-map.jpg" 
+                src={traceSpacesMap} 
                 alt="TRACE Spaces Map Full" 
                 style={{ maxWidth: '100%', maxHeight: '78vh', objectFit: 'contain', borderRadius: '12px' }}
               />
