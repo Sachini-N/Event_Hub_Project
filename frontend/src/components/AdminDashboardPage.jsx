@@ -3,7 +3,7 @@ import EditEventModal from './modals/EditEventModal';
 import AddVenueModal, { PRESET_BRANCHES } from './modals/AddVenueModal';
 import CreateEventPage from './CreateEventPage';
 import CloudinaryUploader from './CloudinaryUploader';
-import { notifyEventUpdated, notifyVenueUpdated, optimizeImageUrl, DEFAULT_EVENT_BANNER, getSpaceTypes, getSpaceTypeIcon } from '../utils/eventUtils';
+import { notifyEventUpdated, notifyVenueUpdated, optimizeImageUrl, DEFAULT_EVENT_BANNER, getSpaceTypes, getSpaceTypeIcon, AVAILABLE_SPACE_TYPES } from '../utils/eventUtils';
 
 export default function AdminDashboardPage({
   currentUser,
@@ -1263,8 +1263,10 @@ export default function AdminDashboardPage({
         if (target.includes('conference') && (t.includes('conference') || t.includes('hall') || str.includes('conference') || str.includes('hall'))) return true;
         if ((target.includes('co-working') || target.includes('coworking')) && (t.includes('co-working') || t.includes('coworking') || str.includes('coworking') || str.includes('co-working'))) return true;
         if (target.includes('maker') && (t.includes('maker') || t.includes('creator') || str.includes('maker') || str.includes('creator'))) return true;
+        if (target.includes('workshop') && (t.includes('workshop') || str.includes('workshop'))) return true;
         if (target.includes('workation') && (t.includes('workation') || str.includes('workation'))) return true;
         if (target.includes('event') && (t.includes('event') || str.includes('event') || str.includes('deck') || str.includes('bay 07'))) return true;
+        if ((target.includes('coffee') || target.includes('coffe') || target.includes('cafe')) && (t.includes('coffee') || t.includes('coffe') || t.includes('cafe') || str.includes('coffee') || str.includes('coffe') || str.includes('cafe'))) return true;
         return t === target || t.includes(target) || target.includes(t);
       });
 
@@ -3019,12 +3021,11 @@ export default function AdminDashboardPage({
                       style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', height: '42px', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', background: '#ffffff', color: '#0f172a', outline: 'none', cursor: 'pointer' }}
                     >
                       <option value="all">All Space Types</option>
-                      <option value="Meeting Rooms">Meeting Rooms</option>
-                      <option value="Conference Hall">Conference Hall</option>
-                      <option value="Co-Working Spaces">Co-Working Spaces</option>
-                      <option value="Maker Spaces">Maker Spaces</option>
-                      <option value="Workation">Workation</option>
-                      <option value="Event Spaces">Event Spaces</option>
+                      {AVAILABLE_SPACE_TYPES.map((typeOpt) => (
+                        <option key={typeOpt} value={typeOpt}>
+                          {typeOpt}
+                        </option>
+                      ))}
                     </select>
                   </div>
 

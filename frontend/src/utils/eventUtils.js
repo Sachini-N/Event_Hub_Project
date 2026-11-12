@@ -304,8 +304,10 @@ export const AVAILABLE_SPACE_TYPES = [
   'Conference Hall',
   'Co-Working Spaces',
   'Maker Spaces',
+  'Workshop Spaces',
   'Workation',
   'Event Spaces',
+  'Coffee Shop',
 ];
 
 /**
@@ -322,6 +324,8 @@ export function normalizeSingleSpaceType(item) {
   if (exact) return exact;
 
   const lower = trimmed.toLowerCase();
+  if (lower.includes('coffee') || lower.includes('coffe') || lower.includes('cafe')) return 'Coffee Shop';
+  if (lower.includes('workshop')) return 'Workshop Spaces';
   if (lower.includes('workation') || lower.includes('work-cation')) return 'Workation';
   if (lower.includes('conference')) return 'Conference Hall';
   if (lower.includes('maker') || lower.includes('creator') || lower.includes('lab') || lower.includes('fablab')) return 'Maker Spaces';
@@ -361,6 +365,12 @@ export function getSpaceTypes(v) {
 
   // Fallback to name/desc only if venue had no type specified
   const str = `${v.name || ''} ${v.description || ''} ${v.branch || ''}`.toLowerCase();
+  if (str.includes('coffee') || str.includes('coffe') || str.includes('cafe')) {
+    return ['Coffee Shop'];
+  }
+  if (str.includes('workshop')) {
+    return ['Workshop Spaces'];
+  }
   if (str.includes('workation') || str.includes('work-cation') || str.includes('by the sea')) {
     return ['Workation'];
   }
@@ -396,6 +406,8 @@ export function getSpaceType(v) {
  */
 export function getSpaceTypeIcon(typeStr) {
   const t = (typeStr || '').toLowerCase();
+  if (t.includes('coffee') || t.includes('coffe') || t.includes('cafe')) return 'fa-mug-hot';
+  if (t.includes('workshop')) return 'fa-screwdriver-wrench';
   if (t.includes('workation')) return 'fa-umbrella-beach';
   if (t.includes('conference') || t.includes('hall')) return 'fa-landmark';
   if (t.includes('maker') || t.includes('creator') || t.includes('lab')) return 'fa-microchip';

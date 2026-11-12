@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import FormattedText from './FormattedText';
 import ImageCarouselSlider from './ImageCarouselSlider';
-import { optimizeImageUrl, getSpaceTypes, getSpaceType, getSpaceTypeIcon } from '../utils/eventUtils';
+import { optimizeImageUrl, getSpaceTypes, getSpaceType, getSpaceTypeIcon, AVAILABLE_SPACE_TYPES } from '../utils/eventUtils';
 
 // TRACE Branch metadata definition for rich display & badges
 const TRACE_BRANCHES_META = [
@@ -477,8 +477,10 @@ export default function VenuesPage({ showToast }) {
         if (target.includes('conference') && (t.includes('conference') || t.includes('hall'))) return true;
         if ((target.includes('co-working') || target.includes('coworking')) && (t.includes('co-working') || t.includes('coworking'))) return true;
         if (target.includes('maker') && t.includes('maker')) return true;
+        if (target.includes('workshop') && t.includes('workshop')) return true;
         if (target.includes('workation') && t.includes('workation')) return true;
         if (target.includes('event') && t.includes('event')) return true;
+        if ((target.includes('coffee') || target.includes('coffe') || target.includes('cafe')) && (t.includes('coffee') || t.includes('coffe') || t.includes('cafe'))) return true;
         return t === target || t.includes(target) || target.includes(t);
       });
 
@@ -685,12 +687,11 @@ export default function VenuesPage({ showToast }) {
                 onChange={(e) => setSpaceTypeFilter(e.target.value)}
               >
                 <option value="All">All Types</option>
-                <option value="Meeting Rooms">Meeting Rooms</option>
-                <option value="Conference Hall">Conference Hall</option>
-                <option value="Co-Working Spaces">Co-Working Spaces</option>
-                <option value="Maker Spaces">Maker Spaces</option>
-                <option value="Workation">Workation</option>
-                <option value="Event Spaces">Event Spaces</option>
+                {AVAILABLE_SPACE_TYPES.map((typeOpt) => (
+                  <option key={typeOpt} value={typeOpt}>
+                    {typeOpt}
+                  </option>
+                ))}
               </select>
               <i className="fa-solid fa-chevron-down select-arrow"></i>
             </div>
