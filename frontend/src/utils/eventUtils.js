@@ -402,6 +402,52 @@ export function getSpaceType(v) {
 }
 
 /**
+ * Helper to derive province for any space
+ */
+export function getSpaceProvince(v) {
+  if (!v) return 'Western Province';
+  if (v.province && typeof v.province === 'string' && v.province.trim()) {
+    return v.province.trim();
+  }
+  const str = `${v.branch || ''} ${v.address || ''} ${v.name || ''}`.toLowerCase();
+
+  if (str.includes('colombo') || str.includes('maradana') || str.includes('western') || str.includes('expert city') || str.includes('hometree') || str.includes('uok') || str.includes('kelaniya')) {
+    return 'Western Province';
+  }
+  if (str.includes('kandy') || str.includes('peradeniya') || str.includes('central') || str.includes('jrdc')) {
+    return 'Central Province';
+  }
+  if (str.includes('jaffna') || str.includes('palaly') || str.includes('northern')) {
+    return 'Northern Province';
+  }
+  if (str.includes('galle') || str.includes('fort') || str.includes('southern') || str.includes('matara') || str.includes('ruhuna') || str.includes('mirissa') || str.includes('kamburugamuwa') || str.includes('asaya') || str.includes('ahangama') || str.includes('tangalle')) {
+    return 'Southern Province';
+  }
+  if (str.includes('kurunegala') || str.includes('wayamba') || str.includes('north western') || str.includes('makandura') || str.includes('bread') || str.includes('isb')) {
+    return 'North Western Province';
+  }
+  if (str.includes('rathnapura') || str.includes('ratnapura') || str.includes('creators') || str.includes('sabaragamuwa')) {
+    return 'Sabaragamuwa Province';
+  }
+  if (str.includes('batticaloa') || str.includes('eastern') || str.includes('dreamspace')) {
+    return 'Eastern Province';
+  }
+  if (str.includes('uwu') || str.includes('badulla') || str.includes('uva')) {
+    return 'Uva Province';
+  }
+  return 'Western Province';
+}
+
+/**
+ * Checks whether a space belongs to Western Province (guaranteeing North Western is not mismatched)
+ */
+export function isWesternSpace(v) {
+  if (!v) return false;
+  const prov = getSpaceProvince(v).toLowerCase().trim();
+  return prov.includes('western') && !prov.includes('north');
+}
+
+/**
  * Returns a FontAwesome icon class for a given space type name.
  */
 export function getSpaceTypeIcon(typeStr) {
